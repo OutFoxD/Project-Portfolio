@@ -13,7 +13,7 @@ In total the supply comes in under 2 kg and can deliver maximum power for about 
 - **Goals:** Backup-charge my e-scooter from 0-100 % SoC within 2 hrs
 - **Technologies Used:**  Spot welding, 3D printing, DC-DC buck conversion, soldering, CAD 
 - **Repository:** [GitHub Link](#)
-- **Images/Demo:** ![Project Image](#)
+- **Images/Demo:** ![Project Image](https://github.com/OutFoxD/Portfolio/blob/main/pictures/scooterBatt3.jpg)
 
 #### **Project Name 2**
 - **Description:** Another hardware project.
