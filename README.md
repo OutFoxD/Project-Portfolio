@@ -10,7 +10,7 @@ Welcome to my portfolio! Here, you'll find an overview of my hardware and softwa
 - **Description:** This supply can power anything up to 55 Volts and 6 Amps, while being completely mobile. It combines a 14s2p spot welded battery made of recycled 18650 cells, with an adjustable DC-DC converter in a 3D printed enclosure.  In total the supply comes in under 2 kg and can deliver maximum power for about an hour (~300 Wh of energy).
 - **Goals:** Backup-charge my e-scooter from 0-100 % SoC within 2 hrs
 - **Technologies Used:**  Spot welding, 3D printing, DC-DC buck conversion, soldering, CAD 
-- **Images/Demo:** ![Project Image](docs/ScooterBatt3.jpg)
+- **Image:** ![Project Image](docs/ScooterBatt3.jpg)
 
 #### **Project Name 2**
 - **Description:** Another hardware project.
@@ -21,15 +21,15 @@ Welcome to my portfolio! Here, you'll find an overview of my hardware and softwa
 
 #### **Hacked electronic load**
 - **Description:** 
-- **Goals:** 
+- **Goals:** Improved usability with separate UI board and a rotary encoder
 - **Technologies Used:**  
-- **Images/Demo:** ![Project Image]()
+- **Image:** ![Project Image]()
 
 #### **Electroluminescence meaurements of PV panels**
 - **Description:** 
 - **Goals:** 
 - **Technologies Used:**  
-- **Images/Demo:** ![Project Image](docs/ElectroLuminesence.JPG)
+- **Image:** ![Project Image](docs/ElectroLuminesence.JPG)
 
 #### **Restoration and modification of Emco Unimat 3 Lathe**
 - **Description:** 
@@ -50,13 +50,13 @@ Preparation of used batteries for lower demand projects.
 - **Description:** 
 - **Goals:** 
 - **Technologies Used:**  
-- **Images/Demo:** ![Project Image](docs/HumidityControl.jpg)
+- **Image:** ![Project Image](docs/HumidityControl.jpg)
 
 #### **Babywalker for my niece**
 - **Description:** 
 - **Goals:** 
 - **Technologies Used:**  
-- **Images/Demo:** ![Project Image]()
+- **Image:** ![Project Image]()
 
 ## 📝 Blog & Tutorials
 - [Article 1: Building a Custom PCB](#)
@@ -69,4 +69,4 @@ Preparation of used batteries for lower demand projects.
 - **Thingiverse:** [github.com/OutFoxD](https://www.thingiverse.com/outfoxd/designs)
 
 ## ✨ Where the magic happens
-- ![my home Lab](docs/HomeLab.jpg)
+![my home Lab](docs/HomeLab.jpg)
