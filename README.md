@@ -8,7 +8,9 @@ Welcome to my portfolio! Here, you'll find an overview of my hardware and softwa
 
 #### **Mobile Battery-supplied Lab Power Supply**
 - **Description:** This supply can power anything up to 55 Volts and 6 Amps, while being completely mobile. 
+
 It combines a 14s2p spot welded battery made of recycled 18650 cells, with an adjustable DC-DC converter in a 3D printed enclosure. 
+
 In total the supply comes in under 2 kg and can deliver maximum power for about an hour (~300 Wh of energy).
 - **Goals:** Backup-charge my e-scooter from 0-100 % SoC within 2 hrs
 - **Technologies Used:**  Spot welding, 3D printing, DC-DC buck conversion, soldering, CAD 
@@ -19,7 +21,7 @@ In total the supply comes in under 2 kg and can deliver maximum power for about 
 - **Description:** Another hardware project.
 - **Technologies Used:** 3D Printing, PCB Design, IoT.
 - **Repository:** [GitHub Link](#)
-- **Images/Demo:** ![Project Image](#)
+- **Image:** ![Project Image](#)
 
 ### 💻 Past Projects
 
@@ -39,13 +41,14 @@ In total the supply comes in under 2 kg and can deliver maximum power for about 
 - **Description:** Another software tool or app.
 - **Tech Stack:** React, Django, Rust.
 - **Repository:** [GitHub Link](#)
-- **Live Demo:** [Demo Link](#)
+- **Image:** <![After](https://github.com/OutFoxD/Portfolio/blob/main/pictures/EmcoUnimat3After.jpg)
+[Before](https://github.com/OutFoxD/Portfolio/blob/main/pictures/EmcoUnimat3Before.jpg)
 
 #### **Rejuvenating old Bosch battery packs**
 - **Description:** Another software tool or app.
 - **Tech Stack:** React, Django, Rust.
 - **Repository:** [GitHub Link](#)
-- **Live Demo:** [Demo Link](#)
+- **Image:** [Demo Link](https://github.com/OutFoxD/Portfolio/blob/main/pictures/BoschBatt2.jpg)
 
 #### **Babywalker for my niece**
 - **Description:** Another software tool or app.
@@ -64,4 +67,4 @@ In total the supply comes in under 2 kg and can deliver maximum power for about 
 - **Thingiverse:** [github.com/OutFoxD](https://www.thingiverse.com/outfoxd/designs)
 
 ## ✨ Where the magic happens
-- ![my home Lab](#)
+- ![my home Lab]([After](https://github.com/OutFoxD/Portfolio/blob/main/pictures/HomeLab.jpg))
