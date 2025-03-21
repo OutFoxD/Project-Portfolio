@@ -1,4 +1,3 @@
-
 Welcome to my portfolio! Here, you'll find an overview of my hardware and software projects. Each project includes a brief description, goals, key technologies used, and links to repositories or pictures.
 
 ## 🚀 Featured Projects
