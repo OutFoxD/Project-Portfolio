@@ -1,14 +1,15 @@
 # My Project Portfolio
 
-Welcome to my portfolio! Here, you'll find an overview of my hardware and software projects. Each project includes a brief description, key technologies used, and links to repositories or live demos.
+Welcome to my portfolio! Here, you'll find an overview of my hardware and software projects. Each project includes a brief description, goals, key technologies used, and links to repositories or live demos.
 
 ## 🚀 Featured Projects
 
 ### 🔧 Hardware Projects
 
-#### **Project Name 1**
+#### **Mobile Battery-supplied Lab Supply**
 - **Description:** Briefly describe what this project does.
-- **Technologies Used:** Arduino, Raspberry Pi, ESP8266, etc.
+- **Goals:** Backup-charge my e-scooter
+- **Technologies Used:**  Spot welding, 3D printing, DC-DC buck conversion, 
 - **Repository:** [GitHub Link](#)
 - **Images/Demo:** ![Project Image](#)
 
@@ -37,6 +38,5 @@ Welcome to my portfolio! Here, you'll find an overview of my hardware and softwa
 - [Article 2: Optimizing Embedded Systems](#)
 
 ## 📫 Contact
-- **Email:** your-email@example.com
-- **GitHub:** [github.com/yourusername](https://github.com/yourusername)
-- **Twitter:** [@yourhandle](#)
+- **Email:** cfuchsey@gmail.com
+- **GitHub:** [github.com/OutFoxD](https://github.com/outfoxd)
