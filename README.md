@@ -35,8 +35,8 @@ Welcome to my portfolio! Here, you'll find an overview of my hardware and softwa
 - **Description:** 
 - **Goals:** 
 - **Technologies Used:**  
-- **Image:** ![After](docs/EmcoUnimat3After.jpg)
-![Before](docs/EmcoUnimat3Before.jpg)
+- **After:** ![After](docs/EmcoUnimat3After.jpg)
+- **Before:** ![Before](docs/EmcoUnimat3Before.jpg)
 
 #### **Rejuvenating old Bosch battery packs**
 - **Description:** 
