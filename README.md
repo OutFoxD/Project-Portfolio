@@ -41,14 +41,14 @@ In total the supply comes in under 2 kg and can deliver maximum power for about 
 - **Description:** Another software tool or app.
 - **Tech Stack:** React, Django, Rust.
 - **Repository:** [GitHub Link](#)
-- **Image:** <![After](https://github.com/OutFoxD/Portfolio/blob/main/pictures/EmcoUnimat3After.jpg)
-[Before](https://github.com/OutFoxD/Portfolio/blob/main/pictures/EmcoUnimat3Before.jpg)
+- **Image:** ![After](https://github.com/OutFoxD/Portfolio/blob/main/pictures/EmcoUnimat3After.jpg)
+![Before](https://github.com/OutFoxD/Portfolio/blob/main/pictures/EmcoUnimat3Before.jpg)
 
 #### **Rejuvenating old Bosch battery packs**
 - **Description:** Another software tool or app.
 - **Tech Stack:** React, Django, Rust.
 - **Repository:** [GitHub Link](#)
-- **Image:** [Demo Link](https://github.com/OutFoxD/Portfolio/blob/main/pictures/BoschBatt2.jpg)
+- **Image:** ![Demo Link](https://github.com/OutFoxD/Portfolio/blob/main/pictures/BoschBatt2.jpg)
 
 #### **Babywalker for my niece**
 - **Description:** Another software tool or app.
@@ -67,4 +67,4 @@ In total the supply comes in under 2 kg and can deliver maximum power for about 
 - **Thingiverse:** [github.com/OutFoxD](https://www.thingiverse.com/outfoxd/designs)
 
 ## ✨ Where the magic happens
-- ![my home Lab]([After](https://github.com/OutFoxD/Portfolio/blob/main/pictures/HomeLab.jpg))
+- ![my home Lab](https://github.com/OutFoxD/Portfolio/blob/main/pictures/HomeLab.jpg)
