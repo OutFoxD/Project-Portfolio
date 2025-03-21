@@ -1,4 +1,3 @@
-# My Project Portfolio
 
 Welcome to my portfolio! Here, you'll find an overview of my hardware and software projects. Each project includes a brief description, goals, key technologies used, and links to repositories or pictures.
 
@@ -44,12 +43,12 @@ Welcome to my portfolio! Here, you'll find an overview of my hardware and softwa
 Insights into spot welding and specifically copper-nickel sandwhich welds.
 Preparation of used batteries for lower demand projects.
 - **Technologies Used:**  Spot welding
-- **Image:** ![Demo Link](docs/BoschBatt2.jpg)
+- **Image:** ![roject Image](docs/BoschBatt2.jpg)
 
 #### **Hacked humidifier with active control**
 - **Description:** 
-- **Goals:** 
-- **Technologies Used:**  
+- **Goals:** Operation withing optimal humidity range (60-80 %RH) to promote tropical plant growth
+- **Technologies Used:**  Raspberry Pi Pico, Rotary Encoder, 3D Printing
 - **Image:** ![Project Image](docs/HumidityControl.jpg)
 
 #### **Babywalker for my niece**
@@ -68,5 +67,9 @@ Preparation of used batteries for lower demand projects.
 - **Printables:** [github.com/OutFoxD](https://www.printables.com/@OutFoxD/models)
 - **Thingiverse:** [github.com/OutFoxD](https://www.thingiverse.com/outfoxd/designs)
 
-## ✨ Where the magic happens
+## ✨ Where the magic happens ✨
+- In my home Lab:
 ![my home Lab](docs/HomeLab.jpg)
+- in my [local Maker Space](https://grandgarage.eu/)
+- or in my Dad's Workshop 
+![Project Image](docs/EmcoCompact5.jpg)
