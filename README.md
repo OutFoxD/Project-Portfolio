@@ -60,11 +60,11 @@ Preparation of used batteries for lower demand projects.
 - [Article 1: Building a Custom PCB](#)
 - [Article 2: Optimizing Embedded Systems](#)
 
-## 📫 Contact
+## 📫 Contact & Links
 - **Email:** cfuchsey@gmail.com
 - **GitHub:** [github.com/OutFoxD](https://github.com/outfoxd)
-- **Printables:** [github.com/OutFoxD](https://www.printables.com/@OutFoxD/models)
-- **Thingiverse:** [github.com/OutFoxD](https://www.thingiverse.com/outfoxd/designs)
+- **Printables:** [printables.com/@OutFoxD/models](https://www.printables.com/@OutFoxD/models)
+- **Thingiverse:** [thingiverse.com/outfoxd/designs](https://www.thingiverse.com/outfoxd/designs)
 
 ## ✨ Where the magic happens ✨
 - In my home Lab:
