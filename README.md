@@ -44,7 +44,7 @@ Preparation of used batteries for lower demand projects.
 ![Project Image](docs/HumidityControl.jpg)
 
 <details>
-<summary><strong>Babywalker for my niece</strong></summary>
+<summary>**Babywalker for my niece**</summary>
 - **Description:** 
 - **Goals:** 
 - **Technologies Used:**  
