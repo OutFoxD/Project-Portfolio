@@ -56,10 +56,11 @@ Preparation of used batteries for lower demand projects.
 - **Technologies Used:**  
 - **Image:** ![Project Image]()
 
-##<details>
-  <summary>##📝 Blog & Tutorials</summary> 
+<details>
+  <summary><h2>📝 Blog & Tutorials</h2></summary> 
 - [Article 1: Building a Custom PCB](#)
 - [Article 2: Optimizing Embedded Systems](#)
+
 </details>
 
 
