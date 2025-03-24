@@ -45,10 +45,11 @@ Preparation of used batteries for lower demand projects.
 
 <details>
 <summary><h3>Babywalker for my niece<h3></summary>
-- **Description:** 
-- **Goals:** 
-- **Technologies Used:**  
-- **Image:** ![Project Image]()
+	<ul>
+	  <li>Description:</li>
+	  <li>Goals:</li>
+	  <li>Technologies Used:</li>
+	</ul>
 </details>
 
 
