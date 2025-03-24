@@ -14,8 +14,8 @@ Welcome to my portfolio! Here, you'll find an overview of my hardware and softwa
 - **Technologies Used:**  Raspberry Pi Pico, Rotary Encoder, 3D Printing, CAD, Soldering
 ![Project Image](docs/ElectronicLoad.jpg)
 
-<details>
-  <summary><h2>💻 Past Projects</h2></summary>  
+## 💻 Past Projects
+ 
 ### **Electroluminescence meaurements of PV panels**
 - **Description:** 
 - **Goals:** 
@@ -48,7 +48,6 @@ Preparation of used batteries for lower demand projects.
 - **Goals:** 
 - **Technologies Used:**  
 - **Image:** ![Project Image]()
-</details>
 
 <details>
   <summary><h2>📝 Blog & Tutorials</h2></summary> 
