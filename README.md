@@ -44,16 +44,6 @@ Preparation of used batteries for lower demand projects.
 ![Project Image](docs/HumidityControl.jpg)
 
 <details>
-<summary><h3>Babywalker for my niece<h3></summary>
-	<ul>
-	  <li>Description:</li>
-	  <li>Goals:</li>
-	  <li>Technologies Used:</li>
-	</ul>
-</details>
-
-
-<details>
   <summary><h2>📝 Blog & Tutorials</h2></summary> 
 - [Article 1: Building a Custom PCB](#)
 </details>
