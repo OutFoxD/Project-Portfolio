@@ -12,7 +12,7 @@ Welcome to my portfolio! Here, you'll find an overview of my hardware and softwa
 - **Description:** 
 - **Goals:** Improved usability with separate UI board and a rotary encoder
 - **Technologies Used:**  Raspberry Pi Pico, Rotary Encoder, 3D Printing, CAD, Soldering
-- **Image:** ![Project Image](docs/ElectronicLoad.jpg)
+![Project Image](docs/ElectronicLoad.jpg)
 
 <details>
   <summary><h2>💻 Past Projects</h2></summary>  
@@ -20,7 +20,7 @@ Welcome to my portfolio! Here, you'll find an overview of my hardware and softwa
 - **Description:** 
 - **Goals:** 
 - **Technologies Used:**  
-- **Image:** ![Project Image](docs/ElectroLuminesence.JPG)
+![Project Image](docs/ElectroLuminesence.JPG)
 
 ### **Restoration and modification of Emco Unimat 3 Lathe**
 - **Description:** 
@@ -35,13 +35,13 @@ Welcome to my portfolio! Here, you'll find an overview of my hardware and softwa
 Insights into spot welding and specifically copper-nickel sandwhich welds.
 Preparation of used batteries for lower demand projects.
 - **Technologies Used:**  Spot welding
-- **Image:** ![roject Image](docs/BoschBatt2.jpg)
+![roject Image](docs/BoschBatt2.jpg)
 
 ### **Hacked humidifier with active control**
 - **Description:** 
 - **Goals:** Operation withing optimal humidity range (60-80 %RH) to promote tropical plant growth
 - **Technologies Used:**  Raspberry Pi Pico, OLED Display, 3D Printing, Temp and Humidity Sensing
-- **Image:** ![Project Image](docs/HumidityControl.jpg)
+![Project Image](docs/HumidityControl.jpg)
 
 ### **Babywalker for my niece**
 - **Description:** 
