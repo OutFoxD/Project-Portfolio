@@ -43,11 +43,14 @@ Preparation of used batteries for lower demand projects.
 - **Technologies Used:**  Raspberry Pi Pico, OLED Display, 3D Printing, Temp and Humidity Sensing
 ![Project Image](docs/HumidityControl.jpg)
 
-### **Babywalker for my niece**
+<details>
+<summary><strong>Babywalker for my niece</strong></summary>
 - **Description:** 
 - **Goals:** 
 - **Technologies Used:**  
 - **Image:** ![Project Image]()
+</details>
+
 
 <details>
   <summary><h2>📝 Blog & Tutorials</h2></summary> 
