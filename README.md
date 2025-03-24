@@ -12,6 +12,7 @@ Welcome to my portfolio! Here, you'll find an overview of my hardware and softwa
     - **Goals:** Backup-charge my e-scooter from 0-100 % SoC within 2 hrs
     - **Technologies Used:** Spot welding, 3D printing, DC-DC buck conversion, soldering, CAD 
     - **Image:** ![Project Image](docs/ScooterBatt3.jpg)
+	
   </details>
 
   <details>
