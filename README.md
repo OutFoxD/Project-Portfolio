@@ -15,6 +15,12 @@ Welcome to my portfolio! Here, you'll find an overview of my hardware and softwa
 ![Project Image](docs/ElectronicLoad.jpg)
 
 ## 💻 Past Projects
+
+### **Hacked humidifier with active control**
+- **Description:** 
+- **Goals:** Operation withing optimal humidity range (60-80 %RH) to promote tropical plant growth
+- **Technologies Used:**  Raspberry Pi Pico, OLED Display, 3D Printing, Temp and Humidity Sensing
+![Project Image](docs/HumidityControl.jpg)
  
 ### **Electroluminescence meaurements of PV panels**
 - **Description:** 
@@ -36,12 +42,6 @@ Insights into spot welding and specifically copper-nickel sandwhich welds.
 Preparation of used batteries for lower demand projects.
 - **Technologies Used:**  Spot welding
 ![roject Image](docs/BoschBatt2.jpg)
-
-### **Hacked humidifier with active control**
-- **Description:** 
-- **Goals:** Operation withing optimal humidity range (60-80 %RH) to promote tropical plant growth
-- **Technologies Used:**  Raspberry Pi Pico, OLED Display, 3D Printing, Temp and Humidity Sensing
-![Project Image](docs/HumidityControl.jpg)
 
 <details>
   <summary><h2>📝 Blog & Tutorials</h2></summary> 
