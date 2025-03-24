@@ -55,7 +55,7 @@ Preparation of used batteries for lower demand projects.
 - **Thingiverse:** [thingiverse.com/outfoxd/designs](https://www.thingiverse.com/outfoxd/designs)
 
 ## ✨ Where the magic happens ✨
-- In my home Lab:
+- In my home Lab
 ![my home Lab](docs/HomeLab.jpg)
 - in my [local Maker Space](https://grandgarage.eu/)
 - or in my Dad's Workshop 
