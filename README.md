@@ -29,7 +29,7 @@ After the data is gatered it's saved to an InfluxDB and later visualized in Graf
 Grafana also does the conversion from relative to absolute humidity.
 - **Goals:** Gaining Insights how my flat heats up during summer and how and when washed clothes are fullie dried
 - **Technologies Used:** Raspberry Pi 4, Docker, NodeRed, Grafana, InfluxDB, TadoAPI
-![Project Image](docs/GrafanaTemparatures.jpg)
+![Project Image](docs/GrafanaTemperatures.jpg)
  
 ### **Electroluminescence meaurements of PV panels**
 - **Description:** 
