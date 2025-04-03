@@ -1,6 +1,6 @@
 **Hi there! I'm Christoph and I love to tinker around - welcome to my portfolio!Within you'll find an overview of my embedded, hardware and software projects.**
 
-**I do care deeply about everything I work on - each project includes a brief description, goals, key technologies used, and links to repositories or pictures.*
+*I do care deeply about everything I work on - each project includes a brief description, goals, key technologies used, and links to repositories or pictures.*
 
 ## 🚀 Featured Project
 
