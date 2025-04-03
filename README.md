@@ -1,5 +1,5 @@
-Hi there! I'm Christoph and I love to tinker around - welcome to my portfolio!  
-Here you'll find an overview of my embedded, hardware and software projects.  
+**Hi there! I'm Christoph and I love to tinker around - welcome to my portfolio!** 
+Within you'll find an overview of my embedded, hardware and software projects.  
 I do care deeply about everything I work on - each project includes a brief description, goals, key technologies used, and links to repositories or pictures.
 
 ## 🚀 Featured Project
@@ -37,17 +37,6 @@ Insights on optical systems and optical filtering.
 - **Technologies Used:** Near-Infrared Imaging, Raspberry Pi Zero W, Raspberry Pi NoIR Cam, Modified CMOS Digicam
 ![Project Image](docs/ElectroLuminesence.JPG)
 
-## 💻 Software Projects
-
-### **Temp and Humidity logging from Tado Thermostats**
-- **Description:** Simple logging of hemperature and humidity was set up with the data from Tado radiator thermostats.  
-I pull the data from the TadoAPI - a local way to get it was not in place, when I realized the project.  
-After the data is gatered it's saved to an InfluxDB and later visualized in Grafana.  
-Grafana also does the conversion from relative to absolute humidity.
-- **Goals:** Gaining Insights how my flat heats up during summer and how and when washed clothes are fullie dried
-- **Technologies Used:** Raspberry Pi 4, Docker, NodeRed, Grafana, InfluxDB, TadoAPI
-![Project Image](docs/GrafanaTemperatures.jpg)
-
 ## 🛠️ Hardware Projects
 
 ### **Restoration and modification of Emco Unimat 3 Lathe**
@@ -67,6 +56,17 @@ Insights into spot welding and specifically steel-copper sandwhich welds.
 Preparation of used batteries for lower demand projects.
 - **Technologies Used:**  Spot welding
 ![project Image](docs/BoschBatt2.jpg)
+
+## 💻 Software Projects
+
+### **Temp and Humidity logging from Tado Thermostats**
+- **Description:** Simple logging of hemperature and humidity was set up with the data from Tado radiator thermostats.  
+I pull the data from the TadoAPI - a local way to get it was not in place, when I realized the project.  
+After the data is gatered it's saved to an InfluxDB and later visualized in Grafana.  
+Grafana also does the conversion from relative to absolute humidity.
+- **Goals:** Gaining Insights how my flat heats up during summer and how and when washed clothes are fullie dried
+- **Technologies Used:** Raspberry Pi 4, Docker, NodeRed, Grafana, InfluxDB, TadoAPI
+![Project Image](docs/GrafanaTemperatures.jpg)
 
 ## 📫 Contact & Links
 - **Email:** cfuchsey@gmail.com
