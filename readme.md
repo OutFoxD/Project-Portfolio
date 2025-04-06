@@ -1,8 +1,8 @@
----
+[comment]: <> (---
 layout: default
 title: Protofox
 description: Project Portfolio - Christoph Fuchs.
----
+---)
 
 **Hey there! I'm Christoph and I love to tinker around - welcome to my portfolio! Within you'll find an overview of my embedded, hardware and software projects.**
 
