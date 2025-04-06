@@ -2,7 +2,7 @@
 
 *I do care deeply about everything I work on - that's why each project includes a brief description, goals, key technologies used, and links to repositories or pictures.*
 
-*What I'm working on [right now](https://protofox.at/now/)
+*What I'm working on [right now](https://protofox.at/now/)*
 
 ## 🚀 Featured Project
 
