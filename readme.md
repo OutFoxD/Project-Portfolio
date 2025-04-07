@@ -31,7 +31,7 @@ Turns out it was not working as well as expected and got replaced anyways.
 - **Technologies Used:**  Raspberry Pi Pico, OLED Display, 3D Printing, Temp and Humidity Sensing
 ![Project Image](docs/HumidityControl.jpg)
  
-### **Electroluminescence meaurements of PV panels**
+### **Electroluminescence measurements of PV panels**
 - **Description:** Failure analysis of PV panels/systems was one of my topics at work and I continued the research privately as well.  
 Turns out near-infrared imaging can be used, when feeding back power into PV panels to image faults and micro-cracks.
 - **Goals:** Insights on ElectroLuminesence for PV panel failure analysis.  
