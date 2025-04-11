@@ -81,5 +81,6 @@ Grafana also does the conversion from relative to absolute humidity.
 - In my home lab
 ![my home Lab](docs/HomeLab.jpg)
 - in the [Grand Garage](https://grandgarage.eu/) - my local makerspace
+![my home Lab](docs/MeGG.jpg)
 - or in my Dad's workshop 
 ![Project Image](docs/EmcoCompact5.jpg)
