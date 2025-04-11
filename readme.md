@@ -75,7 +75,7 @@ Grafana also does the conversion from relative to absolute humidity.
 I supported him on some parts, but he did the heavy lifting ^^. 
 I'm insaley greatful for what he tought me within that project, since that's the basis my portfolio is no built on - ❤️ u Gatzi
 - **Goals:** A simple app to reliably display spot prices with widget support
-- **Technologies Used:** GitHub, Copilot, entso-e API, 
+- **Technologies Used:** Expo, React, GitHub, Copilot, entso-e API
 - **Github Repo:** [github.com/MrGatzi/Spotbroo](https://github.com/MrGatzi/SpotBroo) 
 
 ## 📫 Contact & Links
