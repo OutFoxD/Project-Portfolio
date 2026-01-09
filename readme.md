@@ -80,7 +80,7 @@ I'm insaley greatful for what he tought me within that project, since that's the
 - **Github Repo:** [github.com/MrGatzi/Spotbroo](https://github.com/MrGatzi/SpotBroo) 
 
 ## 📫 Contact & Links
-- **Email:** cfuchsey@gmail.com
+- **Email:** chrifuchs@proton.me
 - **GitHub:** [github.com/OutFoxD](https://github.com/outfoxd)
 - **Printables:** [printables.com/@OutFoxD/models](https://www.printables.com/@OutFoxD/models)
 - **Thingiverse:** [thingiverse.com/outfoxd/designs](https://www.thingiverse.com/outfoxd/designs)
