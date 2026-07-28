@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pilzwetter — rain check for foragers</title>
+<meta name="description" content="Has it rained enough for mushrooms? Precipitation at weather stations around Linz, any time range. Data: GeoSphere Austria.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍄</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  :root{
+    --forest:#16241c; --forest-2:#1e3326; --lichen:#e8efe4; --lichen-dim:#9db3a4;
+    --amber:#e8a13c; --amber-deep:#c07f1f; --line:#2c4434;
+    --ok:#7fcdbb; --dry:#e0a030;
+  }
+  *{box-sizing:border-box; margin:0}
+  html,body{height:100%}
+  body{
+    font-family:"Instrument Sans",system-ui,sans-serif; background:var(--forest);
+    color:var(--lichen); display:flex; flex-direction:column; min-height:100dvh;
+  }
+  header{padding:14px 16px 10px}
+  h1{font-family:"Fraunces",serif; font-weight:700; font-size:1.45rem; letter-spacing:.01em}
+  h1 span{color:var(--amber)}
+  .sub{color:var(--lichen-dim); font-size:.8rem; margin-top:2px}
+
+  /* verdict strip — the one-glance answer */
+  #verdict{
+    margin:10px 16px 0; padding:12px 14px; border:1px solid var(--line);
+    border-radius:14px; background:var(--forest-2);
+    display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;
+  }
+  #verdict .word{font-family:"Fraunces",serif; font-size:1.6rem; font-weight:700; color:var(--amber)}
+  #verdict .num{font-size:.95rem; color:var(--lichen)}
+  #verdict .num b{font-variant-numeric:tabular-nums}
+  #verdict .range{width:100%; font-size:.75rem; color:var(--lichen-dim)}
+
+  /* preset chips */
+  #chips{display:flex; gap:8px; overflow-x:auto; padding:12px 16px 4px; scrollbar-width:none}
+  #chips::-webkit-scrollbar{display:none}
+  .chip{
+    flex:0 0 auto; border:1px solid var(--line); background:transparent; color:var(--lichen);
+    border-radius:999px; padding:8px 14px; font:inherit; font-size:.85rem; cursor:pointer;
+  }
+  .chip[aria-pressed="true"]{background:var(--amber); border-color:var(--amber); color:#241a08; font-weight:600}
+  .chip:focus-visible{outline:2px solid var(--amber); outline-offset:2px}
+
+  #custom{display:none; gap:8px; padding:8px 16px 0; align-items:center; flex-wrap:wrap}
+  #custom.open{display:flex}
+  #custom input{background:var(--forest-2); border:1px solid var(--line); color:var(--lichen);
+    border-radius:8px; padding:8px; font:inherit; font-size:.85rem; color-scheme:dark}
+  #custom button{border:1px solid var(--amber); background:transparent; color:var(--amber);
+    border-radius:8px; padding:8px 12px; font:inherit; cursor:pointer}
+
+  #map{flex:1; min-height:52dvh; margin:12px 0 0; background:#dfe8df}
+  .leaflet-container{font:inherit}
+
+  #status{padding:10px 16px; font-size:.85rem; color:var(--lichen-dim); min-height:2.2em}
+  #status.err{color:#f0b9a2}
+
+  /* legend */
+  #legend{display:flex; flex-wrap:wrap; gap:6px 10px; padding:8px 16px 10px; font-size:.72rem; color:var(--lichen-dim)}
+  #legend i{display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:4px; vertical-align:-2px; border:1px solid rgba(0,0,0,.2)}
+
+  /* bottom sheet: station detail */
+  #sheet{
+    position:fixed; left:0; right:0; bottom:0; z-index:1200; transform:translateY(105%);
+    transition:transform .25s ease; background:var(--forest-2); color:var(--lichen);
+    border-radius:18px 18px 0 0; border:1px solid var(--line); border-bottom:none;
+    padding:14px 16px calc(14px + env(safe-area-inset-bottom)); max-height:70dvh; overflow:auto;
+    box-shadow:0 -8px 30px rgba(0,0,0,.45);
+  }
+  #sheet.open{transform:translateY(0)}
+  @media (prefers-reduced-motion:reduce){ #sheet{transition:none} }
+  #sheet .grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 10px}
+  #sheet h2{font-family:"Fraunces",serif; font-size:1.15rem; font-weight:600}
+  #sheet .meta{color:var(--lichen-dim); font-size:.8rem; margin:2px 0 10px}
+  #sheet .big{font-size:1.5rem; font-family:"Fraunces",serif; color:var(--amber)}
+  #sheet .close{position:absolute; top:10px; right:12px; background:none; border:none;
+    color:var(--lichen-dim); font-size:1.4rem; cursor:pointer; padding:6px}
+  #chartWrap{margin-top:10px; height:160px}
+
+  footer{padding:10px 16px 16px; font-size:.7rem; color:var(--lichen-dim)}
+  footer a{color:var(--lichen-dim)}
+
+  @media (min-width:820px){
+    body{max-width:none}
+    header,#verdict,#chips,#custom,#status,#legend,footer{max-width:920px; margin-left:auto; margin-right:auto; width:100%}
+    #map{min-height:58dvh}
+    #sheet{left:auto; right:24px; bottom:24px; width:380px; border-radius:18px; border-bottom:1px solid var(--line)}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Pilz<span>wetter</span> 🍄</h1>
+  <div class="sub">Has it rained enough? Stations around Linz · data © GeoSphere Austria</div>
+</header>
+
+<section id="verdict" aria-live="polite">
+  <span class="word" id="vWord">…</span>
+  <span class="num"><b id="vMean">–</b> mm avg · <b id="vMax">–</b> mm max</span>
+  <span class="range" id="vRange">loading stations…</span>
+</section>
+
+<nav id="chips" aria-label="Time range">
+  <button class="chip" data-preset="24h">Last 24 h</button>
+  <button class="chip" data-preset="7">Last 7 days</button>
+  <button class="chip" data-preset="14" aria-pressed="true">Last 14 days</button>
+  <button class="chip" data-preset="30">Last 30 days</button>
+  <button class="chip" data-preset="custom">Custom…</button>
+</nav>
+<div id="custom">
+  <label>From <input type="date" id="dFrom"></label>
+  <label>To <input type="date" id="dTo"></label>
+  <button id="dGo">Show</button>
+</div>
+
+<div id="map" role="application" aria-label="Station map"></div>
+<div id="legend"></div>
+<div id="status"></div>
+
+<aside id="sheet" aria-hidden="true">
+  <div class="grab"></div>
+  <button class="close" aria-label="Close station details">×</button>
+  <h2 id="sName">Station</h2>
+  <div class="meta" id="sMeta"></div>
+  <div><span class="big" id="sTotal">–</span> <span id="sUnit">mm in range</span> · <span id="sRainy"></span></div>
+  <div id="chartWrap"><canvas id="sChart"></canvas></div>
+</aside>
+
+<footer>
+  Data: <a href="https://data.hub.geosphere.at" rel="noopener">GeoSphere Austria Data Hub</a>
+  (klima-v2-1d, INCA) · CC BY 4.0 · Map © OpenStreetMap contributors
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script>
+"use strict";
+/* ================= configuration ================= */
+const CENTER = [48.3069, 14.2858];   // Linz — change me
+const RADIUS_KM = 35;                // station search radius
+const MAX_STATIONS = 12;
+const API = "https://dataset.api.hub.geosphere.at/v1";
+const DAILY = "klima-v2-1d";         // daily station data, parameter rr [mm]
+const BOUNDS = [0,2,15,30,50,75,100,150,200,250,350,450,600];
+const COLORS = ["#ffffff","#fdfdd0","#e8f4a5","#b8e28d","#7fcdbb","#41b6c4",
+                "#1d91c0","#225ea8","#0c2c84","#6a51a3","#88419d","#e31a1c","#fc8d59"];
+
+/* ================= state ================= */
+let stations = [];        // {id,name,lat,lon,alt,dist}
+let markers = {};         // id -> leaflet marker
+let series = {};          // id -> {labels:[], values:[]}
+let chart = null;
+let currentRange = null;  // {label}
+
+/* ================= helpers ================= */
+const $ = s => document.querySelector(s);
+const fmt1 = v => (Math.round(v*10)/10).toLocaleString("de-AT");
+const iso = d => d.toISOString().slice(0,10);
+function haversine(a,b,c,d){const r=6371,p=Math.PI/180;
+  const x=Math.sin((c-a)*p/2)**2+Math.cos(a*p)*Math.cos(c*p)*Math.sin((d-b)*p/2)**2;
+  return 2*r*Math.asin(Math.sqrt(x));}
+function colorFor(mm){
+  if(!isFinite(mm)) return "#888";
+  for(let i=BOUNDS.length-1;i>=1;i--) if(mm>=BOUNDS[i]) return COLORS[Math.min(i,COLORS.length-1)];
+  for(let i=1;i<BOUNDS.length;i++) if(mm<BOUNDS[i]) return COLORS[i-1];
+  return COLORS[COLORS.length-1];
+}
+function verdictFor(mean,days){
+  if(days<5) return null; // thresholds are tuned for ~1–2 week sums
+  if(mean>=60) return "Excellent"; if(mean>=40) return "Good";
+  if(mean>=20) return "Marginal";  return "Too dry";
+}
+function setStatus(msg, err=false){ const s=$("#status"); s.textContent=msg; s.className=err?"err":""; }
+
+async function getJSON(url){
+  const r = await fetch(url);
+  if(!r.ok){
+    let msg = r.status+" "+r.statusText;
+    try{ msg += " — "+(await r.json()).message }catch(e){}
+    throw new Error(msg);
+  }
+  return r.json();
+}
+
+/* ================= map ================= */
+const map = L.map("map",{zoomSnap:.5}).setView(CENTER, 10);
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+  {maxZoom:17, attribution:"© OpenStreetMap"}).addTo(map);
+
+const legend = $("#legend");
+legend.innerHTML = BOUNDS.slice(0,-1).map((b,i)=>
+  `<span><i style="background:${COLORS[i]}"></i>${b}–${BOUNDS[i+1]}</span>`).join("")
+  + `<span><i style="background:${COLORS[COLORS.length-1]}"></i>&gt;600 mm</span>`;
+
+/* ================= stations ================= */
+async function loadStations(){
+  setStatus("Loading station list…");
+  const meta = await getJSON(`${API}/station/historical/${DAILY}/metadata`);
+  const today = iso(new Date());
+  stations = (meta.stations||[])
+    .filter(s => s.lat && s.lon && (!s.valid_to || s.valid_to.slice(0,10) >= today))
+    .map(s => ({id:String(s.id), name:(s.name||"?").trim(), lat:+s.lat, lon:+s.lon,
+                alt:s.altitude, dist:haversine(CENTER[0],CENTER[1],+s.lat,+s.lon)}))
+    .filter(s => s.dist <= RADIUS_KM)
+    .sort((a,b) => a.dist-b.dist)
+    .slice(0, MAX_STATIONS);
+  if(!stations.length) throw new Error("no stations in radius — increase RADIUS_KM");
+}
+
+/* ================= data fetch ================= */
+async function fetchDaily(start, end){
+  const ids = stations.map(s=>s.id).join(",");
+  const js = await getJSON(`${API}/station/historical/${DAILY}` +
+    `?parameters=rr&station_ids=${ids}&start=${start}T00:00&end=${end}T00:00&output_format=geojson`);
+  const labels = (js.timestamps||[]).map(t=>t.slice(5,10).split("-").reverse().join("."));
+  series = {};
+  for(const f of js.features||[]){
+    const sid = String(f.properties.station);
+    const vals = ((f.properties.parameters||{}).rr||{}).data||[];
+    series[sid] = {labels, values: vals.map(v=>v==null?NaN:+v)};
+  }
+}
+
+async function fetchInca24h(){
+  // near-real-time: hourly INCA point timeseries at each station (throttled)
+  const end = new Date(Date.now() - 3600e3); end.setMinutes(0,0,0);
+  const start = new Date(end.getTime() - 24*3600e3);
+  const p = t => t.toISOString().slice(0,16);
+  series = {};
+  const queue = [...stations];
+  async function worker(){
+    while(queue.length){
+      const s = queue.shift();
+      const js = await getJSON(`${API}/timeseries/historical/inca-v1-1h-1km` +
+        `?parameters=RR&start=${p(start)}&end=${p(end)}&lat=${s.lat}&lon=${s.lon}&output_format=geojson`);
+      const f = (js.features||[])[0]||{properties:{parameters:{}}};
+      const vals = ((f.properties.parameters||{}).RR||{}).data||[];
+      series[s.id] = {labels:(js.timestamps||[]).map(t=>t.slice(11,16)),
+                      values: vals.map(v=>v==null?NaN:+v)};
+    }
+  }
+  await Promise.all([worker(),worker(),worker(),worker()]); // 4 parallel, ~5 req/s limit
+  return {start,end};
+}
+
+/* ================= render ================= */
+function sum(vs){ return vs.reduce((a,v)=>a+(isFinite(v)?v:0),0); }
+
+function render(rangeLabel, days){
+  for(const id in markers){ map.removeLayer(markers[id]); }
+  markers = {};
+  let totals = [];
+  for(const s of stations){
+    const ser = series[s.id];
+    const total = ser ? sum(ser.values) : NaN;
+    if(isFinite(total)) totals.push(total);
+    const m = L.circleMarker([s.lat,s.lon],{
+      radius:11, weight:2, color:"#233",
+      fillColor: colorFor(total), fillOpacity:.92,
+    }).addTo(map);
+    m.bindTooltip(`${s.name}: ${isFinite(total)?fmt1(total):"?"} mm`);
+    m.on("click", ()=>openSheet(s,total));
+    markers[s.id] = m;
+  }
+  const mean = totals.length ? totals.reduce((a,b)=>a+b,0)/totals.length : NaN;
+  const max = totals.length ? Math.max(...totals) : NaN;
+  $("#vMean").textContent = isFinite(mean)?fmt1(mean):"–";
+  $("#vMax").textContent  = isFinite(max)?fmt1(max):"–";
+  const v = verdictFor(mean, days);
+  $("#vWord").textContent = v ?? `${fmt1(mean)} mm`;
+  $("#vRange").textContent = rangeLabel + ` · ${stations.length} stations`;
+  setStatus("Tap a station for daily details.");
+}
+
+function openSheet(s,total){
+  $("#sName").textContent = s.name;
+  $("#sMeta").textContent = `${s.dist.toFixed(1)} km from centre · ${s.alt??"?"} m`;
+  $("#sTotal").textContent = isFinite(total)?fmt1(total):"–";
+  const ser = series[s.id]||{labels:[],values:[]};
+  const rainy = ser.values.filter(v=>v>1).length;
+  const isHourly = currentRange && currentRange.hourly;
+  $("#sUnit").textContent = isHourly ? "mm in 24 h" : "mm in range";
+  $("#sRainy").textContent = isHourly ? "" : `${rainy} rainy days`;
+  if(chart) chart.destroy();
+  chart = new Chart($("#sChart"),{
+    type:"bar",
+    data:{labels:ser.labels, datasets:[{data:ser.values, backgroundColor:"#41b6c4"}]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{color:"#9db3a4", maxRotation:60, autoSkip:true, font:{size:9}}, grid:{display:false}},
+        y:{ticks:{color:"#9db3a4"}, grid:{color:"#2c4434"},
+           title:{display:true,text:"mm",color:"#9db3a4"}}
+      }
+    }
+  });
+  const sheet=$("#sheet"); sheet.classList.add("open"); sheet.setAttribute("aria-hidden","false");
+}
+$("#sheet .close").addEventListener("click",()=>{ 
+  $("#sheet").classList.remove("open"); $("#sheet").setAttribute("aria-hidden","true"); });
+
+/* ================= time range control ================= */
+async function show(preset, from, to){
+  try{
+    document.querySelectorAll(".chip").forEach(c =>
+      c.setAttribute("aria-pressed", String(c.dataset.preset===preset)));
+    $("#custom").classList.toggle("open", preset==="custom");
+    if(preset==="24h"){
+      setStatus("Loading last 24 h (INCA)…");
+      currentRange = {hourly:true};
+      const {start,end} = await fetchInca24h();
+      const f = t=>t.toLocaleString("de-AT",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+      render(`${f(start)} – ${f(end)} (hourly)`, 1);
+      return;
+    }
+    let start, end;
+    if(preset==="custom"){
+      if(!from||!to) { setStatus("Pick both dates, then press Show."); return; }
+      start=from; end=to;
+    }else{
+      const days=+preset;
+      const e=new Date(); e.setDate(e.getDate()-1);       // daily data: up to yesterday
+      const s=new Date(e); s.setDate(e.getDate()-days+1);
+      start=iso(s); end=iso(e);
+    }
+    currentRange = {hourly:false};
+    setStatus(`Loading ${start} → ${end}…`);
+    await fetchDaily(start,end);
+    const days = Math.round((new Date(end)-new Date(start))/864e5)+1;
+    render(`${start} → ${end} (${days} days)`, days);
+  }catch(e){
+    if(e instanceof TypeError){
+      setStatus("Could not reach the GeoSphere API from the browser. If this "+
+        "persists, the API may be blocking cross-site requests — see the "+
+        "GitHub-Action fallback in the project notes.", true);
+    }else{
+      setStatus("Error: "+e.message, true);
+    }
+  }
+}
+
+document.querySelectorAll(".chip").forEach(c =>
+  c.addEventListener("click",()=>show(c.dataset.preset)));
+$("#dGo").addEventListener("click",()=>show("custom", $("#dFrom").value, $("#dTo").value));
+
+/* ================= boot ================= */
+(async ()=>{
+  try{
+    await loadStations();
+    const y=new Date(); y.setDate(y.getDate()-1);
+    $("#dTo").value = iso(y);
+    const f=new Date(y); f.setDate(y.getDate()-13);
+    $("#dFrom").value = iso(f);
+    await show("14");
+  }catch(e){
+    setStatus("Startup failed: "+e.message, true);
+    $("#vRange").textContent = "—";
+  }
+})();
+</script>
+</body>
+</html>
