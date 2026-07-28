@@ -63,9 +63,6 @@
   /* legend */
   #legend{display:flex; flex-wrap:wrap; gap:6px 10px; padding:8px 16px 10px; font-size:.72rem; color:var(--lichen-dim)}
   #legend i{display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:4px; vertical-align:-2px; border:1px solid rgba(0,0,0,.2)}
-  .spot{width:12px; height:12px; transform:rotate(45deg); border:2px solid #233;
-    border-radius:3px; box-shadow:0 1px 3px rgba(0,0,0,.35)}
-  #legend .shape{font-size:.72rem}
 
   /* bottom sheet: station detail */
   #sheet{
@@ -148,19 +145,6 @@
 const CENTER = [48.3069, 14.2858];   // Linz — change me
 const RADIUS_KM = 35;                // station search radius
 const MAX_STATIONS = 12;
-/* Forest spots: places you actually forage, where no weather station exists.
-   These are sampled from the SPARTACUS/INCA 1 km grid at the exact spot.
-   Edit freely — name + coordinates is all that's needed. */
-const FOREST_SPOTS = [
-  {name:"Hellmonsödt",           lat:48.3861, lon:14.3006},
-  {name:"Kirchschlag bei Linz",  lat:48.4094, lon:14.2789},
-  {name:"Steyregg-Wälder",       lat:48.2839, lon:14.3697},
-  {name:"Kürnbergwald",          lat:48.2853, lon:14.2153},
-  {name:"Donau-Au Ottensheim",   lat:48.3128, lon:14.1750},
-  {name:"Donau-Au Au/Donau",     lat:48.2264, lon:14.4381},
-  {name:"Traun-Au Pucking",      lat:48.1857, lon:14.1866},
-  {name:"Thalheim bei Wels",     lat:48.1447, lon:14.0392},
-];
 const API = "https://dataset.api.hub.geosphere.at/v1";
 const DAILY = "klima-v2-1d";         // daily station data, parameter rr [mm]
 const BOUNDS = [0,2,15,30,50,75,100,150,200,250,350,450,600];
@@ -210,8 +194,7 @@ L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",
   {maxZoom:17, attribution:"© OpenStreetMap"}).addTo(map);
 
 const legend = $("#legend");
-legend.innerHTML = `<span class="shape">● weather station&nbsp;&nbsp;◆ forest spot (1 km grid)</span>` +
-  BOUNDS.slice(0,-1).map((b,i)=>
+legend.innerHTML = BOUNDS.slice(0,-1).map((b,i)=>
   `<span><i style="background:${COLORS[i]}"></i>${b}–${BOUNDS[i+1]}</span>`).join("")
   + `<span><i style="background:${COLORS[COLORS.length-1]}"></i>&gt;600 mm</span>`;
 
@@ -228,42 +211,20 @@ async function loadStations(){
     .sort((a,b) => a.dist-b.dist)
     .slice(0, MAX_STATIONS);
   if(!stations.length) throw new Error("no stations in radius — increase RADIUS_KM");
-  stations = stations.concat(FOREST_SPOTS.map((f,i)=>({
-    id:"g"+i, name:f.name, lat:f.lat, lon:f.lon, alt:null,
-    dist:haversine(CENTER[0],CENTER[1],f.lat,f.lon), grid:true})));
 }
 
 /* ================= data fetch ================= */
 async function fetchDaily(start, end){
+  const ids = stations.map(s=>s.id).join(",");
+  const js = await getJSON(`${API}/station/historical/${DAILY}` +
+    `?parameters=rr&station_ids=${ids}&start=${start}T00:00&end=${end}T00:00&output_format=geojson`);
+  const labels = (js.timestamps||[]).map(t=>t.slice(5,10).split("-").reverse().join("."));
   series = {};
-  const real = stations.filter(s=>!s.grid);
-  const spots = stations.filter(s=>s.grid);
-  if(real.length){
-    const ids = real.map(s=>s.id).join(",");
-    const js = await getJSON(`${API}/station/historical/${DAILY}` +
-      `?parameters=rr&station_ids=${ids}&start=${start}T00:00&end=${end}T00:00&output_format=geojson`);
-    const labels = (js.timestamps||[]).map(t=>t.slice(5,10).split("-").reverse().join("."));
-    for(const f of js.features||[]){
-      const sid = String(f.properties.station);
-      const vals = ((f.properties.parameters||{}).rr||{}).data||[];
-      series[sid] = {labels, values: vals.map(v=>v==null?NaN:+v)};
-    }
+  for(const f of js.features||[]){
+    const sid = String(f.properties.station);
+    const vals = ((f.properties.parameters||{}).rr||{}).data||[];
+    series[sid] = {labels, values: vals.map(v=>v==null?NaN:+v)};
   }
-  // forest spots: SPARTACUS 1 km grid sampled at the exact coordinates
-  const queue = [...spots];
-  async function worker(){
-    while(queue.length){
-      const s = queue.shift();
-      const js = await getJSON(`${API}/timeseries/historical/spartacus-v2-1d-1km` +
-        `?parameters=RR&start=${start}T00:00&end=${end}T00:00&lat=${s.lat}&lon=${s.lon}&output_format=geojson`);
-      const f = (js.features||[])[0]||{properties:{parameters:{}}};
-      const par = f.properties.parameters||{};
-      const vals = ((par.RR||par.rr)||{}).data||[];
-      series[s.id] = {labels:(js.timestamps||[]).map(t=>t.slice(5,10).split("-").reverse().join(".")),
-                      values: vals.map(v=>v==null?NaN:+v)};
-    }
-  }
-  await Promise.all([worker(),worker(),worker(),worker()]); // stay under API rate limit
 }
 
 async function fetchInca24h(){
@@ -299,19 +260,11 @@ function render(rangeLabel, days){
     const ser = series[s.id];
     const total = ser ? sum(ser.values) : NaN;
     if(isFinite(total)) totals.push(total);
-    let m;
-    if(s.grid){
-      const icon = L.divIcon({className:"",
-        html:`<div class="spot" style="background:${colorFor(total)}"></div>`,
-        iconSize:[16,16], iconAnchor:[8,8]});
-      m = L.marker([s.lat,s.lon],{icon, keyboard:true}).addTo(map);
-    }else{
-      m = L.circleMarker([s.lat,s.lon],{
-        radius:11, weight:2, color:"#233",
-        fillColor: colorFor(total), fillOpacity:.92,
-      }).addTo(map);
-    }
-    m.bindTooltip(`${s.name}: ${isFinite(total)?fmt1(total):"?"} mm${s.grid?" (grid)":""}`);
+    const m = L.circleMarker([s.lat,s.lon],{
+      radius:11, weight:2, color:"#233",
+      fillColor: colorFor(total), fillOpacity:.92,
+    }).addTo(map);
+    m.bindTooltip(`${s.name}: ${isFinite(total)?fmt1(total):"?"} mm`);
     m.on("click", ()=>openSheet(s,total));
     markers[s.id] = m;
   }
@@ -327,9 +280,7 @@ function render(rangeLabel, days){
 
 function openSheet(s,total){
   $("#sName").textContent = s.name;
-  $("#sMeta").textContent = (s.grid ? "forest spot · SPARTACUS 1 km grid estimate"
-                                    : "weather station")
-    + ` · ${s.dist.toFixed(1)} km from centre` + (s.alt!=null?` · ${s.alt} m`:"");
+  $("#sMeta").textContent = `${s.dist.toFixed(1)} km from centre · ${s.alt??"?"} m`;
   $("#sTotal").textContent = isFinite(total)?fmt1(total):"–";
   const ser = series[s.id]||{labels:[],values:[]};
   const rainy = ser.values.filter(v=>v>1).length;
