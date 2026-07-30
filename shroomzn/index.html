@@ -2,366 +2,589 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Pilzwetter — rain check for foragers</title>
-<meta name="description" content="Has it rained enough for mushrooms? Precipitation at weather stations around Linz, any time range. Data: GeoSphere Austria.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍄</text></svg>">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pilzwetter 🍄 — has it rained enough?</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
   :root{
-    --forest:#16241c; --forest-2:#1e3326; --lichen:#e8efe4; --lichen-dim:#9db3a4;
-    --amber:#e8a13c; --amber-deep:#c07f1f; --line:#2c4434;
-    --ok:#7fcdbb; --dry:#e0a030;
+    --bg:#1b241c; --card:#232f24; --card2:#2b3a2c;
+    --text:#e8e6dc; --muted:#a9b3a5;
+    --amber:#e0a84c; --amber-soft:#f2c987;
+    --good:#8fce7a; --mid:#e0c66c; --bad:#e0a84c;
+    --line:#3a4a3b;
   }
-  *{box-sizing:border-box; margin:0}
-  html,body{height:100%}
-  body{
-    font-family:"Instrument Sans",system-ui,sans-serif; background:var(--forest);
-    color:var(--lichen); display:flex; flex-direction:column; min-height:100dvh;
-  }
-  header{padding:14px 16px 10px}
-  h1{font-family:"Fraunces",serif; font-weight:700; font-size:1.45rem; letter-spacing:.01em}
-  h1 span{color:var(--amber)}
-  .sub{color:var(--lichen-dim); font-size:.8rem; margin-top:2px}
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px}
+  .serif{font-family:Georgia,"Times New Roman",serif}
+  .wrap{max-width:900px;margin:0 auto;padding:16px 14px 40px}
 
-  /* verdict strip — the one-glance answer */
-  #verdict{
-    margin:10px 16px 0; padding:12px 14px; border:1px solid var(--line);
-    border-radius:14px; background:var(--forest-2);
-    display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;
-  }
-  #verdict .word{font-family:"Fraunces",serif; font-size:1.6rem; font-weight:700; color:var(--amber)}
-  #verdict .num{font-size:.95rem; color:var(--lichen)}
-  #verdict .num b{font-variant-numeric:tabular-nums}
-  #verdict .range{width:100%; font-size:.75rem; color:var(--lichen-dim)}
+  h1{font-size:2rem;margin:6px 0 2px}
+  h1 .accent{color:var(--amber)}
+  .sub{color:var(--muted);margin:0 0 14px;font-size:.95rem}
 
-  /* preset chips */
-  #chips{display:flex; gap:8px; overflow-x:auto; padding:12px 16px 4px; scrollbar-width:none}
-  #chips::-webkit-scrollbar{display:none}
-  .chip{
-    flex:0 0 auto; border:1px solid var(--line); background:transparent; color:var(--lichen);
-    border-radius:999px; padding:8px 14px; font:inherit; font-size:.85rem; cursor:pointer;
-  }
-  .chip[aria-pressed="true"]{background:var(--amber); border-color:var(--amber); color:#241a08; font-weight:600}
-  .chip:focus-visible{outline:2px solid var(--amber); outline-offset:2px}
+  /* verdict card */
+  .verdict{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:16px 18px;margin-bottom:12px}
+  .verdict .headline{display:flex;flex-wrap:wrap;align-items:baseline;gap:12px}
+  .verdict .word{font-size:2rem;font-weight:700}
+  .verdict .word.bad{color:var(--bad)} .verdict .word.mid{color:var(--mid)} .verdict .word.good{color:var(--good)}
+  .verdict .nums{font-size:1.15rem}
+  .verdict .nums b{font-size:1.35rem}
+  .verdict .meta{color:var(--muted);margin-top:6px;font-size:.92rem}
+  .verdict .hint{color:var(--muted);margin-top:4px;font-size:.85rem}
 
-  #custom{display:none; gap:8px; padding:8px 16px 0; align-items:center; flex-wrap:wrap}
-  #custom.open{display:flex}
-  #custom input{background:var(--forest-2); border:1px solid var(--line); color:var(--lichen);
-    border-radius:8px; padding:8px; font:inherit; font-size:.85rem; color-scheme:dark}
-  #custom button{border:1px solid var(--amber); background:transparent; color:var(--amber);
-    border-radius:8px; padding:8px 12px; font:inherit; cursor:pointer}
+  /* range chips — bigger, high contrast, never clipped */
+  .chips{display:flex;gap:10px;overflow-x:auto;padding:6px 2px 12px;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;min-height:46px;padding:10px 18px;border-radius:999px;
+    border:2px solid var(--amber);background:transparent;color:var(--amber-soft);
+    font-size:1rem;font-weight:600;cursor:pointer;white-space:nowrap}
+  .chip[aria-pressed="true"]{background:var(--amber);color:#20180a;border-color:var(--amber)}
+  .chip:focus-visible{outline:3px solid #fff;outline-offset:2px}
 
-  #map{flex:1; min-height:52dvh; margin:12px 0 0; background:#dfe8df}
-  .leaflet-container{font:inherit}
+  .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    color:var(--muted);font-size:.92rem;margin:0 0 10px}
+  .toolbar select{background:var(--card2);color:var(--text);border:1px solid var(--line);
+    border-radius:10px;padding:8px 10px;font-size:.95rem}
+  .toolbar .count{margin-left:auto}
 
-  #status{padding:10px 16px; font-size:.85rem; color:var(--lichen-dim); min-height:2.2em}
-  #status.err{color:#f0b9a2}
+  #map{height:62vh;min-height:380px;border-radius:14px;border:1px solid var(--line)}
+  .leaflet-container{background:#dedede}
 
-  /* legend */
-  #legend{display:flex; flex-wrap:wrap; gap:6px 10px; padding:8px 16px 10px; font-size:.72rem; color:var(--lichen-dim)}
-  #legend i{display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:4px; vertical-align:-2px; border:1px solid rgba(0,0,0,.2)}
+  .legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin:12px 0 4px;font-size:.9rem}
+  .legend .item{display:flex;align-items:center;gap:6px}
+  .legend .swatch{width:16px;height:16px;border-radius:4px;border:1px solid #0006}
 
-  /* bottom sheet: station detail */
-  #sheet{
-    position:fixed; left:0; right:0; bottom:0; z-index:1200; transform:translateY(105%);
-    transition:transform .25s ease; background:var(--forest-2); color:var(--lichen);
-    border-radius:18px 18px 0 0; border:1px solid var(--line); border-bottom:none;
-    padding:14px 16px calc(14px + env(safe-area-inset-bottom)); max-height:70dvh; overflow:auto;
-    box-shadow:0 -8px 30px rgba(0,0,0,.45);
-  }
-  #sheet.open{transform:translateY(0)}
-  @media (prefers-reduced-motion:reduce){ #sheet{transition:none} }
-  #sheet .grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 10px}
-  #sheet h2{font-family:"Fraunces",serif; font-size:1.15rem; font-weight:600}
-  #sheet .meta{color:var(--lichen-dim); font-size:.8rem; margin:2px 0 10px}
-  #sheet .big{font-size:1.5rem; font-family:"Fraunces",serif; color:var(--amber)}
-  #sheet .close{position:absolute; top:10px; right:12px; background:none; border:none;
-    color:var(--lichen-dim); font-size:1.4rem; cursor:pointer; padding:6px}
-  #chartWrap{margin-top:10px; height:160px}
+  .note{color:var(--muted);font-size:.9rem;margin:8px 0}
+  .status{margin:8px 0;padding:10px 12px;border-radius:10px;font-size:.92rem;display:none}
+  .status.err{display:block;background:#4a2c22;color:#f2b8a0;border:1px solid #6b3c2c}
+  .status.info{display:block;background:var(--card2);color:var(--muted);border:1px solid var(--line)}
 
-  footer{padding:10px 16px 16px; font-size:.7rem; color:var(--lichen-dim)}
-  footer a{color:var(--lichen-dim)}
+  /* station detail sheet */
+  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:1200;background:var(--card);
+    border-top:2px solid var(--amber);border-radius:16px 16px 0 0;padding:14px 16px 20px;
+    max-height:55vh;overflow-y:auto;transform:translateY(105%);transition:transform .2s ease;
+    box-shadow:0 -8px 30px #000a}
+  .sheet.open{transform:translateY(0)}
+  .sheet h3{margin:0 0 2px;font-size:1.15rem}
+  .sheet .close{position:absolute;top:10px;right:12px;background:none;border:none;
+    color:var(--muted);font-size:1.5rem;cursor:pointer;line-height:1;padding:6px}
+  .sheet .total{color:var(--amber-soft);font-size:1rem;margin-bottom:10px}
+  .bars{display:flex;flex-direction:column;gap:4px}
+  .barrow{display:grid;grid-template-columns:64px 1fr 58px;align-items:center;gap:8px;font-size:.85rem}
+  .barrow .lbl{color:var(--muted);white-space:nowrap}
+  .barrow .track{background:var(--card2);border-radius:6px;height:16px;overflow:hidden}
+  .barrow .fill{height:100%;background:#7fb2e5;border-radius:6px;min-width:2px}
+  .barrow .val{text-align:right;color:var(--text)}
 
-  @media (min-width:820px){
-    body{max-width:none}
-    header,#verdict,#chips,#custom,#status,#legend,footer{max-width:920px; margin-left:auto; margin-right:auto; width:100%}
-    #map{min-height:58dvh}
-    #sheet{left:auto; right:24px; bottom:24px; width:380px; border-radius:18px; border-bottom:1px solid var(--line)}
-  }
+  /* SPARTACUS section */
+  details.spartacus{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    margin-top:18px;padding:0}
+  details.spartacus>summary{cursor:pointer;padding:14px 16px;font-weight:600;
+    font-size:1.05rem;list-style:none;display:flex;align-items:center;gap:8px}
+  details.spartacus>summary::-webkit-details-marker{display:none}
+  details.spartacus>summary::after{content:"▸";margin-left:auto;color:var(--muted);transition:transform .15s}
+  details.spartacus[open]>summary::after{transform:rotate(90deg)}
+  .spartacus-body{padding:0 16px 16px}
+  .spartacus-body canvas{width:100%;height:auto;border-radius:10px;border:1px solid var(--line);
+    background:#111;display:none}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+  .btn{min-height:44px;padding:10px 16px;border-radius:10px;border:1px solid var(--amber);
+    background:transparent;color:var(--amber-soft);font-size:.95rem;font-weight:600;cursor:pointer}
+  .btn.primary{background:var(--amber);color:#20180a}
+  .btn:disabled{opacity:.5;cursor:default}
+  a.btnlink{display:inline-flex;align-items:center;min-height:44px;padding:10px 16px;
+    border-radius:10px;border:1px solid var(--line);color:var(--muted);text-decoration:none;font-size:.95rem}
+
+  footer{margin-top:22px;color:var(--muted);font-size:.82rem;line-height:1.5}
+  footer a{color:var(--amber-soft)}
 </style>
 </head>
 <body>
+<div class="wrap">
+  <h1 class="serif"><span>Pilz</span><span class="accent">wetter</span> 🍄</h1>
+  <p class="sub">Has it rained enough? Real station measurements around Linz · data © GeoSphere Austria</p>
 
-<header>
-  <h1>Pilz<span>wetter</span> 🍄</h1>
-  <div class="sub">Has it rained enough? Stations around Linz · data © GeoSphere Austria</div>
-</header>
+  <div class="verdict" id="verdict">
+    <div class="headline">
+      <span class="word serif" id="v-word">Loading…</span>
+      <span class="nums" id="v-nums"></span>
+    </div>
+    <div class="meta" id="v-meta"></div>
+    <div class="hint" id="v-hint"></div>
+  </div>
 
-<section id="verdict" aria-live="polite">
-  <span class="word" id="vWord">…</span>
-  <span class="num"><b id="vMean">–</b> mm avg · <b id="vMax">–</b> mm max</span>
-  <span class="range" id="vRange">loading stations…</span>
-</section>
+  <div class="chips" id="chips" role="group" aria-label="Time range"></div>
 
-<nav id="chips" aria-label="Time range">
-  <button class="chip" data-preset="24h">Last 24 h</button>
-  <button class="chip" data-preset="7">Last 7 days</button>
-  <button class="chip" data-preset="14" aria-pressed="true">Last 14 days</button>
-  <button class="chip" data-preset="30">Last 30 days</button>
-  <button class="chip" data-preset="custom">Custom…</button>
-</nav>
-<div id="custom">
-  <label>From <input type="date" id="dFrom"></label>
-  <label>To <input type="date" id="dTo"></label>
-  <button id="dGo">Show</button>
+  <div class="toolbar">
+    <label for="radius">Stations within</label>
+    <select id="radius">
+      <option value="15">15 km</option>
+      <option value="25" selected>25 km</option>
+      <option value="40">40 km</option>
+      <option value="60">60 km</option>
+    </select>
+    <span>of Linz</span>
+    <span class="count" id="stcount"></span>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <div id="map"></div>
+
+  <div class="legend" id="legend"></div>
+  <p class="note">Tap a station for daily details. Circles show the precipitation sum for the selected period, measured at real weather stations (klima-v2-1d daily / TAWES 10-min for the 24 h view). Gray dashed circles = station reported no precipitation data for this period.</p>
+
+  <details class="spartacus" id="spartacus">
+    <summary>SPARTACUS grid (interpolated, 1 km)</summary>
+    <div class="spartacus-body">
+      <p class="note">This is GeoSphere's interpolated 1&nbsp;km analysis (SPARTACUS&nbsp;v3), built from station data — values can differ from single-station measurements, and the last ~7 days are still preliminary. Rendered separately here so it never mixes with real measurements on the map above.</p>
+      <div class="btnrow">
+        <button class="btn primary" id="sp-render">Render grid for current period</button>
+        <button class="btn" id="sp-download" disabled>Download PNG</button>
+        <a class="btnlink" id="sp-netcdf" href="#" target="_blank" rel="noopener">NetCDF ↓</a>
+      </div>
+      <div class="status" id="sp-status"></div>
+      <canvas id="sp-canvas" width="1120" height="990"></canvas>
+    </div>
+  </details>
+
+  <footer>
+    Data: <a href="https://data.hub.geosphere.at/dataset/klima-v2-1d" target="_blank" rel="noopener">klima-v2-1d</a>,
+    <a href="https://data.hub.geosphere.at/dataset/tawes-v1-10min" target="_blank" rel="noopener">tawes-v1-10min</a> and
+    <a href="https://data.hub.geosphere.at/dataset/spartacus-v3-1d-1km" target="_blank" rel="noopener">spartacus-v3-1d-1km</a>
+    © GeoSphere Austria (CC&nbsp;BY&nbsp;4.0). Daily station data can lag 1–2 days behind; the verdict card shows the actual period covered by data.
+  </footer>
 </div>
 
-<div id="map" role="application" aria-label="Station map"></div>
-<div id="legend"></div>
-<div id="status"></div>
+<div class="sheet" id="sheet">
+  <button class="close" id="sheet-close" aria-label="Close">×</button>
+  <h3 id="sheet-title"></h3>
+  <div class="total" id="sheet-total"></div>
+  <div class="bars" id="sheet-bars"></div>
+</div>
 
-<aside id="sheet" aria-hidden="true">
-  <div class="grab"></div>
-  <button class="close" aria-label="Close station details">×</button>
-  <h2 id="sName">Station</h2>
-  <div class="meta" id="sMeta"></div>
-  <div><span class="big" id="sTotal">–</span> <span id="sUnit">mm in range</span> · <span id="sRainy"></span></div>
-  <div id="chartWrap"><canvas id="sChart"></canvas></div>
-</aside>
-
-<footer>
-  Data: <a href="https://data.hub.geosphere.at" rel="noopener">GeoSphere Austria Data Hub</a>
-  (klima-v2-1d, INCA) · CC BY 4.0 · Map © OpenStreetMap contributors
-</footer>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 "use strict";
-/* ================= configuration ================= */
-const CENTER = [48.3069, 14.2858];   // Linz — change me
-const RADIUS_KM = 35;                // station search radius
-const MAX_STATIONS = 12;
+
+/* ================= config ================= */
 const API = "https://dataset.api.hub.geosphere.at/v1";
-const DAILY = "klima-v2-1d";         // daily station data, parameter rr [mm]
-const BOUNDS = [0,2,15,30,50,75,100,150,200,250,350,450,600];
-const COLORS = ["#ffffff","#fdfdd0","#e8f4a5","#b8e28d","#7fcdbb","#41b6c4",
-                "#1d91c0","#225ea8","#0c2c84","#6a51a3","#88419d","#e31a1c","#fc8d59"];
+const CENTER = { lat: 48.306, lon: 14.286 }; // Linz
+const RANGES = [
+  { days: 1,  label: "Last 24 h",   src: "tawes", good: 10, mid: 3  },
+  { days: 7,  label: "Last 7 days", src: "klima", good: 25, mid: 10 },
+  { days: 14, label: "Last 14 days",src: "klima", good: 40, mid: 20 },
+  { days: 30, label: "Last 30 days",src: "klima", good: 70, mid: 35 },
+];
+const BINS = [ // [upper bound, color, label]
+  [2,   "#ffffff", "0–2"],
+  [15,  "#fdf6c3", "2–15"],
+  [30,  "#e2ef9f", "15–30"],
+  [50,  "#a5d383", "30–50"],
+  [75,  "#7fc8b4", "50–75"],
+  [100, "#4fb3c6", "75–100"],
+  [150, "#3f8fd2", "100–150"],
+  [200, "#2f5fc4", "150–200"],
+  [250, "#1f3a9e", "200–250"],
+  [350, "#6f4fb3", "250–350"],
+  [450, "#9c4fb3", "350–450"],
+  [600, "#d23b3b", "450–600"],
+  [1e9, "#e88a4f", ">600"],
+];
+const colorFor = mm => BINS.find(b => mm < b[0])[1];
 
 /* ================= state ================= */
-let stations = [];        // {id,name,lat,lon,alt,dist}
-let markers = {};         // id -> leaflet marker
-let series = {};          // id -> {labels:[], values:[]}
-let chart = null;
-let currentRange = null;  // {label}
+let state = {
+  rangeIdx: 2,             // default: last 14 days
+  radius: 25,
+  klimaStations: null,     // metadata within max radius
+  tawesStations: null,
+  results: null,           // last computed per-station results
+  map: null, markerLayer: null,
+};
 
 /* ================= helpers ================= */
-const $ = s => document.querySelector(s);
-const fmt1 = v => (Math.round(v*10)/10).toLocaleString("de-AT");
-const iso = d => d.toISOString().slice(0,10);
-function haversine(a,b,c,d){const r=6371,p=Math.PI/180;
-  const x=Math.sin((c-a)*p/2)**2+Math.cos(a*p)*Math.cos(c*p)*Math.sin((d-b)*p/2)**2;
-  return 2*r*Math.asin(Math.sqrt(x));}
-function colorFor(mm){
-  if(!isFinite(mm)) return "#888";
-  for(let i=BOUNDS.length-1;i>=1;i--) if(mm>=BOUNDS[i]) return COLORS[Math.min(i,COLORS.length-1)];
-  for(let i=1;i<BOUNDS.length;i++) if(mm<BOUNDS[i]) return COLORS[i-1];
-  return COLORS[COLORS.length-1];
-}
-function verdictFor(mean,days){
-  if(days<5) return null; // thresholds are tuned for ~1–2 week sums
-  if(mean>=60) return "Excellent"; if(mean>=40) return "Good";
-  if(mean>=20) return "Marginal";  return "Too dry";
-}
-function setStatus(msg, err=false){ const s=$("#status"); s.textContent=msg; s.className=err?"err":""; }
+const $ = id => document.getElementById(id);
+const fmt1 = n => (Math.round(n * 10) / 10).toLocaleString("de-AT");
+const pad = n => String(n).padStart(2, "0");
+const isoDate = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const isoMin  = d => `${isoDate(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 
-async function getJSON(url){
-  const r = await fetch(url);
-  if(!r.ok){
-    let msg = r.status+" "+r.statusText;
-    try{ msg += " — "+(await r.json()).message }catch(e){}
-    throw new Error(msg);
+function haversineKm(a, b) {
+  const R = 6371, dLat = (b.lat-a.lat)*Math.PI/180, dLon = (b.lon-a.lon)*Math.PI/180;
+  const s = Math.sin(dLat/2)**2 + Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.sqrt(s));
+}
+
+async function apiFetch(url) {
+  let res;
+  try { res = await fetch(url); }
+  catch (e) { throw new Error("Network error — GeoSphere API not reachable."); }
+  if (!res.ok) {
+    let msg = res.statusText || "request failed";
+    try {
+      const j = await res.json();
+      msg = j.message || j.detail || (Array.isArray(j) && j[0] && j[0].msg) || JSON.stringify(j).slice(0, 200);
+    } catch (_) {}
+    throw new Error(`GeoSphere API ${res.status}: ${msg}`);
   }
-  return r.json();
+  return res.json();
+}
+
+function setStatus(el, kind, text) {
+  el.className = "status" + (kind ? " " + kind : "");
+  el.textContent = text || "";
+}
+
+/* cache metadata in localStorage for 24 h (large but rarely changes) */
+async function cachedMeta(key, url) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      const { t, v } = JSON.parse(raw);
+      if (Date.now() - t < 24*3600e3) return v;
+    }
+  } catch (_) {}
+  const v = await apiFetch(url);
+  try { localStorage.setItem(key, JSON.stringify({ t: Date.now(), v })); } catch (_) {}
+  return v;
+}
+
+function activeStationsNear(meta, maxKm) {
+  const now = Date.now();
+  return (meta.stations || [])
+    .filter(s => s.lat != null && s.lon != null)
+    .filter(s => s.is_active !== false)
+    .filter(s => {
+      if (!s.valid_to) return true;
+      const vt = Date.parse(s.valid_to);
+      return isNaN(vt) || vt > now - 30*24*3600e3; // still reporting (or open-ended)
+    })
+    .map(s => ({ ...s, distKm: haversineKm(CENTER, s) }))
+    .filter(s => s.distKm <= maxKm)
+    .sort((a, b) => a.distKm - b.distKm);
+}
+
+/* ================= data loading ================= */
+async function loadMetadata() {
+  setStatus($("status"), "info", "Loading station list…");
+  const [klima, tawes] = await Promise.all([
+    cachedMeta("pw_meta_klima", `${API}/station/historical/klima-v2-1d/metadata`),
+    cachedMeta("pw_meta_tawes", `${API}/station/historical/tawes-v1-10min/metadata`),
+  ]);
+  state.klimaMetaAll = klima;
+  state.tawesMetaAll = tawes;
+  setStatus($("status"), "", "");
+}
+
+/* Sum precipitation per station; nulls stay null, negatives clamped to 0.
+   Returns { stations:[{id,name,lat,lon,distKm,sum,daily:[{label,mm}],covered}], periodStart, periodEnd } */
+async function loadRangeData() {
+  const range = RANGES[state.rangeIdx];
+  const status = $("status");
+  setStatus(status, "info", "Loading precipitation data…");
+
+  const meta = range.src === "tawes" ? state.tawesMetaAll : state.klimaMetaAll;
+  const stations = activeStationsNear(meta, state.radius);
+  if (!stations.length) throw new Error("No active stations found in this radius.");
+
+  const ids = stations.map(s => s.id).join(",");
+  let url, paramName;
+  const now = new Date();
+
+  if (range.src === "tawes") {
+    const start = new Date(now.getTime() - 24*3600e3);
+    paramName = "RR";
+    url = `${API}/station/historical/tawes-v1-10min?parameters=RR&station_ids=${ids}` +
+          `&start=${encodeURIComponent(isoMin(start))}&end=${encodeURIComponent(isoMin(now))}`;
+  } else {
+    const start = new Date(now.getTime() - range.days*24*3600e3);
+    paramName = "rr";
+    url = `${API}/station/historical/klima-v2-1d?parameters=rr&station_ids=${ids}` +
+          `&start=${isoDate(start)}&end=${isoDate(now)}`;
+  }
+
+  const data = await apiFetch(url);
+  const timestamps = data.timestamps || [];
+  const byId = {};
+  for (const f of (data.features || [])) {
+    const sid = String(f.properties.station);
+    const p = f.properties.parameters || {};
+    const series = (p[paramName] || p[paramName.toLowerCase()] || p[paramName.toUpperCase()] || {}).data || [];
+    byId[sid] = series;
+  }
+
+  const out = [];
+  let lastDataTs = null;
+  for (const st of stations) {
+    const series = byId[String(st.id)];
+    if (!series) continue;
+    let sum = 0, any = false;
+    const daily = [];
+    if (range.src === "tawes") {
+      // aggregate 10-min values into hours
+      const hours = new Map();
+      series.forEach((v, i) => {
+        if (v == null) return;
+        const val = Math.max(0, v);           // clamp sensor artifacts — never negative
+        any = true; sum += val;
+        const t = new Date(timestamps[i]);
+        const key = `${pad(t.getHours())}:00`;
+        hours.set(key, (hours.get(key) || 0) + val);
+        lastDataTs = timestamps[i];
+      });
+      for (const [k, v] of hours) daily.push({ label: k, mm: v });
+    } else {
+      series.forEach((v, i) => {
+        const t = new Date(timestamps[i]);
+        const label = `${pad(t.getDate())}.${pad(t.getMonth()+1)}.`;
+        if (v == null) { daily.push({ label, mm: null }); return; }
+        const val = Math.max(0, v);
+        any = true; sum += val;
+        daily.push({ label, mm: val });
+        if (!lastDataTs || timestamps[i] > lastDataTs) lastDataTs = timestamps[i];
+      });
+    }
+    out.push({ ...st, sum: any ? sum : null, daily, hasData: any });
+  }
+
+  setStatus(status, "", "");
+  return { range, stations: out, timestamps, lastDataTs };
+}
+
+/* ================= verdict ================= */
+function renderVerdict(res) {
+  const withData = res.stations.filter(s => s.hasData);
+  const wordEl = $("v-word"), numsEl = $("v-nums"), metaEl = $("v-meta"), hintEl = $("v-hint");
+
+  if (!withData.length) {
+    wordEl.textContent = "No data"; wordEl.className = "word serif mid";
+    numsEl.textContent = ""; metaEl.textContent = "No station reported precipitation for this period yet.";
+    hintEl.textContent = ""; return;
+  }
+  const avg = withData.reduce((a, s) => a + s.sum, 0) / withData.length;
+  const maxSt = withData.reduce((a, s) => (s.sum > a.sum ? s : a), withData[0]);
+  const r = res.range;
+
+  let word, cls;
+  if (avg >= r.good)      { word = "Looking good"; cls = "good"; }
+  else if (avg >= r.mid)  { word = "Borderline";   cls = "mid";  }
+  else                    { word = "Too dry";      cls = "bad";  }
+  wordEl.textContent = word; wordEl.className = `word serif ${cls}`;
+  numsEl.innerHTML = `<b>${fmt1(avg)}</b> mm avg · <b>${fmt1(maxSt.sum)}</b> mm max`;
+
+  const end = new Date();
+  const startD = new Date(end.getTime() - r.days*24*3600e3);
+  let periodTxt = r.days === 1
+    ? "last 24 h (TAWES 10-min data)"
+    : `${isoDate(startD)} → ${isoDate(end)} (${r.days} days)`;
+  metaEl.textContent = `${periodTxt} · ${withData.length} of ${res.stations.length} stations reporting`;
+
+  let hint = `Wettest: ${maxSt.name} (${fmt1(maxSt.sum)} mm).`;
+  if (r.days > 1 && res.lastDataTs) {
+    const last = res.lastDataTs.slice(0, 10);
+    if (last < isoDate(end)) hint += ` Daily data currently available through ${last}.`;
+  }
+  hintEl.textContent = hint;
 }
 
 /* ================= map ================= */
-const map = L.map("map",{zoomSnap:.5}).setView(CENTER, 10);
-L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-  {maxZoom:17, attribution:"© OpenStreetMap"}).addTo(map);
-
-const legend = $("#legend");
-legend.innerHTML = BOUNDS.slice(0,-1).map((b,i)=>
-  `<span><i style="background:${COLORS[i]}"></i>${b}–${BOUNDS[i+1]}</span>`).join("")
-  + `<span><i style="background:${COLORS[COLORS.length-1]}"></i>&gt;600 mm</span>`;
-
-/* ================= stations ================= */
-async function loadStations(){
-  setStatus("Loading station list…");
-  const meta = await getJSON(`${API}/station/historical/${DAILY}/metadata`);
-  const today = iso(new Date());
-  stations = (meta.stations||[])
-    .filter(s => s.lat && s.lon && (!s.valid_to || s.valid_to.slice(0,10) >= today))
-    .map(s => ({id:String(s.id), name:(s.name||"?").trim(), lat:+s.lat, lon:+s.lon,
-                alt:s.altitude, dist:haversine(CENTER[0],CENTER[1],+s.lat,+s.lon)}))
-    .filter(s => s.dist <= RADIUS_KM)
-    .sort((a,b) => a.dist-b.dist)
-    .slice(0, MAX_STATIONS);
-  if(!stations.length) throw new Error("no stations in radius — increase RADIUS_KM");
+function initMap() {
+  state.map = L.map("map").setView([CENTER.lat, CENTER.lon], 10);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 18, attribution: "© OpenStreetMap"
+  }).addTo(state.map);
+  state.markerLayer = L.layerGroup().addTo(state.map);
 }
 
-/* ================= data fetch ================= */
-async function fetchDaily(start, end){
-  const ids = stations.map(s=>s.id).join(",");
-  const js = await getJSON(`${API}/station/historical/${DAILY}` +
-    `?parameters=rr&station_ids=${ids}&start=${start}T00:00&end=${end}T00:00&output_format=geojson`);
-  const labels = (js.timestamps||[]).map(t=>t.slice(5,10).split("-").reverse().join("."));
-  series = {};
-  for(const f of js.features||[]){
-    const sid = String(f.properties.station);
-    const vals = ((f.properties.parameters||{}).rr||{}).data||[];
-    series[sid] = {labels, values: vals.map(v=>v==null?NaN:+v)};
+function renderMarkers(res) {
+  state.markerLayer.clearLayers();
+  for (const st of res.stations) {
+    const opts = st.hasData
+      ? { radius: 11, color: "#223", weight: 2, fillColor: colorFor(st.sum), fillOpacity: 0.95 }
+      : { radius: 9,  color: "#777", weight: 2, dashArray: "4 3", fillColor: "#eee", fillOpacity: 0.4 };
+    const m = L.circleMarker([st.lat, st.lon], opts).addTo(state.markerLayer);
+    const label = st.hasData ? `${fmt1(st.sum)} mm` : "no data";
+    m.bindTooltip(`${st.name}: ${label}`, { direction: "top" });
+    m.on("click", () => openSheet(st, res.range));
   }
 }
 
-async function fetchInca24h(){
-  // near-real-time: hourly INCA point timeseries at each station (throttled)
-  const end = new Date(Date.now() - 3600e3); end.setMinutes(0,0,0);
-  const start = new Date(end.getTime() - 24*3600e3);
-  const p = t => t.toISOString().slice(0,16);
-  series = {};
-  const queue = [...stations];
-  async function worker(){
-    while(queue.length){
-      const s = queue.shift();
-      const js = await getJSON(`${API}/timeseries/historical/inca-v1-1h-1km` +
-        `?parameters=RR&start=${p(start)}&end=${p(end)}&lat=${s.lat}&lon=${s.lon}&output_format=geojson`);
-      const f = (js.features||[])[0]||{properties:{parameters:{}}};
-      const vals = ((f.properties.parameters||{}).RR||{}).data||[];
-      series[s.id] = {labels:(js.timestamps||[]).map(t=>t.slice(11,16)),
-                      values: vals.map(v=>v==null?NaN:+v)};
-    }
-  }
-  await Promise.all([worker(),worker(),worker(),worker()]); // 4 parallel, ~5 req/s limit
-  return {start,end};
+function renderLegend() {
+  const el = $("legend");
+  el.innerHTML = BINS.map(b =>
+    `<span class="item"><span class="swatch" style="background:${b[1]}"></span>${b[2]}${b[0] === 1e9 ? " mm" : ""}</span>`
+  ).join("");
 }
 
-/* ================= render ================= */
-function sum(vs){ return vs.reduce((a,v)=>a+(isFinite(v)?v:0),0); }
-
-function render(rangeLabel, days){
-  for(const id in markers){ map.removeLayer(markers[id]); }
-  markers = {};
-  let totals = [];
-  for(const s of stations){
-    const ser = series[s.id];
-    const total = ser ? sum(ser.values) : NaN;
-    if(isFinite(total)) totals.push(total);
-    const m = L.circleMarker([s.lat,s.lon],{
-      radius:11, weight:2, color:"#233",
-      fillColor: colorFor(total), fillOpacity:.92,
-    }).addTo(map);
-    m.bindTooltip(`${s.name}: ${isFinite(total)?fmt1(total):"?"} mm`);
-    m.on("click", ()=>openSheet(s,total));
-    markers[s.id] = m;
+/* ================= station sheet ================= */
+function openSheet(st, range) {
+  $("sheet-title").textContent = `${st.name} · ${st.distKm.toFixed(0)} km from Linz` +
+    (st.altitude != null ? ` · ${Math.round(st.altitude)} m` : "");
+  $("sheet-total").textContent = st.hasData
+    ? `${fmt1(st.sum)} mm total (${range.label.toLowerCase()})`
+    : "No precipitation data reported for this period.";
+  const bars = $("sheet-bars");
+  bars.innerHTML = "";
+  const vals = st.daily.filter(d => d.mm != null).map(d => d.mm);
+  const max = Math.max(1, ...vals);
+  for (const d of st.daily) {
+    const row = document.createElement("div");
+    row.className = "barrow";
+    const w = d.mm == null ? 0 : Math.max(1, (d.mm / max) * 100);
+    row.innerHTML = `<span class="lbl">${d.label}</span>` +
+      `<span class="track"><span class="fill" style="width:${w}%"></span></span>` +
+      `<span class="val">${d.mm == null ? "–" : fmt1(d.mm) + " mm"}</span>`;
+    bars.appendChild(row);
   }
-  const mean = totals.length ? totals.reduce((a,b)=>a+b,0)/totals.length : NaN;
-  const max = totals.length ? Math.max(...totals) : NaN;
-  $("#vMean").textContent = isFinite(mean)?fmt1(mean):"–";
-  $("#vMax").textContent  = isFinite(max)?fmt1(max):"–";
-  const v = verdictFor(mean, days);
-  $("#vWord").textContent = v ?? `${fmt1(mean)} mm`;
-  $("#vRange").textContent = rangeLabel + ` · ${stations.length} stations`;
-  setStatus("Tap a station for daily details.");
+  $("sheet").classList.add("open");
+}
+$("sheet-close").onclick = () => $("sheet").classList.remove("open");
+
+/* ================= SPARTACUS grid ================= */
+const SP = { cols: 14, rows: 11, lastRender: null };
+
+function spBBox() {
+  const dLat = state.radius / 111, dLon = state.radius / (111 * Math.cos(CENTER.lat * Math.PI/180));
+  return { s: CENTER.lat - dLat, w: CENTER.lon - dLon, n: CENTER.lat + dLat, e: CENTER.lon + dLon };
 }
 
-function openSheet(s,total){
-  $("#sName").textContent = s.name;
-  $("#sMeta").textContent = `${s.dist.toFixed(1)} km from centre · ${s.alt??"?"} m`;
-  $("#sTotal").textContent = isFinite(total)?fmt1(total):"–";
-  const ser = series[s.id]||{labels:[],values:[]};
-  const rainy = ser.values.filter(v=>v>1).length;
-  const isHourly = currentRange && currentRange.hourly;
-  $("#sUnit").textContent = isHourly ? "mm in 24 h" : "mm in range";
-  $("#sRainy").textContent = isHourly ? "" : `${rainy} rainy days`;
-  if(chart) chart.destroy();
-  chart = new Chart($("#sChart"),{
-    type:"bar",
-    data:{labels:ser.labels, datasets:[{data:ser.values, backgroundColor:"#41b6c4"}]},
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
-      scales:{
-        x:{ticks:{color:"#9db3a4", maxRotation:60, autoSkip:true, font:{size:9}}, grid:{display:false}},
-        y:{ticks:{color:"#9db3a4"}, grid:{color:"#2c4434"},
-           title:{display:true,text:"mm",color:"#9db3a4"}}
+function spUpdateLinks() {
+  const r = RANGES[state.rangeIdx];
+  const days = Math.max(r.days, 1);
+  const end = new Date(); end.setDate(end.getDate() - 1);       // grid lags ~1 day
+  const start = new Date(end.getTime() - (days-1)*24*3600e3);
+  const bb = spBBox();
+  $("sp-netcdf").href = `${API}/grid/historical/spartacus-v3-1d-1km?parameters=RR` +
+    `&start=${isoDate(start)}&end=${isoDate(end)}` +
+    `&bbox=${bb.s.toFixed(3)},${bb.w.toFixed(3)},${bb.n.toFixed(3)},${bb.e.toFixed(3)}&output_format=netcdf`;
+  return { start, end, bb };
+}
+
+async function spRender() {
+  const st = $("sp-status");
+  const btn = $("sp-render");
+  btn.disabled = true;
+  setStatus(st, "info", "Loading SPARTACUS grid points…");
+  try {
+    const { start, end, bb } = spUpdateLinks();
+    // coarse lattice via the timeseries endpoint (multiple lat_lon pairs in one request)
+    const pts = [];
+    let q = "";
+    for (let r = 0; r < SP.rows; r++) {
+      for (let c = 0; c < SP.cols; c++) {
+        const lat = bb.n - (r + 0.5) * (bb.n - bb.s) / SP.rows;
+        const lon = bb.w + (c + 0.5) * (bb.e - bb.w) / SP.cols;
+        pts.push({ lat, lon });
+        q += `&lat_lon=${lat.toFixed(4)},${lon.toFixed(4)}`;
       }
     }
-  });
-  const sheet=$("#sheet"); sheet.classList.add("open"); sheet.setAttribute("aria-hidden","false");
-}
-$("#sheet .close").addEventListener("click",()=>{ 
-  $("#sheet").classList.remove("open"); $("#sheet").setAttribute("aria-hidden","true"); });
+    const url = `${API}/timeseries/historical/spartacus-v3-1d-1km?parameters=RR` +
+      `&start=${isoDate(start)}&end=${isoDate(end)}${q}`;
+    const data = await apiFetch(url);
 
-/* ================= time range control ================= */
-async function show(preset, from, to){
-  try{
-    document.querySelectorAll(".chip").forEach(c =>
-      c.setAttribute("aria-pressed", String(c.dataset.preset===preset)));
-    $("#custom").classList.toggle("open", preset==="custom");
-    if(preset==="24h"){
-      setStatus("Loading last 24 h (INCA)…");
-      currentRange = {hourly:true};
-      const {start,end} = await fetchInca24h();
-      const f = t=>t.toLocaleString("de-AT",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
-      render(`${f(start)} – ${f(end)} (hourly)`, 1);
-      return;
-    }
-    let start, end;
-    if(preset==="custom"){
-      if(!from||!to) { setStatus("Pick both dates, then press Show."); return; }
-      start=from; end=to;
-    }else{
-      const days=+preset;
-      const e=new Date(); e.setDate(e.getDate()-1);       // daily data: up to yesterday
-      const s=new Date(e); s.setDate(e.getDate()-days+1);
-      start=iso(s); end=iso(e);
-    }
-    currentRange = {hourly:false};
-    setStatus(`Loading ${start} → ${end}…`);
-    await fetchDaily(start,end);
-    const days = Math.round((new Date(end)-new Date(start))/864e5)+1;
-    render(`${start} → ${end} (${days} days)`, days);
-  }catch(e){
-    if(e instanceof TypeError){
-      setStatus("Could not reach the GeoSphere API from the browser. If this "+
-        "persists, the API may be blocking cross-site requests — see the "+
-        "GitHub-Action fallback in the project notes.", true);
-    }else{
-      setStatus("Error: "+e.message, true);
-    }
+    const sums = (data.features || []).map(f => {
+      const p = f.properties.parameters || {};
+      const series = (p.RR || p.rr || {}).data || [];
+      let s = 0, any = false;
+      for (const v of series) if (v != null) { s += Math.max(0, v); any = true; }
+      return any ? s : null;
+    });
+
+    // draw
+    const cv = $("sp-canvas"), ctx = cv.getContext("2d");
+    const pad = 40, titleH = 46;
+    const cellW = (cv.width - pad*2) / SP.cols, cellH = (cv.height - pad - titleH - 60) / SP.rows;
+    ctx.fillStyle = "#1b241c"; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.fillStyle = "#e8e6dc"; ctx.font = "bold 26px Georgia, serif";
+    ctx.fillText(`SPARTACUS v3 · RR sum ${isoDate(start)} → ${isoDate(end)}`, pad, 32);
+
+    sums.forEach((s, i) => {
+      const c = i % SP.cols, r = Math.floor(i / SP.cols);
+      ctx.fillStyle = s == null ? "#333" : colorFor(s);
+      ctx.fillRect(pad + c*cellW, titleH + r*cellH, Math.ceil(cellW), Math.ceil(cellH));
+    });
+
+    // Linz marker + border
+    const lx = pad + ((CENTER.lon - bb.w) / (bb.e - bb.w)) * (cv.width - pad*2);
+    const ly = titleH + ((bb.n - CENTER.lat) / (bb.n - bb.s)) * (SP.rows * cellH);
+    ctx.beginPath(); ctx.arc(lx, ly, 7, 0, Math.PI*2);
+    ctx.fillStyle = "#000"; ctx.fill(); ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = "#fff"; ctx.font = "bold 18px system-ui"; ctx.fillText("Linz", lx + 12, ly + 6);
+    ctx.strokeStyle = "#e0a84c"; ctx.strokeRect(pad, titleH, SP.cols*cellW, SP.rows*cellH);
+
+    const valid = sums.filter(s => s != null);
+    ctx.fillStyle = "#a9b3a5"; ctx.font = "18px system-ui";
+    ctx.fillText(
+      valid.length
+        ? `min ${fmt1(Math.min(...valid))} mm · max ${fmt1(Math.max(...valid))} mm · ` +
+          `bbox ${bb.s.toFixed(2)},${bb.w.toFixed(2)} – ${bb.n.toFixed(2)},${bb.e.toFixed(2)} · © GeoSphere Austria`
+        : "No grid data returned for this period.",
+      pad, titleH + SP.rows*cellH + 34);
+
+    cv.style.display = "block";
+    $("sp-download").disabled = false;
+    SP.lastRender = `pilzwetter-spartacus_${isoDate(start)}_${isoDate(end)}.png`;
+    setStatus(st, "", "");
+  } catch (e) {
+    setStatus(st, "err", e.message);
+  } finally {
+    btn.disabled = false;
   }
 }
 
-document.querySelectorAll(".chip").forEach(c =>
-  c.addEventListener("click",()=>show(c.dataset.preset)));
-$("#dGo").addEventListener("click",()=>show("custom", $("#dFrom").value, $("#dTo").value));
+$("sp-render").onclick = spRender;
+$("sp-download").onclick = () => {
+  const a = document.createElement("a");
+  a.download = SP.lastRender || "spartacus.png";
+  a.href = $("sp-canvas").toDataURL("image/png");
+  a.click();
+};
 
-/* ================= boot ================= */
-(async ()=>{
-  try{
-    await loadStations();
-    const y=new Date(); y.setDate(y.getDate()-1);
-    $("#dTo").value = iso(y);
-    const f=new Date(y); f.setDate(y.getDate()-13);
-    $("#dFrom").value = iso(f);
-    await show("14");
-  }catch(e){
-    setStatus("Startup failed: "+e.message, true);
-    $("#vRange").textContent = "—";
+/* ================= wiring ================= */
+function renderChips() {
+  const el = $("chips");
+  el.innerHTML = "";
+  RANGES.forEach((r, i) => {
+    const b = document.createElement("button");
+    b.className = "chip";
+    b.textContent = r.label;
+    b.setAttribute("aria-pressed", String(i === state.rangeIdx));
+    b.onclick = () => { state.rangeIdx = i; renderChips(); refresh(); };
+    el.appendChild(b);
+  });
+}
+
+async function refresh() {
+  const status = $("status");
+  spUpdateLinks();
+  try {
+    const res = await loadRangeData();
+    state.results = res;
+    $("stcount").textContent = `${res.stations.length} stations`;
+    renderVerdict(res);
+    renderMarkers(res);
+  } catch (e) {
+    setStatus(status, "err", e.message);
+    $("v-word").textContent = "Error"; $("v-word").className = "word serif bad";
+    $("v-nums").textContent = ""; $("v-meta").textContent = e.message; $("v-hint").textContent = "";
+  }
+}
+
+$("radius").onchange = e => { state.radius = +e.target.value; refresh(); };
+
+(async function main() {
+  renderChips();
+  renderLegend();
+  initMap();
+  try {
+    await loadMetadata();
+    await refresh();
+  } catch (e) {
+    setStatus($("status"), "err", e.message);
   }
 })();
 </script>
