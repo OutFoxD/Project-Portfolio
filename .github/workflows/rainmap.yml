@@ -1,0 +1,42 @@
+# Save as .github/workflows/rainmap.yml in your GitHub Pages repository.
+# Also put rainmap.py in the repository root.
+# Adjust OUT_DIR to the folder your page lives in (e.g. shroomzn).
+name: Update grid rain map
+
+on:
+  schedule:
+    - cron: "0 5 * * *"      # daily 05:00 UTC (~07:00 in Austria)
+  workflow_dispatch: {}       # allows manual "Run workflow" button
+
+env:
+  OUT_DIR: shroomzn           # folder that contains index.html
+  REGION: linz50              # austria | muehlviertel | linz50
+  DAYS: "14"
+
+permissions:
+  contents: write
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install requests numpy xarray netcdf4 matplotlib pyproj folium pillow
+
+      - name: Render map
+        run: python rainmap.py --days $DAYS --region $REGION -o "$OUT_DIR/rainmap.png"
+
+      - name: Commit result
+        run: |
+          git config user.name  "rainmap-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add "$OUT_DIR/rainmap.png" "$OUT_DIR/rainmap.html"
+          git commit -m "Update grid rain map ($(date -u +%F))" || echo "nothing to commit"
+          git push
