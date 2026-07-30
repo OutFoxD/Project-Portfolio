@@ -23,7 +23,6 @@
   h1 .accent{color:var(--amber)}
   .sub{color:var(--muted);margin:0 0 14px;font-size:.95rem}
 
-  /* verdict card */
   .verdict{background:var(--card);border:1px solid var(--line);border-radius:16px;
     padding:16px 18px;margin-bottom:12px}
   .verdict .headline{display:flex;flex-wrap:wrap;align-items:baseline;gap:12px}
@@ -34,7 +33,6 @@
   .verdict .meta{color:var(--muted);margin-top:6px;font-size:.92rem}
   .verdict .hint{color:var(--muted);margin-top:4px;font-size:.85rem}
 
-  /* range chips — bigger, high contrast, never clipped */
   .chips{display:flex;gap:10px;overflow-x:auto;padding:6px 2px 12px;
     -webkit-overflow-scrolling:touch;scrollbar-width:none}
   .chips::-webkit-scrollbar{display:none}
@@ -46,7 +44,7 @@
 
   .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
     color:var(--muted);font-size:.92rem;margin:0 0 10px}
-  .toolbar select{background:var(--card2);color:var(--text);border:1px solid var(--line);
+  select{background:var(--card2);color:var(--text);border:1px solid var(--line);
     border-radius:10px;padding:8px 10px;font-size:.95rem}
   .toolbar .count{margin-left:auto}
 
@@ -62,7 +60,6 @@
   .status.err{display:block;background:#4a2c22;color:#f2b8a0;border:1px solid #6b3c2c}
   .status.info{display:block;background:var(--card2);color:var(--muted);border:1px solid var(--line)}
 
-  /* station detail sheet */
   .sheet{position:fixed;left:0;right:0;bottom:0;z-index:1200;background:var(--card);
     border-top:2px solid var(--amber);border-radius:16px 16px 0 0;padding:14px 16px 20px;
     max-height:55vh;overflow-y:auto;transform:translateY(105%);transition:transform .2s ease;
@@ -79,7 +76,6 @@
   .barrow .fill{height:100%;background:#7fb2e5;border-radius:6px;min-width:2px}
   .barrow .val{text-align:right;color:var(--text)}
 
-  /* SPARTACUS section */
   details.spartacus{background:var(--card);border:1px solid var(--line);border-radius:14px;
     margin-top:18px;padding:0}
   details.spartacus>summary{cursor:pointer;padding:14px 16px;font-weight:600;
@@ -90,7 +86,7 @@
   .spartacus-body{padding:0 16px 16px}
   .spartacus-body canvas{width:100%;height:auto;border-radius:10px;border:1px solid var(--line);
     background:#111;display:none}
-  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0;align-items:center}
   .btn{min-height:44px;padding:10px 16px;border-radius:10px;border:1px solid var(--amber);
     background:transparent;color:var(--amber-soft);font-size:.95rem;font-weight:600;cursor:pointer}
   .btn.primary{background:var(--amber);color:#20180a}
@@ -135,19 +131,25 @@
   <div id="map"></div>
 
   <div class="legend" id="legend"></div>
-  <p class="note">Tap a station for daily details. Circles show the precipitation sum for the selected period, measured at real weather stations (klima-v2-1d daily / TAWES 10-min for the 24 h view). Gray dashed circles = station reported no precipitation data for this period.</p>
+  <p class="note">Tap a station for daily details. Circles show the precipitation sum for the selected period, measured at real weather stations (klima-v2-1d daily / TAWES 10-min for the 24 h view). Gray dashed circles = no precipitation data for this period.</p>
 
   <details class="spartacus" id="spartacus">
-    <summary>SPARTACUS grid (interpolated, 1 km)</summary>
+    <summary>SPARTACUS grid map (interpolated, 1 km)</summary>
     <div class="spartacus-body">
-      <p class="note">This is GeoSphere's interpolated 1&nbsp;km analysis (SPARTACUS&nbsp;v3), built from station data — values can differ from single-station measurements, and the last ~7 days are still preliminary. Rendered separately here so it never mixes with real measurements on the map above.</p>
+      <p class="note">GeoSphere's interpolated 1&nbsp;km analysis (SPARTACUS&nbsp;v3) drawn over an OpenStreetMap basemap, so cities and rivers stay visible. Values can differ from single-station measurements; the last ~7 days are preliminary. Rendering uses a coarse sampling lattice to stay well inside the API rate limit.</p>
       <div class="btnrow">
-        <button class="btn primary" id="sp-render">Render grid for current period</button>
+        <label for="sp-region">Region</label>
+        <select id="sp-region">
+          <option value="muehlviertel">Mühlviertel (station radius)</option>
+          <option value="ooe" selected>Upper Austria</option>
+          <option value="austria">All of Austria</option>
+        </select>
+        <button class="btn primary" id="sp-render">Render map</button>
         <button class="btn" id="sp-download" disabled>Download PNG</button>
         <a class="btnlink" id="sp-netcdf" href="#" target="_blank" rel="noopener">NetCDF ↓</a>
       </div>
       <div class="status" id="sp-status"></div>
-      <canvas id="sp-canvas" width="1120" height="990"></canvas>
+      <canvas id="sp-canvas" width="1200" height="800"></canvas>
     </div>
   </details>
 
@@ -155,7 +157,9 @@
     Data: <a href="https://data.hub.geosphere.at/dataset/klima-v2-1d" target="_blank" rel="noopener">klima-v2-1d</a>,
     <a href="https://data.hub.geosphere.at/dataset/tawes-v1-10min" target="_blank" rel="noopener">tawes-v1-10min</a> and
     <a href="https://data.hub.geosphere.at/dataset/spartacus-v3-1d-1km" target="_blank" rel="noopener">spartacus-v3-1d-1km</a>
-    © GeoSphere Austria (CC&nbsp;BY&nbsp;4.0). Daily station data can lag 1–2 days behind; the verdict card shows the actual period covered by data.
+    © GeoSphere Austria (CC&nbsp;BY&nbsp;4.0) · Basemap © OpenStreetMap contributors.
+    API limits: 5 requests/s, 240 requests/hour — this page caches station lists for 7 days and results for 15 minutes to stay far below that.
+    Daily station data can lag 1–2 days behind.
   </footer>
 </div>
 
@@ -179,7 +183,7 @@ const RANGES = [
   { days: 14, label: "Last 14 days",src: "klima", good: 40, mid: 20 },
   { days: 30, label: "Last 30 days",src: "klima", good: 70, mid: 35 },
 ];
-const BINS = [ // [upper bound, color, label]
+const BINS = [
   [2,   "#ffffff", "0–2"],
   [15,  "#fdf6c3", "2–15"],
   [30,  "#e2ef9f", "15–30"],
@@ -196,13 +200,31 @@ const BINS = [ // [upper bound, color, label]
 ];
 const colorFor = mm => BINS.find(b => mm < b[0])[1];
 
+const REGIONS = {
+  muehlviertel: { name: "Mühlviertel", cities: "ooe" },   // bbox computed from radius
+  ooe:     { name: "Upper Austria", s: 47.45, w: 12.73, n: 48.78, e: 15.00, cols: 26, rows: 17, cities: "ooe" },
+  austria: { name: "Austria",       s: 46.35, w: 9.50,  n: 49.05, e: 17.20, cols: 40, rows: 15, cities: "at"  },
+};
+const CITIES = {
+  at: [
+    ["Wien",48.208,16.373],["Graz",47.071,15.439],["Linz",48.306,14.286],
+    ["Salzburg",47.811,13.033],["Innsbruck",47.269,11.404],["Klagenfurt",46.624,14.305],
+    ["Villach",46.615,13.846],["Bregenz",47.503,9.747],["St. Pölten",48.204,15.626],
+    ["Eisenstadt",47.845,16.523],["Wels",48.157,14.026],["Steyr",48.043,14.421],
+  ],
+  ooe: [
+    ["Linz",48.306,14.286],["Wels",48.157,14.026],["Steyr",48.043,14.421],
+    ["Vöcklabruck",48.008,13.656],["Ried",48.211,13.489],["Freistadt",48.511,14.505],
+    ["Rohrbach",48.573,13.990],["Gmunden",47.918,13.799],["Bad Ischl",47.712,13.624],
+    ["Kirchdorf",47.906,14.123],["Perg",48.250,14.634],["Braunau",48.258,13.033],
+    ["Schärding",48.457,13.431],["Bad Leonfelden",48.521,14.294],
+  ],
+};
+
 /* ================= state ================= */
 let state = {
-  rangeIdx: 2,             // default: last 14 days
-  radius: 25,
-  klimaStations: null,     // metadata within max radius
-  tawesStations: null,
-  results: null,           // last computed per-station results
+  rangeIdx: 2, radius: 25,
+  klimaStations: null, tawesStations: null,
   map: null, markerLayer: null,
 };
 
@@ -212,6 +234,7 @@ const fmt1 = n => (Math.round(n * 10) / 10).toLocaleString("de-AT");
 const pad = n => String(n).padStart(2, "0");
 const isoDate = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const isoMin  = d => `${isoDate(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 function haversineKm(a, b) {
   const R = 6371, dLat = (b.lat-a.lat)*Math.PI/180, dLon = (b.lon-a.lon)*Math.PI/180;
@@ -219,10 +242,28 @@ function haversineKm(a, b) {
   return 2*R*Math.asin(Math.sqrt(s));
 }
 
+/* ---- throttled fetch: ≤ ~4 req/s, clear 429 messages with reset time ---- */
+let lastReqAt = 0;
 async function apiFetch(url) {
+  const wait = lastReqAt + 260 - Date.now();
+  if (wait > 0) await sleep(wait);
+  lastReqAt = Date.now();
+
   let res;
   try { res = await fetch(url); }
   catch (e) { throw new Error("Network error — GeoSphere API not reachable."); }
+
+  if (res.status === 429) {
+    let hint = "";
+    for (const [k, v] of res.headers.entries()) {
+      if (/ratelimit|retry-after/i.test(k)) hint += ` ${k}=${v}`;
+    }
+    throw new Error(
+      "GeoSphere rate limit exceeded (max 5 requests/s and 240 requests/hour per user)." +
+      (hint ? ` Server says:${hint}.` : "") +
+      " Cached data will be used where possible — try again in a few minutes."
+    );
+  }
   if (!res.ok) {
     let msg = res.statusText || "request failed";
     try {
@@ -239,61 +280,74 @@ function setStatus(el, kind, text) {
   el.textContent = text || "";
 }
 
-/* cache metadata in localStorage for 24 h (large but rarely changes) */
-async function cachedMeta(key, url) {
+/* ---- tiny localStorage cache with TTL ---- */
+function cacheGet(key, maxAgeMs) {
   try {
     const raw = localStorage.getItem(key);
-    if (raw) {
-      const { t, v } = JSON.parse(raw);
-      if (Date.now() - t < 24*3600e3) return v;
-    }
-  } catch (_) {}
-  const v = await apiFetch(url);
+    if (!raw) return null;
+    const { t, v } = JSON.parse(raw);
+    if (Date.now() - t > maxAgeMs) return null;
+    return v;
+  } catch (_) { return null; }
+}
+function cacheSet(key, v) {
   try { localStorage.setItem(key, JSON.stringify({ t: Date.now(), v })); } catch (_) {}
-  return v;
 }
 
-function activeStationsNear(meta, maxKm) {
+/* ================= station metadata (slim, 7-day cache) ================= */
+async function loadStationList(kind) {
+  const key = `pw_st_${kind}_v2`;
+  const cached = cacheGet(key, 7*24*3600e3);
+  if (cached) return cached;
+
+  const url = kind === "tawes"
+    ? `${API}/station/historical/tawes-v1-10min/metadata`
+    : `${API}/station/historical/klima-v2-1d/metadata`;
+  const meta = await apiFetch(url);
+
   const now = Date.now();
-  return (meta.stations || [])
+  const slim = (meta.stations || [])
     .filter(s => s.lat != null && s.lon != null)
     .filter(s => s.is_active !== false)
     .filter(s => {
       if (!s.valid_to) return true;
       const vt = Date.parse(s.valid_to);
-      return isNaN(vt) || vt > now - 30*24*3600e3; // still reporting (or open-ended)
+      return isNaN(vt) || vt > now - 30*24*3600e3;
     })
-    .map(s => ({ ...s, distKm: haversineKm(CENTER, s) }))
-    .filter(s => s.distKm <= maxKm)
+    .map(s => ({ id: s.id, name: s.name, lat: s.lat, lon: s.lon, altitude: s.altitude,
+                 distKm: haversineKm(CENTER, s) }))
+    .filter(s => s.distKm <= 60)          // max selectable radius — keeps cache tiny
     .sort((a, b) => a.distKm - b.distKm);
+
+  cacheSet(key, slim);
+  return slim;
 }
 
-/* ================= data loading ================= */
 async function loadMetadata() {
   setStatus($("status"), "info", "Loading station list…");
-  const [klima, tawes] = await Promise.all([
-    cachedMeta("pw_meta_klima", `${API}/station/historical/klima-v2-1d/metadata`),
-    cachedMeta("pw_meta_tawes", `${API}/station/historical/tawes-v1-10min/metadata`),
-  ]);
-  state.klimaMetaAll = klima;
-  state.tawesMetaAll = tawes;
+  state.klimaStations = await loadStationList("klima");
+  state.tawesStations = await loadStationList("tawes");
   setStatus($("status"), "", "");
 }
 
-/* Sum precipitation per station; nulls stay null, negatives clamped to 0.
-   Returns { stations:[{id,name,lat,lon,distKm,sum,daily:[{label,mm}],covered}], periodStart, periodEnd } */
+/* ================= range data (15-min cache per range+radius) ================= */
 async function loadRangeData() {
   const range = RANGES[state.rangeIdx];
   const status = $("status");
+  const bucket = Math.floor(Date.now() / (15*60e3));      // refreshes every 15 min
+  const key = `pw_data_${range.src}_${range.days}_${state.radius}_${bucket}`;
+  const cached = cacheGet(key, 15*60e3);
+  if (cached) return cached;
+
   setStatus(status, "info", "Loading precipitation data…");
 
-  const meta = range.src === "tawes" ? state.tawesMetaAll : state.klimaMetaAll;
-  const stations = activeStationsNear(meta, state.radius);
+  const all = range.src === "tawes" ? state.tawesStations : state.klimaStations;
+  const stations = all.filter(s => s.distKm <= state.radius);
   if (!stations.length) throw new Error("No active stations found in this radius.");
 
   const ids = stations.map(s => s.id).join(",");
-  let url, paramName;
   const now = new Date();
+  let url, paramName;
 
   if (range.src === "tawes") {
     const start = new Date(now.getTime() - 24*3600e3);
@@ -325,15 +379,14 @@ async function loadRangeData() {
     let sum = 0, any = false;
     const daily = [];
     if (range.src === "tawes") {
-      // aggregate 10-min values into hours
       const hours = new Map();
       series.forEach((v, i) => {
         if (v == null) return;
-        const val = Math.max(0, v);           // clamp sensor artifacts — never negative
+        const val = Math.max(0, v);                 // never negative
         any = true; sum += val;
         const t = new Date(timestamps[i]);
-        const key = `${pad(t.getHours())}:00`;
-        hours.set(key, (hours.get(key) || 0) + val);
+        const k = `${pad(t.getHours())}:00`;
+        hours.set(k, (hours.get(k) || 0) + val);
         lastDataTs = timestamps[i];
       });
       for (const [k, v] of hours) daily.push({ label: k, mm: v });
@@ -352,11 +405,14 @@ async function loadRangeData() {
   }
 
   setStatus(status, "", "");
-  return { range, stations: out, timestamps, lastDataTs };
+  const res = { rangeIdx: state.rangeIdx, stations: out, lastDataTs };
+  cacheSet(key, res);
+  return res;
 }
 
 /* ================= verdict ================= */
 function renderVerdict(res) {
+  const r = RANGES[res.rangeIdx];
   const withData = res.stations.filter(s => s.hasData);
   const wordEl = $("v-word"), numsEl = $("v-nums"), metaEl = $("v-meta"), hintEl = $("v-hint");
 
@@ -367,7 +423,6 @@ function renderVerdict(res) {
   }
   const avg = withData.reduce((a, s) => a + s.sum, 0) / withData.length;
   const maxSt = withData.reduce((a, s) => (s.sum > a.sum ? s : a), withData[0]);
-  const r = res.range;
 
   let word, cls;
   if (avg >= r.good)      { word = "Looking good"; cls = "good"; }
@@ -378,10 +433,10 @@ function renderVerdict(res) {
 
   const end = new Date();
   const startD = new Date(end.getTime() - r.days*24*3600e3);
-  let periodTxt = r.days === 1
+  metaEl.textContent = (r.days === 1
     ? "last 24 h (TAWES 10-min data)"
-    : `${isoDate(startD)} → ${isoDate(end)} (${r.days} days)`;
-  metaEl.textContent = `${periodTxt} · ${withData.length} of ${res.stations.length} stations reporting`;
+    : `${isoDate(startD)} → ${isoDate(end)} (${r.days} days)`) +
+    ` · ${withData.length} of ${res.stations.length} stations reporting`;
 
   let hint = `Wettest: ${maxSt.name} (${fmt1(maxSt.sum)} mm).`;
   if (r.days > 1 && res.lastDataTs) {
@@ -407,15 +462,13 @@ function renderMarkers(res) {
       ? { radius: 11, color: "#223", weight: 2, fillColor: colorFor(st.sum), fillOpacity: 0.95 }
       : { radius: 9,  color: "#777", weight: 2, dashArray: "4 3", fillColor: "#eee", fillOpacity: 0.4 };
     const m = L.circleMarker([st.lat, st.lon], opts).addTo(state.markerLayer);
-    const label = st.hasData ? `${fmt1(st.sum)} mm` : "no data";
-    m.bindTooltip(`${st.name}: ${label}`, { direction: "top" });
-    m.on("click", () => openSheet(st, res.range));
+    m.bindTooltip(`${st.name}: ${st.hasData ? fmt1(st.sum) + " mm" : "no data"}`, { direction: "top" });
+    m.on("click", () => openSheet(st, RANGES[res.rangeIdx]));
   }
 }
 
 function renderLegend() {
-  const el = $("legend");
-  el.innerHTML = BINS.map(b =>
+  $("legend").innerHTML = BINS.map(b =>
     `<span class="item"><span class="swatch" style="background:${b[1]}"></span>${b[2]}${b[0] === 1e9 ? " mm" : ""}</span>`
   ).join("");
 }
@@ -444,91 +497,189 @@ function openSheet(st, range) {
 }
 $("sheet-close").onclick = () => $("sheet").classList.remove("open");
 
-/* ================= SPARTACUS grid ================= */
-const SP = { cols: 14, rows: 11, lastRender: null };
+/* ================= SPARTACUS map render ================= */
+const SP = { lastRender: null, cache: {} };
+const mercY = lat => Math.log(Math.tan(Math.PI/4 + lat*Math.PI/360));
 
-function spBBox() {
-  const dLat = state.radius / 111, dLon = state.radius / (111 * Math.cos(CENTER.lat * Math.PI/180));
-  return { s: CENTER.lat - dLat, w: CENTER.lon - dLon, n: CENTER.lat + dLat, e: CENTER.lon + dLon };
+function spRegion() {
+  const rid = $("sp-region").value;
+  if (rid === "muehlviertel") {
+    const dLat = state.radius / 111, dLon = state.radius / (111 * Math.cos(CENTER.lat*Math.PI/180));
+    return { id: rid, name: `Mühlviertel (${state.radius} km around Linz)`, cities: "ooe",
+             s: CENTER.lat-dLat, w: CENTER.lon-dLon, n: CENTER.lat+dLat, e: CENTER.lon+dLon,
+             cols: 14, rows: 11 };
+  }
+  return { id: rid, ...REGIONS[rid] };
+}
+
+function spPeriod() {
+  const r = RANGES[state.rangeIdx];
+  const days = Math.max(r.days, 1);
+  const end = new Date(); end.setDate(end.getDate() - 1);   // grid lags ~1 day
+  const start = new Date(end.getTime() - (days-1)*24*3600e3);
+  return { start, end, days };
 }
 
 function spUpdateLinks() {
-  const r = RANGES[state.rangeIdx];
-  const days = Math.max(r.days, 1);
-  const end = new Date(); end.setDate(end.getDate() - 1);       // grid lags ~1 day
-  const start = new Date(end.getTime() - (days-1)*24*3600e3);
-  const bb = spBBox();
+  const { start, end } = spPeriod();
+  const rg = spRegion();
   $("sp-netcdf").href = `${API}/grid/historical/spartacus-v3-1d-1km?parameters=RR` +
     `&start=${isoDate(start)}&end=${isoDate(end)}` +
-    `&bbox=${bb.s.toFixed(3)},${bb.w.toFixed(3)},${bb.n.toFixed(3)},${bb.e.toFixed(3)}&output_format=netcdf`;
-  return { start, end, bb };
+    `&bbox=${rg.s.toFixed(3)},${rg.w.toFixed(3)},${rg.n.toFixed(3)},${rg.e.toFixed(3)}&output_format=netcdf`;
 }
 
-async function spRender() {
-  const st = $("sp-status");
-  const btn = $("sp-render");
-  btn.disabled = true;
-  setStatus(st, "info", "Loading SPARTACUS grid points…");
-  try {
-    const { start, end, bb } = spUpdateLinks();
-    // coarse lattice via the timeseries endpoint (multiple lat_lon pairs in one request)
-    const pts = [];
-    let q = "";
-    for (let r = 0; r < SP.rows; r++) {
-      for (let c = 0; c < SP.cols; c++) {
-        const lat = bb.n - (r + 0.5) * (bb.n - bb.s) / SP.rows;
-        const lon = bb.w + (c + 0.5) * (bb.e - bb.w) / SP.cols;
-        pts.push({ lat, lon });
-        q += `&lat_lon=${lat.toFixed(4)},${lon.toFixed(4)}`;
-      }
-    }
+/* fetch lattice sums, chunked to keep URLs short; ≤4-5 requests even for Austria */
+async function spFetchSums(rg, start, end, progressCb) {
+  const cacheKey = `${rg.id}_${state.radius}_${isoDate(start)}_${isoDate(end)}`;
+  if (SP.cache[cacheKey]) return SP.cache[cacheKey];
+
+  const pts = [];
+  for (let r = 0; r < rg.rows; r++)
+    for (let c = 0; c < rg.cols; c++)
+      pts.push({
+        lat: rg.n - (r + 0.5) * (rg.n - rg.s) / rg.rows,
+        lon: rg.w + (c + 0.5) * (rg.e - rg.w) / rg.cols,
+      });
+
+  const CHUNK = 150;
+  const sums = new Array(pts.length).fill(null);
+  for (let off = 0; off < pts.length; off += CHUNK) {
+    progressCb(`Loading grid… ${Math.min(off + CHUNK, pts.length)}/${pts.length} points`);
+    const slice = pts.slice(off, off + CHUNK);
+    const q = slice.map(p => `&lat_lon=${p.lat.toFixed(4)},${p.lon.toFixed(4)}`).join("");
     const url = `${API}/timeseries/historical/spartacus-v3-1d-1km?parameters=RR` +
       `&start=${isoDate(start)}&end=${isoDate(end)}${q}`;
     const data = await apiFetch(url);
-
-    const sums = (data.features || []).map(f => {
+    (data.features || []).forEach((f, i) => {
       const p = f.properties.parameters || {};
       const series = (p.RR || p.rr || {}).data || [];
       let s = 0, any = false;
       for (const v of series) if (v != null) { s += Math.max(0, v); any = true; }
-      return any ? s : null;
+      sums[off + i] = any ? s : null;
     });
+  }
+  SP.cache[cacheKey] = sums;
+  return sums;
+}
 
-    // draw
-    const cv = $("sp-canvas"), ctx = cv.getContext("2d");
-    const pad = 40, titleH = 46;
-    const cellW = (cv.width - pad*2) / SP.cols, cellH = (cv.height - pad - titleH - 60) / SP.rows;
+/* draw OSM tiles for bbox onto ctx within rect (x0,y0,w,h); resolves when done */
+async function spDrawBasemap(ctx, rg, x0, y0, w, h) {
+  const z = Math.max(6, Math.min(11, Math.round(Math.log2(w * 360 / ((rg.e - rg.w) * 256)))));
+  const n2 = Math.pow(2, z);
+  const tx0 = Math.floor((rg.w + 180) / 360 * n2);
+  const tx1 = Math.floor((rg.e + 180) / 360 * n2);
+  const tLat = ty => Math.atan(Math.sinh(Math.PI * (1 - 2 * ty / n2))) * 180 / Math.PI;
+  const latToTy = lat => Math.floor((1 - mercY(lat) / Math.PI) / 2 * n2);
+  const ty0 = latToTy(rg.n), ty1 = latToTy(rg.s);
+
+  const proj = (lat, lon) => [
+    x0 + (lon - rg.w) / (rg.e - rg.w) * w,
+    y0 + (mercY(rg.n) - mercY(lat)) / (mercY(rg.n) - mercY(rg.s)) * h,
+  ];
+
+  const jobs = [];
+  for (let ty = ty0; ty <= ty1; ty++) {
+    for (let tx = tx0; tx <= tx1; tx++) {
+      jobs.push(new Promise(resolve => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => resolve({ img, tx, ty });
+        img.onerror = () => resolve(null);
+        img.src = `https://tile.openstreetmap.org/${z}/${tx}/${ty}.png`;
+      }));
+    }
+  }
+  const tiles = (await Promise.all(jobs)).filter(Boolean);
+
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x0, y0, w, h); ctx.clip();
+  for (const t of tiles) {
+    const lonA = t.tx / n2 * 360 - 180, lonB = (t.tx + 1) / n2 * 360 - 180;
+    const latA = tLat(t.ty), latB = tLat(t.ty + 1);
+    const [px0, py0] = proj(latA, lonA), [px1, py1] = proj(latB, lonB);
+    ctx.drawImage(t.img, px0, py0, px1 - px0, py1 - py0);
+  }
+  ctx.restore();
+  return { tilesDrawn: tiles.length, proj };
+}
+
+async function spRender() {
+  const st = $("sp-status"), btn = $("sp-render");
+  btn.disabled = true;
+  try {
+    spUpdateLinks();
+    const rg = spRegion();
+    const { start, end } = spPeriod();
+    setStatus(st, "info", "Loading grid…");
+    const sums = await spFetchSums(rg, start, end, t => setStatus(st, "info", t));
+
+    /* canvas geometry from mercator aspect ratio */
+    const cv = $("sp-canvas"), W = 1200, padX = 30, titleH = 50, footH = 78;
+    const mapW = W - padX * 2;
+    const mapH = Math.round(mapW * (mercY(rg.n) - mercY(rg.s)) / ((rg.e - rg.w) * Math.PI / 180));
+    cv.width = W; cv.height = titleH + mapH + footH;
+    const ctx = cv.getContext("2d");
+
     ctx.fillStyle = "#1b241c"; ctx.fillRect(0, 0, cv.width, cv.height);
     ctx.fillStyle = "#e8e6dc"; ctx.font = "bold 26px Georgia, serif";
-    ctx.fillText(`SPARTACUS v3 · RR sum ${isoDate(start)} → ${isoDate(end)}`, pad, 32);
+    ctx.fillText(`SPARTACUS v3 · rain sum ${isoDate(start)} → ${isoDate(end)} · ${rg.name}`, padX, 34);
 
+    setStatus(st, "info", "Loading basemap tiles…");
+    const { tilesDrawn, proj } = await spDrawBasemap(ctx, rg, padX, titleH, mapW, mapH);
+
+    /* heatmap, semi-transparent so rivers & city labels of the basemap show through */
+    ctx.save();
+    ctx.beginPath(); ctx.rect(padX, titleH, mapW, mapH); ctx.clip();
+    ctx.globalAlpha = tilesDrawn ? 0.55 : 1.0;
     sums.forEach((s, i) => {
-      const c = i % SP.cols, r = Math.floor(i / SP.cols);
-      ctx.fillStyle = s == null ? "#333" : colorFor(s);
-      ctx.fillRect(pad + c*cellW, titleH + r*cellH, Math.ceil(cellW), Math.ceil(cellH));
+      if (s == null) return;
+      const c = i % rg.cols, r = Math.floor(i / rg.cols);
+      const latT = rg.n - r     * (rg.n - rg.s) / rg.rows;
+      const latB = rg.n - (r+1) * (rg.n - rg.s) / rg.rows;
+      const lonL = rg.w + c     * (rg.e - rg.w) / rg.cols;
+      const lonR = rg.w + (c+1) * (rg.e - rg.w) / rg.cols;
+      const [x1, y1] = proj(latT, lonL), [x2, y2] = proj(latB, lonR);
+      ctx.fillStyle = colorFor(s);
+      ctx.fillRect(x1, y1, Math.ceil(x2 - x1), Math.ceil(y2 - y1));
     });
+    ctx.globalAlpha = 1.0;
 
-    // Linz marker + border
-    const lx = pad + ((CENTER.lon - bb.w) / (bb.e - bb.w)) * (cv.width - pad*2);
-    const ly = titleH + ((bb.n - CENTER.lat) / (bb.n - bb.s)) * (SP.rows * cellH);
-    ctx.beginPath(); ctx.arc(lx, ly, 7, 0, Math.PI*2);
-    ctx.fillStyle = "#000"; ctx.fill(); ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke();
-    ctx.fillStyle = "#fff"; ctx.font = "bold 18px system-ui"; ctx.fillText("Linz", lx + 12, ly + 6);
-    ctx.strokeStyle = "#e0a84c"; ctx.strokeRect(pad, titleH, SP.cols*cellW, SP.rows*cellH);
+    /* city dots + halo labels */
+    ctx.font = "bold 17px system-ui";
+    for (const [name, lat, lon] of CITIES[rg.cities]) {
+      if (lat < rg.s || lat > rg.n || lon < rg.w || lon > rg.e) continue;
+      const [x, y] = proj(lat, lon);
+      ctx.beginPath(); ctx.arc(x, y, 4.5, 0, Math.PI*2);
+      ctx.fillStyle = "#111"; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = "#fff"; ctx.stroke();
+      ctx.lineWidth = 4; ctx.strokeStyle = "#fff"; ctx.strokeText(name, x + 8, y + 5);
+      ctx.fillStyle = "#111"; ctx.fillText(name, x + 8, y + 5);
+    }
+    ctx.restore();
+    ctx.strokeStyle = "#e0a84c"; ctx.lineWidth = 2;
+    ctx.strokeRect(padX, titleH, mapW, mapH);
 
+    /* footer: min/max + legend strip + attribution */
     const valid = sums.filter(s => s != null);
-    ctx.fillStyle = "#a9b3a5"; ctx.font = "18px system-ui";
-    ctx.fillText(
-      valid.length
-        ? `min ${fmt1(Math.min(...valid))} mm · max ${fmt1(Math.max(...valid))} mm · ` +
-          `bbox ${bb.s.toFixed(2)},${bb.w.toFixed(2)} – ${bb.n.toFixed(2)},${bb.e.toFixed(2)} · © GeoSphere Austria`
-        : "No grid data returned for this period.",
-      pad, titleH + SP.rows*cellH + 34);
+    let fy = titleH + mapH + 26;
+    ctx.fillStyle = "#a9b3a5"; ctx.font = "16px system-ui";
+    ctx.fillText(valid.length
+      ? `min ${fmt1(Math.min(...valid))} mm · max ${fmt1(Math.max(...valid))} mm · Data © GeoSphere Austria · Basemap © OpenStreetMap contributors`
+      : "No grid data returned for this period. · © GeoSphere Austria / OpenStreetMap", padX, fy);
+    fy += 14;
+    const sw = Math.min(48, (W - padX*2) / BINS.length);
+    BINS.forEach((b, i) => {
+      ctx.fillStyle = b[1];
+      ctx.fillRect(padX + i*sw, fy, sw - 2, 14);
+      ctx.fillStyle = "#a9b3a5"; ctx.font = "11px system-ui";
+      ctx.fillText(b[2], padX + i*sw, fy + 26);
+    });
 
     cv.style.display = "block";
     $("sp-download").disabled = false;
-    SP.lastRender = `pilzwetter-spartacus_${isoDate(start)}_${isoDate(end)}.png`;
+    SP.lastRender = `pilzwetter-spartacus_${rg.id}_${isoDate(start)}_${isoDate(end)}.png`;
     setStatus(st, "", "");
+    if (!tilesDrawn) setStatus(st, "info", "Basemap tiles could not be loaded — showing grid only.");
   } catch (e) {
     setStatus(st, "err", e.message);
   } finally {
@@ -537,11 +688,16 @@ async function spRender() {
 }
 
 $("sp-render").onclick = spRender;
+$("sp-region").onchange = spUpdateLinks;
 $("sp-download").onclick = () => {
-  const a = document.createElement("a");
-  a.download = SP.lastRender || "spartacus.png";
-  a.href = $("sp-canvas").toDataURL("image/png");
-  a.click();
+  try {
+    const a = document.createElement("a");
+    a.download = SP.lastRender || "spartacus.png";
+    a.href = $("sp-canvas").toDataURL("image/png");
+    a.click();
+  } catch (e) {
+    setStatus($("sp-status"), "err", "PNG export blocked by the browser (basemap tiles without CORS). Re-render and try again, or screenshot the map.");
+  }
 };
 
 /* ================= wiring ================= */
@@ -559,16 +715,14 @@ function renderChips() {
 }
 
 async function refresh() {
-  const status = $("status");
   spUpdateLinks();
   try {
     const res = await loadRangeData();
-    state.results = res;
     $("stcount").textContent = `${res.stations.length} stations`;
     renderVerdict(res);
     renderMarkers(res);
   } catch (e) {
-    setStatus(status, "err", e.message);
+    setStatus($("status"), "err", e.message);
     $("v-word").textContent = "Error"; $("v-word").className = "word serif bad";
     $("v-nums").textContent = ""; $("v-meta").textContent = e.message; $("v-hint").textContent = "";
   }
