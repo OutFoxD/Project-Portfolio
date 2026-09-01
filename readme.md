@@ -28,7 +28,7 @@ Turns out it was not working as well as expected and got replaced anyways.
 
 ### **Hacked humidifier with active control**
 - **Description:** My girlfriend wanted her plants to grow better, so I made it happen.
-- **Goals:** Operation withing optimal humidity range (60-80 %RH) to promote tropical plant growth
+- **Goals:** Operation within optimal humidity range (60-80 %RH) to promote tropical plant growth
 - **Technologies Used:**  Raspberry Pi Pico, OLED Display, 3D Printing, Temp and Humidity Sensing
 ![Project Image](docs/HumidityControl.jpg)
  
@@ -53,7 +53,7 @@ Install digital readout on both axes and make the machine nice to work on in gen
 
 ### **Rejuvenating old Bosch battery packs**
 - **Description:** My batteries could no longer provide enough power to supply my vacuum cleaner on turbo mode.  
-So the cells had to go and got replaced by Molycel 28R cells held together by steel-copper sandwhich welds for improved internal resistance.
+So the cells had to go and got replaced by Molycel 28R cells held together by steel-copper sandwich welds for improved internal resistance.
 - **Goals:** Improved capacity and internal resistance of my Bosch batteries.  
 Insights into spot welding and specifically steel-copper sandwhich welds.  
 Preparation of used batteries for lower demand projects.
@@ -63,18 +63,18 @@ Preparation of used batteries for lower demand projects.
 ## 💻 Software Projects
 
 ### **Temp and Humidity logging from Tado Thermostats**
-- **Description:** Simple logging of hemperature and humidity was set up with the data from Tado radiator thermostats.  
+- **Description:** Simple logging of temperature and humidity was set up with the data from Tado radiator thermostats.  
 I pull the data from the TadoAPI - a local way to get it was not in place, when I realized the project.  
-After the data is gatered it's saved to an InfluxDB and later visualized in Grafana.  
+After the data is gathered it's saved to an InfluxDB and later visualized in Grafana.  
 Grafana also does the conversion from relative to absolute humidity.
-- **Goals:** Gaining Insights how my flat heats up during summer and how and when washed clothes are fullie dried
+- **Goals:** Gaining Insights how my flat heats up during summer and how and when washed clothes are fully dried
 - **Technologies Used:** Raspberry Pi 4, Docker, NodeRed, Grafana, InfluxDB, TadoAPI
 ![Project Image](docs/GrafanaTemperatures.jpg)
 
 ### **Spotbroo - App for energy spot price visualization with widget support**
 - **Description:** Frustration with currently available apps for spot prices lead to a friend offering to program an app for me.  
 I supported him on some parts, but he did the heavy lifting ^^. 
-I'm insaley greatful for what he tought me within that project, since that's the basis my portfolio is now built on - ❤️ u Gatzi
+I'm insaney greatful for what he thought me within that project, since that's the basis my portfolio is now built on - ❤️ u Gatzi
 - **Goals:** A simple app to reliably display spot prices with widget support
 - **Technologies Used:** Expo, React, GitHub, Copilot, entso-e API
 - **Github Repo:** [github.com/MrGatzi/Spotbroo](https://github.com/MrGatzi/SpotBroo) 
