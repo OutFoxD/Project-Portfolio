@@ -3,8 +3,6 @@ Within you'll find an overview of my embedded, hardware and software projects.**
 
 *I do care deeply about everything I work on - that's why each project includes a brief description, goals, key technologies used, and links to repositories or pictures.*
 
-*What I'm working on [right now](https://protofox.at/now/)*
-
 ## 🚀 Featured Project
 
 ### **Mobile Battery-supplied Lab Power Supply**
@@ -15,6 +13,26 @@ In total the supply comes in under 2 kg and can deliver maximum power for about 
 - **Technologies Used:**  Spot welding, 3D printing, DC-DC buck conversion, Soldering, CAD
 - **Repository:** [Mobile-Battery-supplied-Lab-Power-Supply](https://github.com/OutFoxD/Mobile-Battery-supplied-Lab-Power-Supply)
 ![Project Image](docs/ScooterBatt3.jpg)
+
+## 🛠️ Hardware Projects
+
+### **Restoration and modification of Emco Unimat 3 Lathe**
+- **Description:** I got this machine for cheap and deeply enjoy restoring and improving old, solidly built hardware. 
+- **Goals:** Get the machine cleaned up and running.  
+Improve it to be able to make parts reproducably within ±10 µm accuracy.  
+Install digital readout on both axes and make the machine nice to work on in general.
+- **Technologies Used:** 3D Printing, CAD, Conventional Turning, CNC Servo and Speed Control, Powder Coating, Woodworking, Scraping 
+- **After:** ![After](docs/EmcoUnimat3After.jpg)
+- **Before:** ![Before](docs/EmcoUnimat3Before.jpg)
+
+### **Rejuvenating old Bosch battery packs**
+- **Description:** My batteries could no longer provide enough power to supply my vacuum cleaner on turbo mode.  
+So the cells had to go and got replaced by Molycel 28R cells held together by steel-copper sandwich welds for improved internal resistance.
+- **Goals:** Improved capacity and internal resistance of my Bosch batteries.  
+Insights into spot welding and specifically steel-copper sandwhich welds.  
+Preparation of used batteries for lower demand projects.
+- **Technologies Used:**  Spot welding
+![project Image](docs/BoschBatt2.jpg)
 
 ## 🔋📟🤖🔌 Embedded Projects
 
@@ -39,26 +57,6 @@ Turns out near-infrared imaging can be used, when feeding back power into PV pan
 Insights on optical systems and optical filtering.
 - **Technologies Used:** Near-Infrared Imaging, Raspberry Pi Zero W, Raspberry Pi NoIR Cam, Modified CMOS Digicam
 ![Project Image](docs/ElectroLuminesence.JPG)
-
-## 🛠️ Hardware Projects
-
-### **Restoration and modification of Emco Unimat 3 Lathe**
-- **Description:** I got this machine for cheap and deeply enjoy restoring and improving old, solidly built hardware. 
-- **Goals:** Get the machine cleaned up and running.  
-Improve it to be able to make parts reproducably within ±10 µm accuracy.  
-Install digital readout on both axes and make the machine nice to work on in general.
-- **Technologies Used:** 3D Printing, CAD, Conventional Turning, CNC Servo and Speed Control, Powder Coating, Woodworking, Scraping 
-- **After:** ![After](docs/EmcoUnimat3After.jpg)
-- **Before:** ![Before](docs/EmcoUnimat3Before.jpg)
-
-### **Rejuvenating old Bosch battery packs**
-- **Description:** My batteries could no longer provide enough power to supply my vacuum cleaner on turbo mode.  
-So the cells had to go and got replaced by Molycel 28R cells held together by steel-copper sandwich welds for improved internal resistance.
-- **Goals:** Improved capacity and internal resistance of my Bosch batteries.  
-Insights into spot welding and specifically steel-copper sandwhich welds.  
-Preparation of used batteries for lower demand projects.
-- **Technologies Used:**  Spot welding
-![project Image](docs/BoschBatt2.jpg)
 
 ## 💻 Software Projects
 
@@ -85,6 +83,8 @@ I'm insaney greatful for what he thought me within that project, since that's th
 - **Printables:** [printables.com/@OutFoxD/models](https://www.printables.com/@OutFoxD/models)
 - **Thingiverse:** [thingiverse.com/outfoxd/designs](https://www.thingiverse.com/outfoxd/designs)
 - **Linkedin**: [linkedin.com/in/christoph-fuchs](https://www.linkedin.com/in/christoph-fuchs-5b9b18214/)
+
+*What I'm working on [right now](https://protofox.at/now/)*
 
 ## ✨ Where the magic happens
 - In my home lab
