@@ -76,19 +76,45 @@
   .status.err{display:block;background:#4a2c22;color:#f2b8a0;border:1px solid #6b3c2c}
   .status.info{display:block;background:var(--card2);color:var(--muted);border:1px solid var(--line)}
 
+  [hidden]{display:none!important}
   .sheet{position:fixed;left:0;right:0;bottom:0;z-index:1200;background:var(--card);
-    border-top:2px solid var(--amber);border-radius:16px 16px 0 0;padding:14px 16px 20px;
-    max-height:55vh;overflow-y:auto;transform:translateY(105%);transition:transform .2s ease;
-    box-shadow:0 -8px 30px #000a}
+    border-top:2px solid var(--amber);border-radius:16px 16px 0 0;padding:8px 16px 20px;
+    max-height:55vh;overflow-y:auto;overscroll-behavior:contain;
+    transform:translateY(105%);transition:transform .2s ease;box-shadow:0 -8px 30px #000a}
   .sheet.open{transform:translateY(0)}
+  .sheet .grab{width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 10px}
   .sheet h3{margin:0 0 2px;font-size:1.15rem;padding-right:28px}
   .sheet .close{position:absolute;top:10px;right:12px;background:none;border:none;
     color:var(--muted);font-size:1.5rem;cursor:pointer;line-height:1;padding:6px}
+  .sheet .back{background:none;border:none;color:var(--amber-soft);font-size:.92rem;
+    padding:6px 0;margin-bottom:4px;cursor:pointer;min-height:36px}
   .sheet .total{color:var(--amber-soft);font-size:1rem;margin-bottom:10px}
+  .sheet .actions{margin:0 0 12px}
   .bars{display:flex;flex-direction:column;gap:4px}
-  .summary{display:flex;align-items:center;justify-content:center;border-radius:50%;
-    border:2px solid #223;box-shadow:0 0 0 3px rgba(255,255,255,.8);
-    font:700 12px/1 system-ui,sans-serif;font-variant-numeric:tabular-nums;cursor:pointer}
+  .strow{display:grid;grid-template-columns:minmax(0,1fr) 30% 64px;align-items:center;gap:8px;
+    width:100%;min-height:40px;padding:4px 6px;margin:0 -6px;box-sizing:content-box;
+    background:none;border:none;border-radius:8px;color:var(--text);font:inherit;font-size:.9rem;
+    text-align:left;cursor:pointer}
+  .strow:hover,.strow:focus-visible{background:var(--card2);outline:none}
+  .strow .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .strow .val{text-align:right;font-variant-numeric:tabular-nums}
+  .strow .track{background:var(--card2);border-radius:6px;height:12px;overflow:hidden}
+  .strow .fill{display:block;height:100%;border-radius:6px;min-width:2px}
+
+  /* summary circle: average value + "mm", badge = number of stations */
+  .summary{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border-radius:50%;border:2px solid #223;box-shadow:0 0 0 3px rgba(255,255,255,.85);
+    font:700 12px/1 system-ui,sans-serif;font-variant-numeric:tabular-nums;cursor:pointer;box-sizing:border-box}
+  .summary b{font-size:12px;font-weight:800}
+  .summary small{font-size:8px;font-weight:600;opacity:.75;margin-top:1px}
+  .summary .cnt{position:absolute;top:-7px;right:-9px;min-width:16px;padding:2px 4px;border-radius:9px;
+    background:#223;color:#fff;font:700 9px/1.1 system-ui,sans-serif;font-style:normal;text-align:center;
+    box-shadow:0 0 0 1.5px #fff}
+  .key{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;margin:12px 0 2px;font-size:.88rem;color:var(--muted)}
+  .key .kitem{display:inline-flex;align-items:center;gap:10px}
+  .key .kdot{width:14px;height:14px;border-radius:50%;background:#e2ef9f;border:2px solid #223;box-sizing:border-box}
+  .key .summary{flex:0 0 auto;margin-right:6px;cursor:default}
+  @media (prefers-reduced-motion: reduce){ .sheet{transition:none} }
   .barrow{display:grid;grid-template-columns:64px 1fr 58px;align-items:center;gap:8px;font-size:.85rem}
   .barrow .lbl{color:var(--muted);white-space:nowrap}
   .barrow .track{background:var(--card2);border-radius:6px;height:16px;overflow:hidden}
@@ -150,9 +176,13 @@
 
   <div id="map"></div>
 
+  <div class="key">
+    <span class="kitem"><span class="kdot"></span>One station</span>
+    <span class="kitem"><span class="summary" style="width:32px;height:32px;background:#e2ef9f;color:#1a1a1a"><b>12</b><small>mm</small><i class="cnt">5</i></span>Average of 5 stations close together · tap for the list</span>
+  </div>
   <div class="legend" id="legend"></div>
   <p class="note" id="grid-note"></p>
-  <p class="note">Tap a station for daily details. Where stations sit close together, a ringed circle shows their average in mm — tap it to zoom in. Circles show the precipitation sum measured at real weather stations (klima-v2-1d daily / TAWES 10-min for the 24 h view). The coloured background is GeoSphere's interpolated 1&nbsp;km grid (SPARTACUS). Gray dashed circles = no precipitation data for this period.</p>
+  <p class="note">Tap a circle for daily values. Circles show the rain measured at weather stations (klima-v2-1d daily, TAWES 10-min for the 24 h view); the coloured background is GeoSphere's interpolated 1&nbsp;km grid (SPARTACUS). Gray dashed circles: no data for this period.</p>
 
   <details class="spartacus" id="spartacus">
     <summary>Rain map image (1 km grid, downloadable)</summary>
@@ -189,10 +219,13 @@
   </footer>
 </div>
 
-<div class="sheet" id="sheet">
+<div class="sheet" id="sheet" role="dialog" aria-labelledby="sheet-title">
+  <div class="grab" aria-hidden="true"></div>
   <button class="close" id="sheet-close" aria-label="Close">×</button>
+  <button class="back" id="sheet-back" hidden></button>
   <h3 id="sheet-title"></h3>
   <div class="total" id="sheet-total"></div>
+  <div class="actions" id="sheet-actions" hidden><button class="btn" id="sheet-zoom">Zoom in here</button></div>
   <div class="bars" id="sheet-bars"></div>
 </div>
 
@@ -679,7 +712,7 @@ function renderMarkers(res) {
   });
   if (z < UNCLUSTER_ZOOM) {
     /* keep merging any two circles that would overlap until none do */
-    const rad = g => g.list.length === 1 ? r : summarySize(g.list.length, r) / 2;
+    const rad = g => g.list.length === 1 ? r : summarySize(g.list.length, r) / 2 + 2;   // +2: count badge
     let merged = true;
     while (merged) {
       merged = false;
@@ -701,11 +734,15 @@ function renderMarkers(res) {
   }
   for (const g of groups) {
     if (g.list.length === 1) addDot(g.list[0], r, res.range);
-    else addSummary(g.list, r, state.map.layerPointToLatLng([g.x, g.y]));
+    else addSummary(g.list, r, state.map.layerPointToLatLng([g.x, g.y]), res.range);
   }
 }
 
-const summarySize = (n, r) => Math.round(2 * r + 8 + Math.min(8, 2.5 * Math.log2(n)));
+const summarySize = (n, r) => Math.round(Math.max(28, 2 * r + 10) + Math.min(6, 2 * Math.log2(n)));
+const avgOf = list => {
+  const d = list.filter(s => s.hasData).map(s => s.sum);
+  return d.length ? { mean: d.reduce((a, b) => a + b, 0) / d.length, min: Math.min(...d), max: Math.max(...d) } : null;
+};
 
 function addDot(st, r, range) {
   const opts = st.hasData
@@ -716,20 +753,58 @@ function addDot(st, r, range) {
   m.on("click", () => openSheet(st, range));
 }
 
-function addSummary(list, r, at) {
-  const data = list.filter(s => s.hasData).map(s => s.sum);
-  const mean = data.length ? data.reduce((a, b) => a + b, 0) / data.length : null;
-  const size = summarySize(list.length, r);
-  const label = mean == null ? "–" : mean < 10 ? fmt1(mean) : String(Math.round(mean));
-  const html = `<div class="summary" style="width:${size}px;height:${size}px;background:${mean == null ? "#eee" : colorFor(mean)};` +
-    `color:${mean != null && mean >= 150 ? "#fff" : "#1a1a1a"}">${label}</div>`;
+function addSummary(list, r, at, range) {
+  const a = avgOf(list), size = summarySize(list.length, r);
+  const label = !a ? "–" : a.mean < 10 ? fmt1(a.mean) : String(Math.round(a.mean));
+  const html = `<div class="summary" style="width:${size}px;height:${size}px;background:${a ? colorFor(a.mean) : "#eee"};` +
+    `color:${a && a.mean >= 150 ? "#fff" : "#1a1a1a"}"><b>${label}</b><small>mm</small><i class="cnt">${list.length}</i></div>`;
   const m = L.marker(at, {
     icon: L.divIcon({ className: "", html, iconSize: [size, size], iconAnchor: [size / 2, size / 2] }),
+    title: `${list.length} stations, average ${a ? fmt1(a.mean) + " mm" : "no data"}`,
   }).addTo(state.markerLayer);
-  const range = data.length > 1 ? ` (${fmt1(Math.min(...data))}–${fmt1(Math.max(...data))})` : "";
-  m.bindTooltip(`${list.length} stations · Ø ${mean == null ? "no data" : fmt1(mean) + " mm"}${range} · tap to zoom in`,
-    { direction: "top", offset: [0, -size / 2] });
-  m.on("click", () => state.map.setView(at, Math.min(UNCLUSTER_ZOOM, state.map.getZoom() + 2)));
+  m.on("click", () => openSummary(list, at, range));
+}
+
+/* name the group after the station closest to its centre */
+function nearestName(list, at) {
+  let best = list[0], bd = Infinity;
+  for (const s of list) {
+    const d = (s.lat - at.lat) ** 2 + ((s.lon - at.lng) * 0.67) ** 2;
+    if (d < bd) { bd = d; best = s; }
+  }
+  return best.name;
+}
+
+const periodText = range => range.days === 1 ? "last 24 h" : `${dm(range.startIso)} → ${dm(range.endIso)}`;
+
+function openSummary(list, at, range) {
+  const a = avgOf(list), title = `${list.length} stations around ${nearestName(list, at)}`;
+  $("sheet-back").hidden = true;
+  $("sheet-title").textContent = title;
+  $("sheet-total").textContent = a
+    ? `Ø ${fmt1(a.mean)} mm · ${fmt1(a.min)}–${fmt1(a.max)} mm (${periodText(range)})`
+    : `No data (${periodText(range)})`;
+  $("sheet-actions").hidden = false;
+  $("sheet-zoom").onclick = () => {
+    closeSheet();
+    state.map.setView(at, Math.min(UNCLUSTER_ZOOM, state.map.getZoom() + 2));
+  };
+  const bars = $("sheet-bars");
+  bars.innerHTML = "";
+  const max = Math.max(1, a ? a.max : 1);
+  const sorted = [...list].sort((x, y) => (y.hasData ? y.sum : -1) - (x.hasData ? x.sum : -1));
+  for (const st of sorted) {
+    const row = document.createElement("button");
+    row.className = "strow";
+    const w = st.hasData ? Math.max(1, st.sum / max * 100) : 0;
+    row.innerHTML = `<span class="nm"></span>` +
+      `<span class="track"><span class="fill" style="width:${w}%;background:${st.hasData ? colorFor(st.sum) : "transparent"}"></span></span>` +
+      `<span class="val">${st.hasData ? fmt1(st.sum) + " mm" : "–"}</span>`;
+    row.querySelector(".nm").textContent = st.name;
+    row.onclick = () => openSheet(st, range, { title, back: () => openSummary(list, at, range) });
+    bars.appendChild(row);
+  }
+  showSheet();
 }
 
 function renderLegend() {
@@ -746,7 +821,7 @@ function fillBlSelect() {
   sel.onchange = () => {
     state.bl = sel.value; savePrefs();
     state.lastRes = null;                   // don't redraw the old region's dots while zooming
-    $("sheet").classList.remove("open");
+    closeSheet();
     renderBorders(); fitRegion(); refresh();
   };
   $("grid-toggle").checked = state.gridOn;
@@ -757,11 +832,15 @@ function fillBlSelect() {
 }
 
 /* ================= station sheet ================= */
-function openSheet(st, range) {
+function openSheet(st, range, parent) {
+  const back = $("sheet-back");
+  back.hidden = !parent;
+  if (parent) { back.textContent = `← ${parent.title}`; back.onclick = parent.back; }
+  $("sheet-actions").hidden = true;
   $("sheet-title").textContent = st.name + (st.state ? ` · ${st.state}` : "") +
     (st.altitude != null ? ` · ${Math.round(st.altitude)} m` : "");
   $("sheet-total").textContent = st.hasData
-    ? `${fmt1(st.sum)} mm total (${range.days === 1 ? "last 24 h" : `${dm(range.startIso)} → ${dm(range.endIso)}`})`
+    ? `${fmt1(st.sum)} mm total (${periodText(range)})`
     : "No precipitation data reported for this period.";
   const bars = $("sheet-bars");
   bars.innerHTML = "";
@@ -776,9 +855,62 @@ function openSheet(st, range) {
       `<span class="val">${d.mm == null ? "–" : fmt1(d.mm) + " mm"}</span>`;
     bars.appendChild(row);
   }
-  $("sheet").classList.add("open");
+  showSheet();
 }
-$("sheet-close").onclick = () => $("sheet").classList.remove("open");
+
+/* ---- opening and closing the sheet: ×, swipe down, tap outside, Esc, Android back ---- */
+let sheetOpen = false;
+function showSheet() {
+  const el = $("sheet");
+  el.scrollTop = 0;
+  el.classList.add("open");
+  if (!sheetOpen) {
+    sheetOpen = true;
+    try { history.pushState({ pwSheet: true }, ""); } catch (_) {}
+  }
+}
+function closeSheet() {
+  if (!sheetOpen) return;
+  sheetOpen = false;
+  $("sheet").classList.remove("open");
+  if (history.state && history.state.pwSheet) history.back();
+}
+window.addEventListener("popstate", () => {
+  if (sheetOpen) { sheetOpen = false; $("sheet").classList.remove("open"); }
+});
+$("sheet-close").onclick = closeSheet;
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeSheet(); });
+document.addEventListener("click", e => {
+  if (!sheetOpen) return;
+  /* composedPath is fixed when the tap happens, so it still holds the sheet even if
+     the tapped row was replaced in the meantime (list -> station details) */
+  const inside = e.composedPath().some(n => n.nodeType === 1 &&
+    (n.id === "sheet" || n.matches(".leaflet-interactive, .leaflet-marker-icon, .leaflet-control")));
+  if (!inside) closeSheet();
+});
+(function swipeToClose() {
+  const el = $("sheet");
+  let y0 = null, dy = 0, t0 = 0;
+  el.addEventListener("touchstart", e => {
+    y0 = el.scrollTop > 0 ? null : e.touches[0].clientY;   // only when the list is scrolled to the top
+    dy = 0; t0 = Date.now();
+    if (y0 != null) el.style.transition = "none";
+  }, { passive: true });
+  el.addEventListener("touchmove", e => {
+    if (y0 == null) return;
+    dy = Math.max(0, e.touches[0].clientY - y0);
+    el.style.transform = dy ? `translateY(${dy}px)` : "";
+  }, { passive: true });
+  const end = () => {
+    if (y0 == null) return;
+    el.style.transition = "";
+    el.style.transform = "";
+    if (dy > 90 || (dy > 30 && dy / (Date.now() - t0) > 0.5)) closeSheet();   // far enough or a quick flick
+    y0 = null;
+  };
+  el.addEventListener("touchend", end);
+  el.addEventListener("touchcancel", end);
+})();
 
 /* ================= rain map image ================= */
 const SP = { lastRender: null };
