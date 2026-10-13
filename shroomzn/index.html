@@ -575,7 +575,7 @@ function updateGridLayer(range) {
   if (!state.gridOn) return;
   const v = encodeURIComponent(state.grid.generated);
   state.gridLayer = L.imageOverlay(`${DATA}${per.file}?v=${v}`, state.grid.bounds,
-    { opacity: 0.6, pane: "gridPane", interactive: false }).addTo(state.map);
+    { opacity: 0.85, pane: "gridPane", interactive: false }).addTo(state.map);
 }
 
 /* ================= verdict ================= */
@@ -632,7 +632,9 @@ function initMap() {
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 18, attribution: "© OpenStreetMap"
   }).addTo(state.map);
-  state.map.createPane("gridPane").style.zIndex = 350;
+  const gp = state.map.createPane("gridPane");
+  gp.style.zIndex = 350;
+  gp.style.mixBlendMode = "multiply";   /* tints the basemap: streets, rivers and labels stay visible */
   state.map.createPane("bordersPane").style.zIndex = 380;
   state.map.getPane("bordersPane").style.pointerEvents = "none";
   state.markerLayer = L.layerGroup().addTo(state.map);
@@ -908,7 +910,9 @@ async function spRender() {
 
     ctx.save();
     ctx.beginPath(); ctx.rect(padX, titleH, mapW, mapH); ctx.clip();
-    ctx.globalAlpha = tilesDrawn ? 0.6 : 1.0;
+    /* multiply = rain colour tints the basemap instead of covering it */
+    ctx.globalAlpha = tilesDrawn ? 0.85 : 1.0;
+    ctx.globalCompositeOperation = tilesDrawn ? "multiply" : "source-over";
     if (overlay) {
       const gb = state.grid.bounds;                  // [[s,w],[n,e]]
       const [ox0, oy0] = proj(gb[1][0], gb[0][1]), [ox1, oy1] = proj(gb[0][0], gb[1][1]);
@@ -928,6 +932,7 @@ async function spRender() {
       });
     }
     ctx.globalAlpha = 1.0;
+    ctx.globalCompositeOperation = "source-over";
     spDrawBorders(ctx, proj);
 
     ctx.font = "bold 19px system-ui";
