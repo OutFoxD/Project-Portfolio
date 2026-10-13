@@ -117,6 +117,21 @@ def select_stations(meta):
     return out
 
 
+def drop_twins(stations, max_deg=0.01):
+    """Same name at (almost) the same spot under two ids: keep the one with
+    the most values. Seen e.g. for Hochfilzen, Reutte, Warth."""
+    def filled(s):
+        return sum(v is not None for v in s["rr"])
+    keep = []
+    for s in sorted(stations, key=filled, reverse=True):
+        if any(k["name"] == s["name"] and abs(k["lat"] - s["lat"]) < max_deg
+               and abs(k["lon"] - s["lon"]) < max_deg for k in keep):
+            continue
+        keep.append(s)
+    keep.sort(key=lambda s: (s["state"], s["name"]))
+    return keep
+
+
 def parse_station_series(js, param="rr"):
     """Station GeoJSON response -> (dates, {station_id: [mm|None, ...]}).
     Negative values are trace amounts (<0.1 mm) and count as 0."""
@@ -167,6 +182,7 @@ def build_stations(out_dir):
     for st in stations:
         st["rr"] = series.get(st["id"]) or series.get(str(st["id"])) or [None] * len(dates or [])
     stations = [s for s in stations if any(v is not None for v in s["rr"])]
+    stations = drop_twins(stations)
     doc = {
         "generated": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "source": STATION_DATASET,
@@ -334,6 +350,13 @@ def build_grid(out_dir):
     tr = Transformer.from_crs("EPSG:4326", meta.get("crs") or "EPSG:3416", always_xy=True)
     X, Y = tr.transform(LON, LAT)
     masks = state_masks(LON, LAT, load_state_polygons())
+    # SPARTACUS v3 reaches ~20 % beyond the border; show Austria only, like Klimamonitoring
+    austria = np.zeros(LON.shape, dtype=bool)
+    for m in masks.values():
+        austria |= m
+    # close the hairline gaps the simplified borders leave between neighbouring states
+    near = lambda a, ax, k: np.roll(a, k, ax) | np.roll(a, 2 * k, ax)
+    austria |= (near(austria, 1, 1) & near(austria, 1, -1)) | (near(austria, 0, 1) & near(austria, 0, -1))
 
     doc = {
         "generated": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
@@ -350,6 +373,7 @@ def build_grid(out_dir):
         total = np.nansum(stack, axis=0)
         total[np.all(np.isnan(stack), axis=0)] = np.nan     # outside Austria
         vals = sample_nearest(total, xs, ys, X, Y)
+        vals[~austria] = np.nan
         fname = f"grid_{p}d.png"
         write_overlay_png(classify(vals), os.path.join(out_dir, fname))
         doc["periods"][str(p)] = {
