@@ -1,0 +1,69 @@
+# Precomputes the data behind protofox.at/shroomzn and stores it on the
+# `shroomzn-data` branch (one commit, replaced every run, so main's history
+# stays clean). Then it re-runs the Pages deploy, which copies that branch
+# into shroomzn/data/.
+name: Update shroomzn data
+
+on:
+  schedule:
+    - cron: "17 6 * * *"     # ~08:17 Vienna (summer time): yesterday's daily sums are in
+    - cron: "17 12 * * *"    # ~14:17: late station reports + newer SPARTACUS day
+  workflow_dispatch: {}
+  push:
+    branches: ["main"]
+    paths:
+      - "shroomzn/precompute.py"
+      - "shroomzn/bundeslaender.geojson"
+      - ".github/workflows/shroomzn-data.yml"
+
+permissions:
+  contents: write    # push the data branch
+  actions: write     # start the Pages deploy afterwards
+
+concurrency:
+  group: shroomzn-data
+  cancel-in-progress: false
+
+jobs:
+  precompute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests numpy xarray netCDF4 pyproj pillow matplotlib
+
+      - name: Compute station sums and rain grids
+        run: python shroomzn/precompute.py "$RUNNER_TEMP/out"
+
+      - name: Publish to the shroomzn-data branch
+        run: |
+          set -e
+          DATA="$RUNNER_TEMP/data"
+          # start from the previous data, so a part that failed this run keeps its last good files
+          if git ls-remote --exit-code --heads origin shroomzn-data >/dev/null; then
+            git clone --depth 1 --branch shroomzn-data \
+              "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" "$DATA"
+          else
+            mkdir -p "$DATA"
+          fi
+          cp "$RUNNER_TEMP"/out/* "$DATA"/
+          cd "$DATA"
+          rm -rf .git
+          git init -q -b shroomzn-data
+          git config user.name  "shroomzn-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "shroomzn data $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" shroomzn-data
+          ls -la
+
+      - name: Redeploy the site
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run jekyll-gh-pages.yml --repo "${{ github.repository }}" --ref main

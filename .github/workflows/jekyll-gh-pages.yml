@@ -28,6 +28,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Add precomputed shroomzn data
+        # written by shroomzn-data.yml; skipped quietly if the branch doesn't exist yet
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          ref: shroomzn-data
+          path: shroomzn/data
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Build with Jekyll
