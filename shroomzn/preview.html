@@ -86,6 +86,9 @@
     color:var(--muted);font-size:1.5rem;cursor:pointer;line-height:1;padding:6px}
   .sheet .total{color:var(--amber-soft);font-size:1rem;margin-bottom:10px}
   .bars{display:flex;flex-direction:column;gap:4px}
+  .summary{display:flex;align-items:center;justify-content:center;border-radius:50%;
+    border:2px solid #223;box-shadow:0 0 0 3px rgba(255,255,255,.8);
+    font:700 12px/1 system-ui,sans-serif;font-variant-numeric:tabular-nums;cursor:pointer}
   .barrow{display:grid;grid-template-columns:64px 1fr 58px;align-items:center;gap:8px;font-size:.85rem}
   .barrow .lbl{color:var(--muted);white-space:nowrap}
   .barrow .track{background:var(--card2);border-radius:6px;height:16px;overflow:hidden}
@@ -149,7 +152,7 @@
 
   <div class="legend" id="legend"></div>
   <p class="note" id="grid-note"></p>
-  <p class="note">Tap a station for daily details. Circles show the precipitation sum measured at real weather stations (klima-v2-1d daily / TAWES 10-min for the 24 h view). The coloured background is GeoSphere's interpolated 1&nbsp;km grid (SPARTACUS). Gray dashed circles = no precipitation data for this period.</p>
+  <p class="note">Tap a station for daily details. Where stations sit close together, a ringed circle shows their average in mm — tap it to zoom in. Circles show the precipitation sum measured at real weather stations (klima-v2-1d daily / TAWES 10-min for the 24 h view). The coloured background is GeoSphere's interpolated 1&nbsp;km grid (SPARTACUS). Gray dashed circles = no precipitation data for this period.</p>
 
   <details class="spartacus" id="spartacus">
     <summary>Rain map image (1 km grid, downloadable)</summary>
@@ -638,6 +641,7 @@ function initMap() {
   state.map.createPane("bordersPane").style.zIndex = 380;
   state.map.getPane("bordersPane").style.pointerEvents = "none";
   state.markerLayer = L.layerGroup().addTo(state.map);
+  state.map.on("zoomend", () => renderMarkers());
 }
 
 function fitRegion() {
@@ -658,17 +662,74 @@ function renderBorders() {
   }).addTo(state.map);
 }
 
+/* Dots shrink when zoomed out; dots that would overlap merge into one
+   summary circle showing their average (tap it to zoom in). */
+const UNCLUSTER_ZOOM = 11;
+const dotRadius = z => z <= 6 ? 5 : z <= 7 ? 6 : z <= 8 ? 8 : z <= 9 ? 9 : 10;
+
 function renderMarkers(res) {
+  if (res) state.lastRes = res;
+  res = state.lastRes;
   state.markerLayer.clearLayers();
-  const r = state.bl === "AT" ? 7 : 11;
-  for (const st of res.stations) {
-    const opts = st.hasData
-      ? { radius: r, color: "#223", weight: 2, fillColor: colorFor(st.sum), fillOpacity: 0.95 }
-      : { radius: r - 2, color: "#777", weight: 2, dashArray: "4 3", fillColor: "#eee", fillOpacity: 0.4 };
-    const m = L.circleMarker([st.lat, st.lon], opts).addTo(state.markerLayer);
-    m.bindTooltip(`${st.name}: ${st.hasData ? fmt1(st.sum) + " mm" : "no data"}`, { direction: "top" });
-    m.on("click", () => openSheet(st, res.range));
+  if (!res) return;
+  const z = state.map.getZoom(), r = dotRadius(z);
+  let groups = res.stations.map(st => {
+    const p = state.map.latLngToLayerPoint([st.lat, st.lon]);
+    return { list: [st], x: p.x, y: p.y };
+  });
+  if (z < UNCLUSTER_ZOOM) {
+    /* keep merging any two circles that would overlap until none do */
+    const rad = g => g.list.length === 1 ? r : summarySize(g.list.length, r) / 2;
+    let merged = true;
+    while (merged) {
+      merged = false;
+      for (let i = 0; i < groups.length; i++) {
+        for (let j = i + 1; j < groups.length; j++) {
+          const a = groups[i], b = groups[j];
+          if (Math.hypot(a.x - b.x, a.y - b.y) < rad(a) + rad(b) + 2) {
+            const n = a.list.length + b.list.length;
+            a.x = (a.x * a.list.length + b.x * b.list.length) / n;
+            a.y = (a.y * a.list.length + b.y * b.list.length) / n;
+            a.list = a.list.concat(b.list);
+            groups.splice(j, 1);
+            merged = true;
+            j = i;                          // a grew and moved: check it against everyone again
+          }
+        }
+      }
+    }
   }
+  for (const g of groups) {
+    if (g.list.length === 1) addDot(g.list[0], r, res.range);
+    else addSummary(g.list, r, state.map.layerPointToLatLng([g.x, g.y]));
+  }
+}
+
+const summarySize = (n, r) => Math.round(2 * r + 8 + Math.min(8, 2.5 * Math.log2(n)));
+
+function addDot(st, r, range) {
+  const opts = st.hasData
+    ? { radius: r, color: "#223", weight: r < 7 ? 1.5 : 2, fillColor: colorFor(st.sum), fillOpacity: 0.95 }
+    : { radius: Math.max(4, r - 2), color: "#777", weight: 1.5, dashArray: "3 3", fillColor: "#eee", fillOpacity: 0.4 };
+  const m = L.circleMarker([st.lat, st.lon], opts).addTo(state.markerLayer);
+  m.bindTooltip(`${st.name}: ${st.hasData ? fmt1(st.sum) + " mm" : "no data"}`, { direction: "top" });
+  m.on("click", () => openSheet(st, range));
+}
+
+function addSummary(list, r, at) {
+  const data = list.filter(s => s.hasData).map(s => s.sum);
+  const mean = data.length ? data.reduce((a, b) => a + b, 0) / data.length : null;
+  const size = summarySize(list.length, r);
+  const label = mean == null ? "–" : mean < 10 ? fmt1(mean) : String(Math.round(mean));
+  const html = `<div class="summary" style="width:${size}px;height:${size}px;background:${mean == null ? "#eee" : colorFor(mean)};` +
+    `color:${mean != null && mean >= 150 ? "#fff" : "#1a1a1a"}">${label}</div>`;
+  const m = L.marker(at, {
+    icon: L.divIcon({ className: "", html, iconSize: [size, size], iconAnchor: [size / 2, size / 2] }),
+  }).addTo(state.markerLayer);
+  const range = data.length > 1 ? ` (${fmt1(Math.min(...data))}–${fmt1(Math.max(...data))})` : "";
+  m.bindTooltip(`${list.length} stations · Ø ${mean == null ? "no data" : fmt1(mean) + " mm"}${range} · tap to zoom in`,
+    { direction: "top", offset: [0, -size / 2] });
+  m.on("click", () => state.map.setView(at, Math.min(UNCLUSTER_ZOOM, state.map.getZoom() + 2)));
 }
 
 function renderLegend() {
@@ -684,6 +745,7 @@ function fillBlSelect() {
   sel.value = state.bl;
   sel.onchange = () => {
     state.bl = sel.value; savePrefs();
+    state.lastRes = null;                   // don't redraw the old region's dots while zooming
     $("sheet").classList.remove("open");
     renderBorders(); fitRegion(); refresh();
   };
@@ -705,7 +767,7 @@ function openSheet(st, range) {
   bars.innerHTML = "";
   const vals = st.daily.filter(d => d.mm != null).map(d => d.mm);
   const max = Math.max(1, ...vals);
-  for (const d of st.daily) {
+  for (const d of [...st.daily].reverse()) {          // newest first
     const row = document.createElement("div");
     row.className = "barrow";
     const w = d.mm == null ? 0 : Math.max(1, (d.mm / max) * 100);
