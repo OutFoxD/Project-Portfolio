@@ -1,4 +1,8 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Custom Brompton Build</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,6 +40,8 @@
   --good: #6cc08f; --warn: #e2a64a; --bad: #ec7b70; color-scheme: dark;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
 body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.5; }
 .wrap { max-width: 1080px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 56px; display: grid; gap: 40px; }
 h1, h2, h3 { font-family: var(--font-display); font-weight: 700; line-height: 1.1; text-wrap: balance; margin: 0; letter-spacing: 0.01em; }
@@ -111,6 +117,16 @@ header { display: grid; gap: 14px; }
 .padd { font: inherit; font-size: 0.88rem; margin: 6px 12px 10px; padding: 5px 10px; border-radius: 4px; border: 1px dashed var(--line); background: transparent; color: var(--accent); cursor: pointer; }
 .padd:hover { border-color: var(--accent); }
 .plist.ro .padd, .plist.ro .pdel { display: none; }
+.pmsg { color: var(--ink); background: var(--hi-soft); border: 1px solid var(--hi); border-radius: 5px; padding: 8px 12px; }
+.pmanage { display: grid; gap: 8px; }
+.pmbtns { display: flex; flex-wrap: wrap; gap: 8px; }
+.pmbtns button, #pl-io-load { font: inherit; font-size: 0.9rem; padding: 6px 12px; border-radius: 5px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.pmbtns button:hover, #pl-io-load:hover { border-color: var(--accent); }
+.pmbtns button:focus-visible, #pl-io-load:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#pl-reset.armed { background: var(--bad); border-color: var(--bad); color: var(--surface); }
+.pio { display: grid; gap: 6px; }
+.pio textarea { font-family: var(--font-data); font-size: 0.8rem; width: 100%; padding: 8px; border: 1px solid var(--line); border-radius: 5px; background: var(--bg); color: var(--ink); resize: vertical; }
+#pl-io-load { justify-self: start; }
 @media (max-width: 600px) {
   .prow, .prow.armed { grid-template-columns: 30px minmax(0, 1fr) minmax(0, 1fr) auto; grid-template-areas: "chk name name del" ". price weight ."; }
 }
@@ -224,7 +240,8 @@ tr.have td { color: var(--muted); }
   .dot, .whisk { transition: left 0.25s ease, width 0.25s ease; }
 }
 </style>
-
+</head>
+<body>
 <div class="wrap">
 
 <header>
@@ -233,7 +250,7 @@ tr.have td { color: var(--muted); }
   <p class="lede">Your parts list with cost and weight, then the options compared: wheels and gears, fork, brakes and tools. Weights in grams unless noted; prices in euros.</p>
 </header>
 
-<section aria-labelledby="pl-h" class="plist">
+<section aria-labelledby="pl-h" class="plist" data-store="local">
   <div class="sec-head">
     <h2 id="pl-h">Parts list</h2>
     <p class="small">Tick a part when you have it. Prices and weights are editable; typing a weight marks it as weighed. Changes are saved.</p>
@@ -254,8 +271,23 @@ tr.have td { color: var(--muted); }
     <span class="small" id="pl-legend"><span class="wst est">est.</span> estimate · <span class="wst spec">spec</span> published figure · <span class="wst weighed">weighed</span> your number · <span class="tag add">added</span> not on your sheet</span>
   </div>
   <p class="pstate" id="pl-state">Loading your parts list…</p>
+  <p class="pmsg" id="pl-msg" role="status" hidden></p>
   <div id="pl-list" class="plist-groups"></div>
+  <div class="pmanage" id="pl-manage" hidden>
+    <p class="small">This list is saved in this browser only. To move it to another device, export here and import there.</p>
+    <div class="pmbtns">
+      <button type="button" id="pl-export">Export</button>
+      <button type="button" id="pl-import">Import</button>
+      <button type="button" id="pl-reset">Reset to presets</button>
+    </div>
+    <div class="pio" id="pl-io" hidden>
+      <label for="pl-io-text" class="small">Parts list data</label>
+      <textarea id="pl-io-text" rows="4" spellcheck="false"></textarea>
+      <button type="button" id="pl-io-load" hidden>Load list</button>
+    </div>
+  </div>
 </section>
+<script type="application/json" id="pl-presets">{"v":1,"parts":[{"id":"frame","name":"Main frame (steel, yellow)","group":"frame","price":350,"weight":2100,"have":true,"wstat":"est","src":"sheet","note":"Mk4-era figure","order":10},{"id":"triangle","name":"Rear triangle (titanium)","group":"frame","price":140,"weight":461,"have":true,"wstat":"spec","src":"sheet","note":"Brompton Ti, SJS","order":20},{"id":"fork","name":"Fork (carbon, AliExpress)","group":"frame","price":120,"weight":240,"have":false,"wstat":"spec","src":"sheet","note":"listing weight","order":30},{"id":"stem","name":"Stem (M, steel)","group":"frame","price":145,"weight":810,"have":true,"wstat":"est","src":"sheet","note":"","order":40},{"id":"handlebar","name":"Handlebar (M)","group":"frame","price":30,"weight":280,"have":false,"wstat":"est","src":"sheet","note":"","order":50},{"id":"barclamp","name":"Bar clamp","group":"frame","price":30,"weight":40,"have":false,"wstat":"est","src":"sheet","note":"","order":60},{"id":"headset","name":"Headset (sealed, 1 1/8\")","group":"frame","price":30,"weight":110,"have":false,"wstat":"est","src":"added","note":"stock steel one is 166 g","order":70},{"id":"crankset","name":"Crankset (Kurbel), 50T","group":"drive","price":50,"weight":661,"have":false,"wstat":"spec","src":"sheet","note":"Brompton spider crankset","order":110},{"id":"bb","name":"Bottom bracket (119 mm JIS)","group":"drive","price":30,"weight":250,"have":false,"wstat":"est","src":"added","note":"skip if the frame came with one","order":120},{"id":"derailleur","name":"Derailleur parts (Schaltung)","group":"drive","price":30,"weight":230,"have":false,"wstat":"est","src":"sheet","note":"tensioner, pusher, 2 sprockets","order":130},{"id":"chain","name":"Chain 3/32\"","group":"drive","price":0,"weight":260,"have":true,"wstat":"est","src":"added","note":"","order":140},{"id":"brakes","name":"Brakes + shifters","group":"brakes","price":200,"weight":540,"have":false,"wstat":"est","src":"sheet","note":"2 calipers, 2 levers with shifters","order":210},{"id":"cables","name":"Cables","group":"brakes","price":0,"weight":160,"have":true,"wstat":"est","src":"sheet","note":"came with the stem","order":220},{"id":"grips","name":"Grips","group":"brakes","price":0,"weight":80,"have":true,"wstat":"est","src":"added","note":"","order":230},{"id":"wheelset","name":"Wheelset (stock BWR 6-speed, used)","group":"wheels","price":300,"weight":2097,"have":false,"wstat":"spec","src":"sheet","note":"front 634 g + rear 1,463 g","order":310},{"id":"tyres","name":"Tyres (Schwalbe One, pair)","group":"wheels","price":110,"weight":360,"have":false,"wstat":"spec","src":"added","note":"set price to 0 if they come with the wheels","order":320},{"id":"tubes","name":"Inner tubes (pair)","group":"wheels","price":20,"weight":170,"have":false,"wstat":"spec","src":"added","note":"Schwalbe AV4; Tubolito 68 g","order":330},{"id":"saddlepost","name":"T Line saddle + carbon seatpost","group":"seat","price":150,"weight":486,"have":true,"wstat":"spec","src":"added","note":"205 g + 281 g","order":410},{"id":"pentaclip","name":"Superlight Pentaclip","group":"seat","price":46,"weight":45,"have":false,"wstat":"est","src":"added","note":"needed for the T Line saddle","order":420},{"id":"seatclamp","name":"Seatpost clamp (Brompfication Ti)","group":"seat","price":50,"weight":21,"have":false,"wstat":"spec","src":"added","note":"stock is 63 g","order":430},{"id":"hingelevers","name":"Hinge levers (purple)","group":"small","price":30,"weight":120,"have":false,"wstat":"est","src":"sheet","note":"both hinge clamps","order":510},{"id":"hinge","name":"Rear hinge kit (spindle, bushes, bolts)","group":"small","price":10,"weight":25,"have":false,"wstat":"est","src":"sheet","note":"","order":520},{"id":"hook","name":"Fork hook (L-type)","group":"small","price":10,"weight":20,"have":false,"wstat":"est","src":"sheet","note":"","order":530},{"id":"ezwheel","name":"Eazy wheel extension","group":"small","price":20,"weight":40,"have":false,"wstat":"est","src":"sheet","note":"","order":540},{"id":"suspblock","name":"Suspension block","group":"small","price":10,"weight":20,"have":false,"wstat":"est","src":"added","note":"","order":550},{"id":"pedals","name":"Pedals (light)","group":"small","price":0,"weight":300,"have":true,"wstat":"est","src":"sheet","note":"","order":560},{"id":"mudguards","name":"Mudguards (carbon)","group":"small","price":0,"weight":200,"have":true,"wstat":"est","src":"added","note":"","order":570},{"id":"screws","name":"Titanium screws","group":"small","price":0,"weight":0,"have":true,"wstat":"est","src":"added","note":"weight already in the parts; saves about 120 g","order":580},{"id":"misc","name":"Misc","group":"small","price":100,"weight":0,"have":false,"wstat":"est","src":"sheet","note":"buffer; may already cover some added parts","order":590}]}</script>
 
 
 <section class="verdict" aria-labelledby="v-h">
@@ -501,21 +533,94 @@ tr.have td { color: var(--muted); }
 </div>
 
 <script>
-/* Parts list: records live in the artifact's db collection "parts". */
+/* Parts list. On claude.ai the rows live in the artifact's db collection "parts";
+   anywhere else (or data-store="local") they live in this browser, starting from the presets below. */
 (function () {
   var GROUPS = [["frame", "Frame & fork"], ["drive", "Drivetrain"], ["brakes", "Brakes & controls"],
                 ["wheels", "Wheels & tyres"], ["seat", "Seat"], ["small", "Small parts & accents"]];
+  var KEY = "brompton-parts-v1";
   var root = document.querySelector(".plist");
+  var mode = root.getAttribute("data-store") || "auto";
   var listEl = document.getElementById("pl-list");
   var stateEl = document.getElementById("pl-state");
-  var db = null, col = null, canWrite = true, parts = new Map(), filter = "all";
-  var rowEls = new Map(), groupEls = {}, pendingFocus = null, chains = {};
+  var msgEl = document.getElementById("pl-msg");
+  var manageEl = document.getElementById("pl-manage");
+  var ioEl = document.getElementById("pl-io");
+  var ioText = document.getElementById("pl-io-text");
+  var ioLoad = document.getElementById("pl-io-load");
+  var store = null, canWrite = true, parts = new Map(), filter = "all";
+  var rowEls = new Map(), groupEls = {}, pendingFocus = null;
+
+  var PRESETS = [];
+  try { PRESETS = JSON.parse(document.getElementById("pl-presets").textContent).parts || []; } catch (e) { PRESETS = []; }
 
   function eur(n) { return "€" + Math.round(n).toLocaleString("en-US"); }
   function grams(n) { return Math.round(n).toLocaleString("en-US") + " g"; }
   function num(v) { var n = parseFloat(String(v).replace(",", ".")); return isFinite(n) ? n : 0; }
+  function copy(o) { return JSON.parse(JSON.stringify(o)); }
+  function newId() { return "u" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function msg(t) { msgEl.textContent = t || ""; msgEl.hidden = !t; }
 
-  // Build group containers once
+  /* ---------- stores ---------- */
+  function localStore() {
+    var m = new Map(), saved = null, warned = false;
+    try { saved = JSON.parse(window.localStorage.getItem(KEY) || "null"); } catch (e) { saved = null; }
+    var rows = saved && Array.isArray(saved.parts) ? saved.parts : PRESETS;
+    rows.forEach(function (p) { if (p && p.id) m.set(p.id, copy(p)); });
+    function save() {
+      try { window.localStorage.setItem(KEY, JSON.stringify({ v: 1, parts: Array.from(m.values()) })); }
+      catch (e) {
+        if (!warned) { warned = true; msg("This browser isn't saving changes (private mode or blocked storage). They'll be gone after a reload; use Export to keep them."); }
+      }
+    }
+    return {
+      local: true,
+      start: function () { parts = m; render(); },
+      update: function (id, data) { var p = m.get(id); if (!p) return; Object.assign(p, data); save(); render(); },
+      add: function (id, data) { data.id = id; m.set(id, data); save(); render(); },
+      remove: function (id) { m.delete(id); save(); render(); },
+      all: function () { return Array.from(m.values()).map(copy); },
+      replaceAll: function (rows) { m.clear(); rows.forEach(function (p) { m.set(p.id, copy(p)); }); save(); render(); }
+    };
+  }
+
+  function dbStore(col) {
+    var chains = {};
+    function chain(id, fn) {
+      var next = (chains[id] || Promise.resolve()).then(fn).catch(onWriteError);
+      chains[id] = next;
+      return next;
+    }
+    return {
+      local: false,
+      start: function () {
+        col.onSnapshot(function (snap) {
+          var m = new Map();
+          snap.docs.forEach(function (s) { var o = s.data(); if (o) m.set(s.id, Object.assign({}, o, { id: s.id })); });
+          parts = m;
+          render();
+        }, function () { stateEl.hidden = false; stateEl.textContent = "The parts list stopped updating. Reload the page to reconnect."; });
+      },
+      update: function (id, data) { chain(id, function () { return col.doc(id).update(data); }); },
+      add: function (id, data) { chain(id, function () { return col.doc(id).set(data); }); },
+      remove: function (id) { chain(id, function () { return col.doc(id).delete(); }); },
+      all: function () { return Array.from(parts.values()).map(copy); }
+    };
+  }
+
+  function onWriteError(e) {
+    if (e && (e.code === "invalid_argument" || e.code === "not_granted" || e.code === "revoked")) {
+      canWrite = false; root.classList.add("ro");
+      msg("You can view this list but not change it.");
+      render();
+    } else if (e && e.code === "quota_exceeded") {
+      msg("The list is full. Delete a part before adding another.");
+    } else {
+      msg("A change didn't save. Check your connection and try again.");
+    }
+  }
+
+  /* ---------- UI scaffolding ---------- */
   GROUPS.forEach(function (g) {
     var sec = document.createElement("div");
     sec.className = "pgroup";
@@ -536,33 +641,13 @@ tr.have td { color: var(--muted); }
     });
   });
 
-  function write(id, data) {
-    if (!col || !canWrite) return Promise.resolve();
-    var prev = chains[id] || Promise.resolve();
-    var next = prev.then(function () { return col.doc(id).update(data); }).catch(function (e) { onWriteError(e); });
-    chains[id] = next;
-    return next;
-  }
-  function onWriteError(e) {
-    if (e && (e.code === "invalid_argument" || e.code === "not_granted" || e.code === "revoked")) {
-      canWrite = false; root.classList.add("ro");
-      stateEl.hidden = false; stateEl.textContent = "You can view this list but not change it.";
-      render();
-    } else if (e && e.code === "quota_exceeded") {
-      stateEl.hidden = false; stateEl.textContent = "The list is full. Delete a part before adding another.";
-    } else {
-      stateEl.hidden = false; stateEl.textContent = "A change didn't save. Check your connection and try again.";
-    }
-  }
-
   function addPart(group) {
-    if (!col || !canWrite) return;
+    if (!store || !canWrite) return;
     var maxOrder = 0;
     parts.forEach(function (p) { if ((p.order || 0) > maxOrder) maxOrder = p.order || 0; });
-    var ref = col.doc();
-    pendingFocus = ref.id;
-    ref.set({ name: "New part", group: group, price: 0, weight: 0, have: false, wstat: "est", src: "you", note: "", order: maxOrder + 1 })
-      .catch(onWriteError);
+    var id = newId();
+    pendingFocus = id;
+    store.add(id, { name: "New part", group: group, price: 0, weight: 0, have: false, wstat: "est", src: "you", note: "", order: maxOrder + 1 });
   }
 
   function makeRow(id) {
@@ -578,10 +663,10 @@ tr.have td { color: var(--muted); }
         pr = r.querySelector(".pin.price"), wt = r.querySelector(".pin.weight"), del = r.querySelector(".pdel");
     var uid = "p-" + id;
     chk.id = uid + "-have"; nm.id = uid + "-name"; pr.id = uid + "-price"; wt.id = uid + "-weight";
-    chk.addEventListener("change", function () { write(id, { have: chk.checked }); });
-    nm.addEventListener("change", function () { var v = nm.value.trim() || "Unnamed part"; write(id, { name: v }); });
-    pr.addEventListener("change", function () { write(id, { price: num(pr.value) }); });
-    wt.addEventListener("change", function () { write(id, { weight: num(wt.value), wstat: "weighed" }); });
+    chk.addEventListener("change", function () { store.update(id, { have: chk.checked }); });
+    nm.addEventListener("change", function () { store.update(id, { name: nm.value.trim() || "Unnamed part" }); });
+    pr.addEventListener("change", function () { store.update(id, { price: num(pr.value) }); });
+    wt.addEventListener("change", function () { store.update(id, { weight: num(wt.value), wstat: "weighed" }); });
     [nm, pr, wt].forEach(function (inp) {
       inp.addEventListener("keydown", function (e) { if (e.key === "Enter") inp.blur(); });
     });
@@ -594,7 +679,7 @@ tr.have td { color: var(--muted); }
         return;
       }
       clearTimeout(armTimer);
-      if (col && canWrite) col.doc(id).delete().catch(onWriteError);
+      if (store && canWrite) store.remove(id);
     });
     return r;
   }
@@ -625,10 +710,8 @@ tr.have td { color: var(--muted); }
     var sorted = Array.from(parts.entries()).sort(function (a, b) {
       return (a[1].order || 0) - (b[1].order || 0) || String(a[1].name).localeCompare(String(b[1].name));
     });
-    // remove deleted rows
     rowEls.forEach(function (el, id) { if (!parts.has(id)) { el.remove(); rowEls.delete(id); } });
-    var tot = 0, spent = 0, wsum = 0, have = 0, known = 0, sheet = 0, added = 0;
-    var gs = {};
+    var tot = 0, spent = 0, wsum = 0, have = 0, known = 0, sheet = 0, added = 0, gs = {};
     GROUPS.forEach(function (g) { gs[g[0]] = { ids: [], price: 0, buy: 0, w: 0 }; });
     sorted.forEach(function (e) {
       var id = e[0], p = e[1];
@@ -649,9 +732,8 @@ tr.have td { color: var(--muted); }
       var want = info.ids.map(function (id) { return rowEls.get(id); });
       var same = body.children.length === want.length && want.every(function (el, i) { return body.children[i] === el; });
       if (!same) want.forEach(function (el) { body.appendChild(el); });
-      sec.hidden = parts.size === 0 ? false : (info.ids.length === 0 && !canWrite);
       var anyVisible = want.some(function (el) { return !el.hidden; });
-      if (filter !== "all" && !anyVisible) sec.hidden = true;
+      sec.hidden = filter !== "all" ? !anyVisible : (info.ids.length === 0 && !canWrite);
       sec.querySelector(".pgsum").textContent = eur(info.price) + (info.buy ? " · " + eur(info.buy) + " to buy" : " · all owned") + " · " + grams(info.w);
     });
     var n = parts.size;
@@ -664,8 +746,8 @@ tr.have td { color: var(--muted); }
     document.getElementById("pl-weight").textContent = (wsum / 1000).toFixed(2) + " kg";
     document.getElementById("pl-weight-n").textContent = known + " of " + n + " weights from a spec or scale";
     document.getElementById("pl-bar").style.width = (n ? Math.round(have / n * 100) : 0) + "%";
-    if (n === 0) { stateEl.hidden = false; stateEl.textContent = canWrite ? "No parts yet. Add the first one in any group below." : "No parts yet."; }
-    else if (stateEl.textContent === "Loading your parts list…") stateEl.hidden = true;
+    stateEl.hidden = n !== 0;
+    if (n === 0) stateEl.textContent = canWrite ? "No parts yet. Add the first one in any group below." : "No parts yet.";
     if (pendingFocus && rowEls.get(pendingFocus)) {
       var f = rowEls.get(pendingFocus).querySelector(".pin.name");
       pendingFocus = null;
@@ -673,30 +755,56 @@ tr.have td { color: var(--muted); }
     }
   }
 
-  function noDb() {
-    stateEl.hidden = false;
-    stateEl.textContent = "The parts list needs saved data, which isn't available in this view. Open the page on claude.ai while signed in.";
-    root.classList.add("ro");
+  /* ---------- export / import / reset (browser-saved lists only) ---------- */
+  function setupManage() {
+    manageEl.hidden = false;
+    document.getElementById("pl-export").addEventListener("click", function () {
+      var text = JSON.stringify({ v: 1, parts: store.all() });
+      ioEl.hidden = false; ioLoad.hidden = true; ioText.value = text;
+      var done = function () { msg("Copied. On your other device, tap Import, paste and load."); };
+      var fallback = function () { ioText.focus(); ioText.select(); msg("Copy the text in the box, then use Import on your other device."); };
+      try { navigator.clipboard.writeText(text).then(done, fallback); } catch (e) { fallback(); }
+    });
+    document.getElementById("pl-import").addEventListener("click", function () {
+      ioEl.hidden = false; ioLoad.hidden = false; ioText.value = ""; ioText.focus();
+      msg("Paste exported text into the box, then tap Load list.");
+    });
+    ioLoad.addEventListener("click", function () {
+      var data = null;
+      try { data = JSON.parse(ioText.value); } catch (e) { data = null; }
+      var rows = data && Array.isArray(data.parts) ? data.parts.filter(function (p) { return p && p.id && p.name != null; }) : null;
+      if (!rows || !rows.length) { msg("That text isn't an exported parts list. Export it again and paste the whole text."); return; }
+      store.replaceAll(rows); ioEl.hidden = true; msg("Loaded " + rows.length + " parts.");
+    });
+    var reset = document.getElementById("pl-reset"), armT = null;
+    reset.addEventListener("click", function () {
+      if (!reset.classList.contains("armed")) {
+        reset.classList.add("armed"); reset.textContent = "Tap again to reset";
+        clearTimeout(armT); armT = setTimeout(function () { reset.classList.remove("armed"); reset.textContent = "Reset to presets"; }, 3000);
+        return;
+      }
+      clearTimeout(armT); reset.classList.remove("armed"); reset.textContent = "Reset to presets";
+      store.replaceAll(PRESETS); msg("Back to the preset list.");
+    });
+  }
+
+  function startLocal() {
+    store = localStore();
+    setupManage();
+    store.start();
   }
 
   (async function init() {
+    if (mode === "local") { startLocal(); return; }
     var d = null;
     try { d = window.claude && window.claude.use ? await window.claude.use("db") : null; } catch (e) { d = null; }
-    if (!d) { noDb(); return; }
-    db = d; col = db.collection("parts");
+    if (!d) { startLocal(); return; }
     try {
       var u = await window.claude.use("user");
       if (u) { var c = await u.can("data.write"); if (c === false) { canWrite = false; root.classList.add("ro"); } }
     } catch (e) {}
-    col.onSnapshot(function (snap) {
-      var m = new Map();
-      snap.docs.forEach(function (s) { var o = s.data(); if (o) m.set(s.id, Object.assign({}, o)); });
-      parts = m;
-      render();
-    }, function (err) {
-      stateEl.hidden = false;
-      stateEl.textContent = "The parts list stopped updating. Reload the page to reconnect.";
-    });
+    store = dbStore(d.collection("parts"));
+    store.start();
   })();
 })();
 </script>
@@ -860,5 +968,5 @@ tr.have td { color: var(--muted); }
   render();
 })();
 </script>
-
-</body></html>
+</body>
+</html>
