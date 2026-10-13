@@ -4,7 +4,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: workshop build sheet. Summary first, then a calculator (controls + live total), then reference tables. Titanium greys, anodised-blue accent, frame-yellow for "your pick". */
+/* Layout: workshop build sheet. Summary first, then a calculator (controls + live total), then reference tables and a tool list. Titanium greys, anodised-blue accent, frame-yellow for "your pick". */
 :root {
   --bg: #eef0ee;
   --surface: #ffffff;
@@ -54,11 +54,66 @@ section { display: grid; gap: 16px; min-width: 0; }
 /* Header */
 header { display: grid; gap: 14px; }
 .lede { font-size: 1.1rem; color: var(--muted); }
-.owned { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-.owned div { background: var(--surface); padding: 12px 14px; display: grid; gap: 2px; min-width: 0; }
-.owned .k { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
-.owned .v { font-family: var(--font-data); font-size: 1.05rem; }
+.owned { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.owned div { background: var(--surface); padding: 12px 14px; display: grid; gap: 2px; min-width: 0; align-content: start; }
+.owned .k { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.owned .v { font-family: var(--font-data); font-size: 1.02rem; }
 .owned .n { font-size: 0.85rem; color: var(--muted); }
+
+/* Parts list */
+.ptiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+.ptile { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; display: grid; gap: 2px; min-width: 0; }
+.ptile.hi { border-color: var(--hi); box-shadow: inset 4px 0 0 var(--hi); }
+.ptile .k { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.ptile .v { font-family: var(--font-display); font-weight: 700; font-size: 2rem; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.ptile .n { font-size: 0.82rem; color: var(--muted); }
+.pprog { height: 6px; border-radius: 3px; background: var(--sunk); overflow: hidden; }
+.pprog span { display: block; height: 100%; width: 0; background: var(--good); transition: width 0.3s ease; }
+.ptools { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; }
+.pfilter button { font: inherit; font-size: 0.9rem; padding: 6px 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 5px; cursor: pointer; }
+.pfilter button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+.pfilter button:focus-visible, .padd:focus-visible, .pdel:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pstate { color: var(--muted); }
+.plist-groups { display: grid; gap: 14px; }
+.pgroup { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.pghead { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; justify-content: space-between; padding: 10px 12px; background: var(--sunk); }
+.pghead h3 { font-size: 1.15rem; }
+.pgsum { font-family: var(--font-data); font-size: 0.8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.prow { display: grid; grid-template-columns: 30px minmax(0, 1fr) 100px 108px 34px; grid-template-areas: "chk name price weight del"; gap: 6px 8px; align-items: center; padding: 6px 12px; border-top: 1px solid var(--line); }
+.prow.have { box-shadow: inset 3px 0 0 var(--good); }
+.prow .chk { grid-area: chk; display: grid; place-items: center; }
+.prow .chk input { width: 20px; height: 20px; accent-color: var(--good); cursor: pointer; }
+.prow .nm { grid-area: name; min-width: 0; display: grid; gap: 1px; }
+.prow .pr { grid-area: price; }
+.prow .wt { grid-area: weight; }
+.prow .dl { grid-area: del; }
+.pin { font: inherit; color: var(--ink); background: transparent; border: 1px solid transparent; border-radius: 4px; padding: 4px 6px; width: 100%; min-width: 0; }
+.pin:hover { border-color: var(--line); }
+.pin:focus { outline: none; border-color: var(--accent); background: var(--bg); }
+.pin:disabled { color: var(--ink); cursor: default; }
+.pin:disabled:hover { border-color: transparent; }
+.pin.name { font-weight: 600; }
+.prow.have .pin.name { color: var(--muted); }
+.nline { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; padding-left: 7px; font-size: 0.8rem; color: var(--muted); }
+.numw { display: flex; align-items: center; gap: 2px; }
+.numw .pin { font-family: var(--font-data); font-variant-numeric: tabular-nums; text-align: right; -moz-appearance: textfield; }
+.numw .pin::-webkit-outer-spin-button, .numw .pin::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.numw .u { font-family: var(--font-data); font-size: 0.8rem; color: var(--muted); }
+.wst { font-family: var(--font-data); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0 4px; border-radius: 3px; white-space: nowrap; }
+.wst.est { color: var(--warn); border: 1px dotted currentColor; }
+.wst.spec { color: var(--accent); border: 1px solid currentColor; }
+.wst.weighed { color: var(--good); border: 1px solid currentColor; }
+.tag.add { color: var(--accent); margin-left: 0; }
+.pdel { font: inherit; font-size: 1rem; line-height: 1; width: 30px; height: 30px; border-radius: 4px; border: 1px solid transparent; background: transparent; color: var(--muted); cursor: pointer; }
+.pdel:hover { border-color: var(--line); color: var(--bad); }
+.pdel.armed { width: auto; padding: 0 6px; font-size: 0.75rem; color: var(--surface); background: var(--bad); border-color: var(--bad); }
+.prow.armed { grid-template-columns: 30px minmax(0, 1fr) 100px 108px 70px; }
+.padd { font: inherit; font-size: 0.88rem; margin: 6px 12px 10px; padding: 5px 10px; border-radius: 4px; border: 1px dashed var(--line); background: transparent; color: var(--accent); cursor: pointer; }
+.padd:hover { border-color: var(--accent); }
+.plist.ro .padd, .plist.ro .pdel { display: none; }
+@media (max-width: 600px) {
+  .prow, .prow.armed { grid-template-columns: 30px minmax(0, 1fr) minmax(0, 1fr) auto; grid-template-areas: "chk name name del" ". price weight ."; }
+}
 
 /* Verdict */
 .verdict { display: grid; gap: 12px; }
@@ -90,6 +145,14 @@ legend { font-family: var(--font-display); font-size: 1.15rem; font-weight: 600;
 .seg { display: flex; flex-wrap: wrap; gap: 6px; }
 .seg .opt { grid-template-columns: auto; padding: 8px 12px; }
 .seg .opt .dl { grid-row: auto; grid-column: 1; text-align: left; font-size: 0.78rem; }
+.mine { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
+.field { display: grid; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 5px; padding: 10px 12px; }
+.field label { font-weight: 600; font-size: 0.95rem; }
+.field .hint { font-size: 0.8rem; color: var(--muted); }
+.field .inrow { display: flex; align-items: center; gap: 6px; }
+.field input { width: 100%; font: inherit; font-family: var(--font-data); font-size: 1rem; padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); color: var(--ink); }
+.field input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.field .u { font-family: var(--font-data); color: var(--muted); font-size: 0.85rem; }
 .result { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 18px; display: grid; gap: 14px; }
 .big { font-family: var(--font-display); font-weight: 700; font-size: 3.4rem; line-height: 0.95; }
 .big span { font-size: 1.4rem; margin-left: 4px; color: var(--muted); }
@@ -125,11 +188,18 @@ th { font-family: var(--font-data); font-weight: 500; font-size: 0.72rem; text-t
 td.num { text-align: right; white-space: nowrap; }
 th.num { text-align: right; }
 tr:last-child td { border-bottom: 0; }
-td .sub { display: block; font-size: 0.82rem; color: var(--muted); }
+td .sub { display: block; font-size: 0.82rem; color: var(--muted); font-weight: 400; }
 tr.na td { color: var(--muted); }
+tr.sum td { background: var(--sunk); font-weight: 700; }
+tr.have td { color: var(--muted); }
 .tname { min-width: 170px; font-weight: 600; }
 .tnote { min-width: 220px; }
 .foot { font-size: 0.85rem; color: var(--muted); }
+.tag { font-family: var(--font-data); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--good); border: 1px solid currentColor; border-radius: 3px; padding: 0 5px; margin-left: 6px; white-space: nowrap; }
+
+/* Disc verdict */
+.callout { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; display: grid; gap: 8px; }
+.callout ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
 
 /* Checklist */
 .checks { display: grid; gap: 10px; padding: 0; margin: 0; list-style: none; }
@@ -146,7 +216,7 @@ tr.na td { color: var(--muted); }
   .result .big { font-size: 2.3rem; grid-row: span 3; }
   .result .rlabel { display: none; }
   .result .rrow { border-top: 0; padding-top: 0; font-size: 0.85rem; }
-  .result .rnote { display: none; }
+  .result .rnote, .result .rhide { display: none; }
   .plot-row, .axis { grid-template-columns: minmax(0, 120px) minmax(0, 1fr); gap: 8px; }
   .plot-row .lab { font-size: 0.8rem; }
 }
@@ -160,43 +230,62 @@ tr.na td { color: var(--muted); }
 <header>
   <div class="eyebrow">Build sheet · steel main frame · Ti rear frame · M stem</div>
   <h1>Custom Brompton Build</h1>
-  <p class="lede">Weights and prices for the wheel, gear and fork options you're weighing up, plus an estimate of the finished bike. Weights in grams unless noted; prices in euros.</p>
-  <div class="owned" aria-label="Parts you already have">
-    <div><span class="k">Main frame · steel</span><span class="v">≈ 2,100 g</span><span class="n">€399 listing</span></div>
-    <div><span class="k">M-type stem + cables</span><span class="v">≈ 810 g</span><span class="n">€150 listing</span></div>
-    <div><span class="k">Rear frame · titanium</span><span class="v">461 g</span><span class="n">€150 · 294 g lighter than steel</span></div>
-    <div><span class="k">Fork · planned</span><span class="v">RIRO carbon</span><span class="n">€120.50 · weight not listed</span></div>
-  </div>
+  <p class="lede">Your parts list with cost and weight, then the options compared: wheels and gears, fork, brakes and tools. Weights in grams unless noted; prices in euros.</p>
 </header>
+
+<section aria-labelledby="pl-h" class="plist">
+  <div class="sec-head">
+    <h2 id="pl-h">Parts list</h2>
+    <p class="small">Tick a part when you have it. Prices and weights are editable; typing a weight marks it as weighed. Changes are saved.</p>
+  </div>
+  <div class="ptiles" aria-live="polite">
+    <div class="ptile hi"><span class="k">Still to buy</span><span class="v" id="pl-tobuy">—</span><span class="n" id="pl-tobuy-n">&nbsp;</span></div>
+    <div class="ptile"><span class="k">Spent / owned</span><span class="v" id="pl-spent">—</span><span class="n" id="pl-spent-n">&nbsp;</span></div>
+    <div class="ptile"><span class="k">Whole build</span><span class="v" id="pl-total">—</span><span class="n" id="pl-total-n">&nbsp;</span></div>
+    <div class="ptile"><span class="k">Bike weight</span><span class="v" id="pl-weight">—</span><span class="n" id="pl-weight-n">&nbsp;</span></div>
+  </div>
+  <div class="pprog" aria-hidden="true"><span id="pl-bar"></span></div>
+  <div class="ptools">
+    <div class="seg pfilter" role="group" aria-label="Show">
+      <button type="button" data-f="all" aria-pressed="true">All</button>
+      <button type="button" data-f="buy" aria-pressed="false">To buy</button>
+      <button type="button" data-f="have" aria-pressed="false">Have</button>
+    </div>
+    <span class="small" id="pl-legend"><span class="wst est">est.</span> estimate · <span class="wst spec">spec</span> published figure · <span class="wst weighed">weighed</span> your number · <span class="tag add">added</span> not on your sheet</span>
+  </div>
+  <p class="pstate" id="pl-state">Loading your parts list…</p>
+  <div id="pl-list" class="plist-groups"></div>
+</section>
+
 
 <section class="verdict" aria-labelledby="v-h">
   <div class="sec-head">
     <h2 id="v-h">Recommendation</h2>
-    <p class="small">Bike weights assume Marathon Racer tyres, stock seatpost and saddle, no mudguards or rack. "Light parts" = Schwalbe One tyres + titanium seatpost (−325 g).</p>
+    <p class="small">Weights below include your 240 g fork, Ti screws, light pedals and carbon mudguards, plus Schwalbe One tyres and a Ti seatpost. Change any of it in the calculator.</p>
   </div>
   <div class="pick top">
-    <div class="w">10.4<small>10.0 light</small></div>
-    <b>You use 1st and 6th on your M6L: Brompton BWR 6-speed</b>
-    <p>Most range (302%) of anything that fits your rear frame, and every part is stock Brompton, so any dealer can service it. Adding a third rear cog later gives 9 speeds (≈350%) for about 20 g. If you'd strip your current M6L, its rear wheel and shifters are exactly these parts.</p>
+    <div class="w" id="pick1">9.8<small>kg</small></div>
+    <b>You use 1st and 6th on your M6L: BWR 6-speed</b>
+    <p>Most range (302%) of anything that fits your rear frame, and the hub is a stock Brompton part any dealer can service. Building it into a BrommiePlus wheelset barely changes the weight, because the hub is most of it. A third rear cog later gives 9 speeds (≈350%) for about 20 g.</p>
   </div>
   <div class="pick">
-    <div class="w">9.6<small>9.3 light</small></div>
+    <div class="w" id="pick2">9.2<small>kg</small></div>
     <b>You mostly ride the middle gears: Brompton 2-speed + Superlight front wheel</b>
-    <p>The lightest build that is still all-stock and close to maintenance-free. About 0.75 kg lighter than the BWR. Range is only ≈135%, which is flat-city gearing.</p>
+    <p>The lightest build that is still all-stock and close to maintenance-free, about 0.7 kg under the BWR. Range is only ≈135%, which is flat-city gearing.</p>
   </div>
   <div class="flags">
-    <div class="flag"><span class="chip warn">5-speed derailleur</span><span>The BrommiePlus Hubsmith wheelsets are the lightest proper option (≈9.4–9.5 kg), but a 5-cog cassette only gives ≈190% range, less than the Sturmey 5-speed or BWR, and the derailleur parts are third-party pieces made mainly for the newer P/T Line frame. If you go this way, take the R002 set (120 kg rated) over the Kinlin (85 kg limit).</span></div>
-    <div class="flag"><span class="chip warn">Sturmey 5-speed</span><span>One shifter and 256% range, but about as heavy as the BWR, and BrommiePlus itself warns it is hard to keep adjusted. No real gain over the BWR for your goals.</span></div>
-    <div class="flag"><span class="chip bad">Carbon wheels</span><span>About the same weight as the Kinlin set (estimated; the weight isn't listed), but with Brompton rim calipers braking on a carbon track. Poor trade for a daily bike.</span></div>
-    <div class="flag"><span class="chip bad">Carbon fork</span><span>A Brompton titanium fork weighs about the same (260–350 g). Titanium bends before it fails; an unbranded carbon fork can snap without warning. If you keep the carbon fork, see the checklist below.</span></div>
+    <div class="flag"><span class="chip info">BrommiePlus 3×2</span><span>Same Sturmey BWR hub and same Brompton 2-speed parts as stock, so not meaningfully lighter. Lighter rims and front hub may save 50–100 g. Make sure the hub is the BWR (takes two sprockets); a plain Sturmey 3-speed only takes one.</span></div>
+    <div class="flag"><span class="chip warn">Carbon fork</span><span>At 240 g it is 20–110 g lighter than a Brompton Ti fork. Good reviews help. It is still the one part where a crack means a crash, so torque it correctly, check it after any knock, and confirm the 349 brake reach before fitting.</span></div>
+    <div class="flag"><span class="chip warn">Front disc</span><span>Works, but adds ≈125 g and ≈€200–300 for a bike you want light. Worth it only if you ride a lot in rain or on long descents. Details below.</span></div>
+    <div class="flag"><span class="chip warn">5-speed derailleur</span><span>The BrommiePlus Hubsmith wheelsets are the lightest proper option, but a 5-cog cassette only gives ≈190% range and the derailleur parts are mainly made for the newer P/T Line frame.</span></div>
     <div class="flag"><span class="chip info">Not an option</span><span>Brompton's own 4- and 12-speed systems need the newer Advance rear frame. Your titanium rear frame is the older Superlight/C Line type.</span></div>
   </div>
 </section>
 
 <section aria-labelledby="c-h">
   <div class="sec-head">
-    <h2 id="c-h">Build calculator</h2>
-    <p class="small">Pick a combination to see the finished-bike estimate. Dotted figures are estimates; everything else comes from a published spec or listing.</p>
+    <h2 id="c-h">Gear option explorer</h2>
+    <p class="small">Compare wheel, gear, fork and brake options with the rest of the build held fixed. Dotted figures are estimates; everything else comes from a published spec or listing. This uses a factory Brompton as its reference, so it comes out a little lighter than the parts list above, which adds up every part.</p>
   </div>
   <div class="calc">
     <div class="controls">
@@ -209,8 +298,13 @@ tr.na td { color: var(--muted); }
         <div class="seg" id="fork-opts"></div>
       </fieldset>
       <fieldset>
-        <legend>Tyres</legend>
+        <legend>Front brake</legend>
+        <div class="seg" id="brake-opts"></div>
+      </fieldset>
+      <fieldset>
+        <legend>Tyres &amp; tubes</legend>
         <div class="seg" id="tyre-opts"></div>
+        <div class="seg" id="tube-opts"></div>
       </fieldset>
       <fieldset>
         <legend>Seatpost</legend>
@@ -221,26 +315,32 @@ tr.na td { color: var(--muted); }
         <div class="seg" id="guard-opts"></div>
       </fieldset>
       <fieldset>
-        <legend>Small parts</legend>
-        <div class="seg" id="extra-opts"></div>
+        <legend>Your parts</legend>
+        <div class="mine">
+          <div class="field"><label for="in-fork">Carbon fork</label><div class="inrow"><input id="in-fork" type="number" inputmode="numeric" min="100" max="900" step="5" value="240"><span class="u">g</span></div><span class="hint">Brompton Ti ≈ 300, steel ≈ 560</span></div>
+          <div class="field"><label for="in-pedals">Pedals, pair</label><div class="inrow"><input id="in-pedals" type="number" inputmode="numeric" min="100" max="900" step="5" value="300"><span class="u">g</span></div><span class="hint">Stock ≈ 470 (folding left 288)</span></div>
+          <div class="field"><label for="in-guards">Carbon mudguards, set</label><div class="inrow"><input id="in-guards" type="number" inputmode="numeric" min="0" max="900" step="5" value="200"><span class="u">g</span></div><span class="hint">With stays and fittings</span></div>
+          <div class="field"><label for="in-ti">Ti screws save</label><div class="inrow"><input id="in-ti" type="number" inputmode="numeric" min="0" max="500" step="5" value="120"><span class="u">g</span></div><span class="hint">Full set, vs stock steel</span></div>
+          <div class="field"><label for="in-saddle">Saddle</label><div class="inrow"><input id="in-saddle" type="number" inputmode="numeric" min="100" max="700" step="5" value="378"><span class="u">g</span></div><span class="hint">Stock Brompton 378</span></div>
+        </div>
       </fieldset>
     </div>
     <aside class="result" aria-live="polite">
       <div class="rlabel eyebrow">Finished bike, estimated</div>
-      <div class="big" id="r-weight">10.0<span>kg</span></div>
-      <div class="rrow"><span>Likely range</span><span class="mono" id="r-range">9.7–10.4 kg</span></div>
+      <div class="big" id="r-weight">9.8<span>kg</span></div>
+      <div class="rrow"><span>Likely range</span><span class="mono" id="r-range">9.4–10.3 kg</span></div>
       <div class="rrow"><span>Gears / range</span><span class="mono" id="r-gears">6 · 302%</span></div>
-      <div class="rrow"><span>Parts cost</span><span class="mono" id="r-cost">≈ €1040</span></div>
-      <div class="rrow"><span>Reliability</span><span id="r-rel"></span></div>
-      <p class="small rnote">Cost covers wheels, gear parts, fork, tyres, seatpost and the options above, delivered to Austria. Frame parts you own and common parts (cranks, brakes, saddle, chain) aren't included.</p>
+      <div class="rrow"><span>Still to buy</span><span class="mono" id="r-cost">≈ €1015</span></div>
+      <div class="rrow rhide"><span>Reliability</span><span id="r-rel"></span></div>
+      <p class="small rnote">"Still to buy" covers wheels, gear parts, fork, front brake, tyres, tubes, seatpost and Ti stays, delivered to Austria. Parts you own and common parts (cranks, rear brake, chain) aren't included.</p>
     </aside>
   </div>
 </section>
 
 <section aria-labelledby="p-h">
   <div class="sec-head">
-    <h2 id="p-h">All gear options at your current settings</h2>
-    <p class="small">Each dot is the whole bike with the fork, tyres and other choices above. Whiskers show how unsure each option's own figure is; the shared ±0.25 kg base error moves every dot together, so the gaps between dots are more reliable than the absolute numbers.</p>
+    <h2 id="p-h">All gear options with your other choices</h2>
+    <p class="small">Each dot is the whole bike with the fork, brake, tyres and parts set above. Whiskers show how unsure each option's own figure is; the shared base error moves every dot together, so the gaps between dots are more reliable than the absolute numbers.</p>
   </div>
   <div class="plot" id="plot"></div>
 </section>
@@ -252,12 +352,33 @@ tr.na td { color: var(--muted); }
   <div class="tbl">
     <table>
       <thead>
-        <tr><th>Option</th><th class="num">Price, landed</th><th class="num">Wheelset</th><th class="num">Δ vs stock 2-sp</th><th class="num">Bike</th><th class="num">Light parts</th><th>Gears</th><th>Reliability</th><th>Notes</th></tr>
+        <tr><th>Option</th><th class="num">Price, landed</th><th class="num">Wheelset</th><th class="num">Δ vs stock 2-sp</th><th class="num">Reference bike</th><th class="num">Your build</th><th>Gears</th><th>Reliability</th><th>Notes</th></tr>
       </thead>
       <tbody id="cmp-body"></tbody>
     </table>
   </div>
-  <p class="foot">Δ is the change against stock Brompton 2-speed wheels and gear parts (front 634 g + rear 800 g). Bike = reference 9.70 kg + Δ, with a carbon or Ti fork, Marathon Racer tyres, stock seatpost, no mudguards. Taiwan imports: list price + ≈€40 shipping (est.), then up to 4.7% EU duty and 20% Austrian import VAT. Brompton part prices are UK (SJS/Condor) prices at ≈1.15 €/£; Austrian dealers may differ.</p>
+  <p class="foot">Δ is the change against stock Brompton 2-speed wheels and gear parts (front 634 g + rear 800 g). Reference bike = 9.70 kg + Δ: Ti fork, stock pedals, saddle and screws, Marathon Racer tyres, no mudguards. "Your build" applies everything else you've set in the calculator. Taiwan imports: list price + ≈€40 shipping (est.), then up to 4.7% EU duty and 20% Austrian import VAT. Brompton part prices are UK (SJS/Condor) prices at ≈1.15 €/£.</p>
+</section>
+
+<section aria-labelledby="d-h">
+  <div class="sec-head">
+    <h2 id="d-h">Front disc brake</h2>
+    <p>Your fork's disc mount makes it possible. For a bike built to be light it's hard to justify: it adds about 125 g and €200–300, and puts all the front braking load through one carbon fork leg. It makes sense if you often ride in the rain or down long hills, where Brompton rim brakes are weakest, or if you want a front rim without a brake track. Good pads on the stock caliper close much of the wet-weather gap for €25.</p>
+  </div>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>You'd need</th><th class="num">Weight</th><th class="num">Price</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td class="tname">Disc mount on the fork</td><td class="num">—</td><td class="num">—</td><td class="tnote">Check post or flat mount and the rotor sizes the fork allows. It must be the version sold as disc-rated.</td></tr>
+        <tr><td class="tname">Front wheel with 74 mm disc hub</td><td class="num"><span class="est" title="Estimate: disc hub vs rim-brake hub">≈ +50 g</span></td><td class="num"><span class="est" title="Estimate">≈ €150–250</span></td><td class="tnote">Brompton front spacing is 74 mm, so a normal 100 mm disc hub won't fit. BrommiePlus builds custom wheels; ask for a 74 mm disc hub.</td></tr>
+        <tr><td class="tname">Mechanical road caliper<span class="sub">e.g. TRP Spyre</span></td><td class="num">154 g</td><td class="num">€65</td><td class="tnote">Works with road (short-pull) levers like Brompton's. A hydraulic brake would mean a new lever.</td></tr>
+        <tr><td class="tname">140 mm rotor + adapter</td><td class="num"><span class="est" title="Estimate">≈ 100–130 g</span></td><td class="num"><span class="est" title="Estimate">≈ €30–50</span></td><td class="tnote">On a 16" wheel the smallest rotor the fork allows is plenty.</td></tr>
+        <tr><td class="tname">Compressionless housing</td><td class="num">—</td><td class="num"><span class="est" title="Estimate">≈ €15</span></td><td class="tnote">Gives a firmer lever with cable discs; route it so the fold doesn't kink it.</td></tr>
+        <tr><td class="tname">Remove: Brompton front caliper</td><td class="num">−204 g</td><td class="num">—</td><td class="tnote">Its rear twin stays on the Ti rear frame, which is rim-brake only.</td></tr>
+        <tr class="sum"><td>Net change</td><td class="num"><span class="est" title="Estimate">≈ +125 g</span></td><td class="num"><span class="est" title="Estimate">≈ €200–300</span></td><td>Also check the rotor clears the rear frame and your carbon mudguard when folded, and won't get bent when the bike is carried.</td></tr>
+      </tbody>
+    </table>
+  </div>
 </section>
 
 <section aria-labelledby="f-h">
@@ -268,12 +389,12 @@ tr.na td { color: var(--muted); }
     <table>
       <thead><tr><th>Part</th><th class="num">Weight</th><th class="num">Price</th><th>Notes</th></tr></thead>
       <tbody>
-        <tr><td class="tname">Main frame, steel (yours)</td><td class="num">≈ 2,100 g</td><td class="num">€399</td><td class="tnote">Mk4-era figure. A Chinese Ti clone main frame saves about 1 kg but isn't a Brompton part.</td></tr>
-        <tr><td class="tname">M-type stem, steel (yours)</td><td class="num">≈ 810 g</td><td class="num">€150</td><td class="tnote">M and P stems are the lightest Brompton steel stems; S ≈ 880 g, H ≈ 910 g.</td></tr>
-        <tr><td class="tname">Rear frame, titanium (yours)</td><td class="num">461 g</td><td class="num">€150</td><td class="tnote">Steel version 755 g. Superlight/C Line type: fits 1/2-speed, BWR and Sturmey hubs; not the Advance frame needed for Brompton 4/12-speed.</td></tr>
+        <tr><td class="tname">Main frame, steel <span class="tag">have</span></td><td class="num">≈ 2,100 g</td><td class="num">€399</td><td class="tnote">Mk4-era figure.</td></tr>
+        <tr><td class="tname">M-type stem, steel <span class="tag">have</span></td><td class="num">≈ 810 g</td><td class="num">€150</td><td class="tnote">M and P stems are the lightest Brompton steel stems; S ≈ 880 g, H ≈ 910 g.</td></tr>
+        <tr><td class="tname">Rear frame, titanium <span class="tag">have</span></td><td class="num">461 g</td><td class="num">€150</td><td class="tnote">Steel version 755 g. Superlight/C Line type: fits 1/2-speed, BWR and Sturmey hubs; rim brake only.</td></tr>
+        <tr><td class="tname">Fork, AliExpress carbon</td><td class="num">240 g</td><td class="num">€120.50 + import</td><td class="tnote">Lightest option. Confirm the brake bridge suits 349 rims and the brake-bolt hole fits the Brompton caliper's recessed nut (8 mm).</td></tr>
+        <tr><td class="tname">Fork, Brompton titanium</td><td class="num">260–350 g</td><td class="num"><span class="est" title="Estimate, not checked">≈ €250–350</span></td><td class="tnote">Sources disagree on the exact weight.</td></tr>
         <tr><td class="tname">Fork, Brompton steel</td><td class="num">560–565 g</td><td class="num"><span class="est" title="Estimate, not checked">≈ €80</span></td><td class="tnote">Heaviest, cheapest, most forgiving.</td></tr>
-        <tr><td class="tname">Fork, titanium</td><td class="num">260–350 g</td><td class="num"><span class="est" title="Estimate, not checked">≈ €250–350</span></td><td class="tnote">Brompton Superlight fork; sources disagree on the exact weight. Aftermarket Ti forks run a little heavier.</td></tr>
-        <tr><td class="tname">Fork, RIRO carbon (AliExpress)</td><td class="num"><span class="est" title="Not stated in the listing; typical for this kind of fork">≈ 300–350 g</span></td><td class="num">€120.50 + import</td><td class="tnote">No real saving over Ti. Order the caliper ("C") version, not disc.</td></tr>
       </tbody>
     </table>
   </div>
@@ -282,19 +403,46 @@ tr.na td { color: var(--muted); }
 <section aria-labelledby="o-h">
   <div class="sec-head">
     <h2 id="o-h">Other parts worth changing</h2>
-    <p class="small">Ordered by weight saved per euro, with reliability kept in mind.</p>
+    <p class="small">Ordered by weight saved per euro. Parts you already have are listed for reference.</p>
   </div>
   <div class="tbl">
     <table>
-      <thead><tr><th>Upgrade</th><th class="num">Saves</th><th class="num">Price</th><th>Reliability note</th></tr></thead>
+      <thead><tr><th>Upgrade</th><th class="num">Saves</th><th class="num">Price</th><th>Note</th></tr></thead>
       <tbody>
-        <tr><td class="tname">Schwalbe One 35-349 tyres<span class="sub">instead of Marathon Racer (280 g)</span></td><td class="num">≈ 200 g/pair</td><td class="num"><span class="est" title="Estimate">≈ €110/pair</span></td><td class="tnote">180 g each, faster rolling. Less puncture protection than Marathon Racer; fine for city riding.</td></tr>
-        <tr><td class="tname">Superlight front wheel<span class="sub">Brompton, sealed bearings, 570 g</span></td><td class="num">64 g</td><td class="num">≈ €145</td><td class="tnote">Already assumed in the Brompton options above. SJS's Jtek/CR18 build is 530 g (−104 g).</td></tr>
+        <tr><td class="tname">Schwalbe One 35-349 tyres<span class="sub">instead of Marathon Racer (280 g)</span></td><td class="num">≈ 200 g/pair</td><td class="num"><span class="est" title="Estimate">≈ €110/pair</span></td><td class="tnote">180 g each, faster rolling, less puncture protection.</td></tr>
+        <tr><td class="tname">Light inner tubes<span class="sub">Tubolito 34 g vs Schwalbe AV4 85 g</span></td><td class="num">≈ 100 g/pair</td><td class="num">≈ €58</td><td class="tnote">Check they're rated for rim brakes; long descents heat the rim.</td></tr>
+        <tr><td class="tname">Light saddle<span class="sub">vs stock 378 g</span></td><td class="num">80–170 g</td><td class="num">€55–150</td><td class="tnote">Selle Italia Flite saves ≈80 g; Brompton Superlight carbon saddle is 205 g.</td></tr>
         <tr><td class="tname">Titanium seatpost<span class="sub">Brompfication, Pentaclip version</span></td><td class="num">125 g</td><td class="num">≈ €160</td><td class="tnote">The all-Ti yoke version saves 185 g (100 kg rider limit).</td></tr>
-        <tr><td class="tname">TPU inner tubes<span class="sub">instead of Schwalbe AV4 (85 g each)</span></td><td class="num"><span class="est" title="Estimate">≈ 100 g/pair</span></td><td class="num"><span class="est" title="Estimate">≈ €40</span></td><td class="tnote">Check they're rated for rim brakes; long descents heat the rim.</td></tr>
-        <tr><td class="tname">Lighter saddle</td><td class="num"><span class="est" title="Estimate">≈ 150 g</span></td><td class="num"><span class="est" title="Estimate">€50–120</span></td><td class="tnote">Comfort matters more than grams here.</td></tr>
-        <tr><td class="tname">Titanium bolts &amp; front axle</td><td class="num"><span class="est" title="Estimate for a set">≈ 50–80 g</span></td><td class="num"><span class="est" title="Estimate">€60–100</span></td><td class="tnote">Ti front axle −33 g, main stem bolt −13 g. Low risk, small gain.</td></tr>
-        <tr><td class="tname">Brake pads</td><td class="num">—</td><td class="num"><span class="est" title="Estimate">≈ €25</span></td><td class="tnote">Keep Brompton calipers; good pads (e.g. SwissStop) do more for safety than any weight part.</td></tr>
+        <tr><td class="tname">Superlight front wheel</td><td class="num">64 g</td><td class="num">≈ €145</td><td class="tnote">Already assumed in the Brompton options. SJS Jtek/CR18 build is 530 g (−104 g).</td></tr>
+        <tr><td class="tname">Titanium mudguard stays</td><td class="num"><span class="est" title="Estimate; Brompton doesn't publish the saving">≈ 20–40 g</span></td><td class="num">≈ €25–50</td><td class="tnote">Brompton's Ti front stay kit is ≈70 g. Small gain; fine if you like the look.</td></tr>
+        <tr><td class="tname">Ti mudguard anchor plates</td><td class="num">4.9 g</td><td class="num">≈ €31</td><td class="tnote">Not worth it: about €6 per gram.</td></tr>
+        <tr class="have"><td class="tname">Titanium screws <span class="tag">have</span></td><td class="num"><span class="est" title="Estimate for a full set">≈ 100–150 g</span></td><td class="num">—</td><td class="tnote">Use titanium anti-seize on every thread.</td></tr>
+        <tr class="have"><td class="tname">Light pedals <span class="tag">have</span></td><td class="num">vs ≈470 g stock</td><td class="num">—</td><td class="tnote">Enter their weight in the calculator.</td></tr>
+        <tr class="have"><td class="tname">Carbon mudguards <span class="tag">have</span></td><td class="num">—</td><td class="num">—</td><td class="tnote">Enter their weight in the calculator.</td></tr>
+        <tr><td class="tname">Brake pads</td><td class="num">—</td><td class="num"><span class="est" title="Estimate">≈ €25</span></td><td class="tnote">Good pads (e.g. SwissStop) do more for safety than any weight part.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section aria-labelledby="w-h">
+  <div class="sec-head">
+    <h2 id="w-h">Tools for the build</h2>
+    <p class="small">Fitting the titanium rear frame is easy if your main frame's hinge tube already has its bushes fitted and reamed. If they're missing or worn, that step needs Brompton's reamer and is a dealer job.</p>
+  </div>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Job</th><th>Tools &amp; supplies</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td class="tname">Rear frame onto main frame</td><td class="tnote">5/32" hex bit (a 4 mm key fits tightly), torque wrench, low-strength threadlocker (Loctite 221), grease, new hinge bolts and nylon washers</td><td class="tnote">Grease the bushes, washers on both sides, threadlock the bolts, 10 Nm. The frame should swing under its own weight with no play. Brompton's bush kit (spindle, bushes, washers, bolts) is ≈£27.</td></tr>
+        <tr><td class="tname">Hinge bushes, only if needed</td><td class="tnote">7/16" UNF tap and drift to remove, press, Brompton reamer QRHREAM</td><td class="tnote">Ream no more than 15 mm into the tube from each side; the spindle should push through with a thumb.</td></tr>
+        <tr><td class="tname">Fork and headset</td><td class="tnote">Crown race setter, two headset spanners (1 1/8" threaded; usually 36 mm, measure yours), headset press if the cups aren't fitted, grease</td><td class="tnote">Use a proper setter on the carbon crown, never a hammer and drift. A threaded steerer can't be shortened, so the fork's thread length must suit the Brompton head tube.</td></tr>
+        <tr><td class="tname">Stem, hinges, suspension block, brakes</td><td class="tnote">Ball-end hex keys 2–10 mm, cable cutter, torque wrench</td><td class="tnote">A cable cutter that cuts housing cleanly matters more than any special tool.</td></tr>
+        <tr><td class="tname">Bottom bracket and cranks</td><td class="tnote">Splined cartridge BB tool (check your BB), square-taper crank puller, 8 mm hex or 14 mm socket</td><td class="tnote">Skip if the cranks come pre-fitted.</td></tr>
+        <tr><td class="tname">Wheels, chain, gears</td><td class="tnote">15 mm spanner for axle nuts, chain tool, 3/32" chain</td><td class="tnote">The BWR indicator chain is adjusted by hand.</td></tr>
+        <tr><td class="tname">Pedals</td><td class="tnote">15 mm pedal spanner or 6/8 mm hex, depending on your pedals</td><td class="tnote">Left pedal is reverse thread.</td></tr>
+        <tr><td class="tname">Titanium screws everywhere</td><td class="tnote">Titanium anti-seize paste; threadlocker only where Brompton specifies it</td><td class="tnote">Ti threads gall without paste. Ti and carbon both need a torque wrench, not feel.</td></tr>
+        <tr><td class="tname">Front disc, if you go that way</td><td class="tnote">T25 Torx for rotor bolts, 5 mm hex, cable cutter</td><td class="tnote">Center the caliper with the lever pulled, then tighten.</td></tr>
       </tbody>
     </table>
   </div>
@@ -303,36 +451,45 @@ tr.na td { color: var(--muted); }
 <section aria-labelledby="k-h">
   <div class="sec-head"><h2 id="k-h">Before you order</h2></div>
   <ul class="checks">
-    <li><span class="box"></span><span><b>Carbon fork fit.</b> The RIRO listing mentions 355 as well as 349. Ask the seller where the brake bridge sits: if it's placed for 355 rims, a Brompton caliper may not reach a 349 rim. Also confirm steerer length and thread match your main frame's headset, and that the fold hook and mudguard mounts are there.</span></li>
-    <li><span class="box"></span><span><b>Derailleur on the old rear frame.</b> Most 5–7-speed Brompton derailleur kits are made for the P/T Line Advance frame and fit a C Line frame "after modification". Ask BrommiePlus which hanger and derailleur fit a Superlight Ti rear frame before buying a Hubsmith wheelset.</span></li>
-    <li><span class="box"></span><span><b>Chain tensioner type.</b> BWR and 2-speed need the derailleur-version tensioner and chain pusher; the Sturmey 5-speed needs the non-derailleur tensioner.</span></li>
-    <li><span class="box"></span><span><b>Rider weight.</b> The Kinlin wheelset is rated for riders under 85 kg; the R002 set passed ISO tests at 120 kg.</span></li>
-    <li><span class="box"></span><span><b>Import costs.</b> BrommiePlus ships from Taiwan: expect 20% import VAT plus up to 4.7% duty on top of their price. AliExpress shows VAT included but warns that import charges still apply.</span></li>
-    <li><span class="box"></span><span><b>Weigh as you go.</b> Put each part on a kitchen scale when it arrives and replace the estimates here with real numbers; the fork and carbon wheels have no published weight.</span></li>
+    <li><span class="box"></span><span><b>Carbon fork, rim brake.</b> The listing mentions 355 as well as 349. Ask the seller whether a Brompton caliper reaches a 349 rim, and check the caliper hole takes Brompton's 8 mm recessed nut. Also confirm steerer thread length and the fold hook mount.</span></li>
+    <li><span class="box"></span><span><b>BrommiePlus 3×2 wheelset.</b> Confirm the rear hub is the BWR with the two-sprocket driver. You still need Brompton's derailleur-version chain tensioner, chain pusher and left shifter.</span></li>
+    <li><span class="box"></span><span><b>Hinge bushes.</b> Push the spindle through your main frame's hinge tube. If it's missing bushes or rattles, have a dealer fit and ream them before you fit the rear frame.</span></li>
+    <li><span class="box"></span><span><b>Derailleur on the old rear frame.</b> If you pick a 5-speed derailleur set, ask BrommiePlus which hanger and derailleur fit a Superlight Ti rear frame.</span></li>
+    <li><span class="box"></span><span><b>Import costs.</b> BrommiePlus ships from Taiwan: expect 20% import VAT plus up to 4.7% duty. AliExpress shows VAT included but warns that import charges still apply.</span></li>
+    <li><span class="box"></span><span><b>Weigh as you go.</b> Put each part on a kitchen scale and update the calculator.</span></li>
   </ul>
 </section>
 
 <section aria-labelledby="m-h">
   <div class="sec-head">
     <h2 id="m-h">How the weights are estimated</h2>
-    <p>The reference is a factory Brompton M2E-X: steel main frame and M stem, titanium fork and rear frame, 2-speed, no mudguards or rack, reported at about 9.7 kg. Your frame matches it part for part, so each option is added as a change against that bike's stock wheels and gear parts. Two other factory bikes agree with that reference: the S6E-X based CHPT3 edition at 10.3 kg with light tyres, and the gap between Brompton's 2-speed and 6-speed systems of about 0.73 kg.</p>
+    <p>The reference is a factory Brompton M2E-X: steel main frame and M stem, titanium fork and rear frame, 2-speed, no mudguards or rack, reported at about 9.7 kg. Your frame matches it part for part, so each option is added as a change against that bike's stock parts. Two other factory figures agree with it: the S6E-X based CHPT3 edition at 10.3 kg, and a gap of about 0.73 kg between Brompton's 2-speed and 6-speed systems.</p>
   </div>
   <ol class="sources">
     <li><a href="https://www.bikeforums.net/20728806-post9.html" target="_blank" rel="noopener">BikeForums: Brompton frame, fork, stem weights; M2E-X ≈ 9.7 kg</a></li>
     <li><a href="https://www.cyclechat.net/threads/does-anyone-know-the-weights-for-the-standard-frame-fork-and-rear-triangle.212009/" target="_blank" rel="noopener">CycleChat: Brompton weights list (fork steel 565 g, Ti 350 g)</a></li>
-    <li><a href="https://sjscycles.co.uk/brompton-spares-accessories/brompton-titanium-rear-frame-triangle-raw-finish" target="_blank" rel="noopener">SJS: Brompton Ti rear frame 461 g vs steel 755 g; C Line fit</a></li>
+    <li><a href="https://sjscycles.co.uk/brompton-spares-accessories/brompton-titanium-rear-frame-triangle-raw-finish" target="_blank" rel="noopener">SJS: Ti rear frame 461 g vs steel 755 g</a></li>
     <li><a href="https://www.sjscycles.co.uk/16-x-1-3-8-brompton-3-spd-rear-wheel-brompton-wide-range-ss-spokes-qrw3ss-bwr-prod19457" target="_blank" rel="noopener">SJS: BWR 6-speed rear wheel, 1,463 g, £235</a></li>
-    <li><a href="https://sjscycles.co.uk/wheelswheels-rear/16-x-1-38-brompton-2spd-rear-wheel-stainless-steel-double-butted-spokes-black" target="_blank" rel="noopener">SJS: 1/2-speed rear wheel, 800 g, £175</a></li>
-    <li><a href="https://sjscycles.co.uk/wheelswheels-front/16-x-1-38-brompton-front-wheel-superlight-black-qfwssslbk" target="_blank" rel="noopener">SJS: Superlight front wheel, 570 g, £125</a></li>
+    <li><a href="https://www.sjscycles.co.uk/wheelsbrompton-wheels/16-349-sjsc-for-brompton-rear-wheel-28h-with-bwr-3-speed-hub-sun-cr18-rim-black" target="_blank" rel="noopener">SJS: aftermarket BWR rear wheel, about the same weight as stock</a></li>
+    <li><a href="https://sjscycles.co.uk/wheelswheels-rear/16-x-1-38-brompton-2spd-rear-wheel-stainless-steel-double-butted-spokes-black" target="_blank" rel="noopener">SJS: 1/2-speed rear wheel, 800 g</a></li>
+    <li><a href="https://sjscycles.co.uk/wheelswheels-front/16-x-1-38-brompton-front-wheel-superlight-black-qfwssslbk" target="_blank" rel="noopener">SJS: Superlight front wheel, 570 g</a></li>
     <li><a href="https://cycling-intelligence.com/2011/02/19/my-bikes-i-the-brompton/" target="_blank" rel="noopener">Cycling Intelligence: 2-speed +188 g, 6-speed +920 g</a></li>
     <li><a href="https://www.bikeradar.com/reviews/bikes/folding-bikes/brompton-chpt3-edition-review" target="_blank" rel="noopener">BikeRadar: CHPT3 (S6E-X) 10.3 kg</a></li>
     <li><a href="https://en.wikipedia.org/wiki/Comparison_of_hub_gears" target="_blank" rel="noopener">Wikipedia: BWR hub 940 g, 302% range</a></li>
-    <li><a href="https://m.bikeforums.net/showthread.php?p=21064496" target="_blank" rel="noopener">BikeForums: Sturmey S-RF5(W) on a Brompton, weight and adjustment</a></li>
+    <li><a href="https://m.bikeforums.net/showthread.php?p=21064496" target="_blank" rel="noopener">BikeForums: Sturmey S-RF5(W) on a Brompton</a></li>
     <li><a href="https://be.brompton.com/support/knowledge/12-speed" target="_blank" rel="noopener">Brompton: 12-speed needs the Advance rear frame</a></li>
-    <li><a href="https://velorution.com/blogs/gear/brompton-c-vs-p" target="_blank" rel="noopener">Velorution: current C Line / P Line weights</a></li>
+    <li><a href="https://trade.brompton.com/Uploads/QPart/QPart-Datasheets/ds-rhin.pdf" target="_blank" rel="noopener">Brompton datasheet: rear hinge bushes and spindle</a></li>
+    <li><a href="https://www.sjscycles.co.uk/consumables-brompton/brompton-rear-hinge-bush-kit-inc-spindle-tools-etc-workshop-use-only-note-on-ordering-comments" target="_blank" rel="noopener">SJS: Brompton rear hinge bush kit, £27</a></li>
+    <li><a href="https://sjscycles.co.uk/headsets/brompton-headbearing-set-1-18-steel" target="_blank" rel="noopener">SJS: Brompton 1 1/8" headset</a></li>
+    <li><a href="https://condorcycles.com/products/brompton-brake-caliper-with-swissstop-pads" target="_blank" rel="noopener">Condor: Brompton caliper 204 g, 8 mm recessed-nut note</a></li>
+    <li><a href="https://www.bike-discount.de/en/trp-spyre-disc-mechanical-post-mount-brake-caliper" target="_blank" rel="noopener">Bike-Discount: TRP Spyre 154 g, €64.99</a></li>
+    <li><a href="https://www.condorcycles.com/blogs/journal/easy-lightweight-upgrades-for-brompton-bikes" target="_blank" rel="noopener">Condor: saddle 378 g, Tubolito 34 g, pedal and saddle upgrades</a></li>
+    <li><a href="https://www.sjscycles.co.uk/pedals-cleats/brompton-folding-pedal-left-hand/" target="_blank" rel="noopener">SJS: Brompton folding pedal 288 g</a></li>
+    <li><a href="https://www.brompton.com/p/624/titanium-front-fender-stay-kit" target="_blank" rel="noopener">Brompton: Ti front mudguard stay kit ≈70 g</a></li>
+    <li><a href="https://sjscycles.co.uk/mudguards/ti-parts-workshop-titanium-mudguard-stay-anchor-plate-set" target="_blank" rel="noopener">SJS: Ti anchor plates save 4.9 g</a></li>
     <li><a href="https://sjscycles.co.uk/tyres-small/brompton-schwalbe-marathon-racer-hs429-tyre-with-reflex-16-x-135-inch-35349" target="_blank" rel="noopener">SJS: Marathon Racer 35-349, 280 g</a></li>
     <li><a href="https://www.perennialcycle.com/16-x-1-1-3-schwalbe-one-349mm-iso-folding-tan-sidewall.html" target="_blank" rel="noopener">Perennial Cycle: Schwalbe One 35-349, 180 g</a></li>
-    <li><a href="https://www.sjscycles.co.uk/seat-posts/brompfication-titanium-pentaclip-seat-post-535-mm/" target="_blank" rel="noopener">SJS: Brompfication Ti seatpost, −125 g, £139.99</a></li>
+    <li><a href="https://www.sjscycles.co.uk/seat-posts/brompfication-titanium-pentaclip-seat-post-535-mm/" target="_blank" rel="noopener">SJS: Brompfication Ti seatpost, −125 g</a></li>
     <li><a href="https://www.condorcycles.com/collections/all?page=16" target="_blank" rel="noopener">Condor: Brompton gear-part prices</a></li>
     <li><a href="https://www.walmart.com/ip/6095413396" target="_blank" rel="noopener">Brompton 5-speed cassette listing: 11–21T, 101 g</a></li>
     <li><a href="https://www.ebay.de/itm/195548151517" target="_blank" rel="noopener">MiniMODs 3-cog kit, ≈ $36</a></li>
@@ -344,19 +501,222 @@ tr.na td { color: var(--muted); }
 </div>
 
 <script>
+/* Parts list: records live in the artifact's db collection "parts". */
 (function () {
-  var BASE = 9700, BASE_UNC = 250, LIGHT = -325;
+  var GROUPS = [["frame", "Frame & fork"], ["drive", "Drivetrain"], ["brakes", "Brakes & controls"],
+                ["wheels", "Wheels & tyres"], ["seat", "Seat"], ["small", "Small parts & accents"]];
+  var root = document.querySelector(".plist");
+  var listEl = document.getElementById("pl-list");
+  var stateEl = document.getElementById("pl-state");
+  var db = null, col = null, canWrite = true, parts = new Map(), filter = "all";
+  var rowEls = new Map(), groupEls = {}, pendingFocus = null, chains = {};
+
+  function eur(n) { return "€" + Math.round(n).toLocaleString("en-US"); }
+  function grams(n) { return Math.round(n).toLocaleString("en-US") + " g"; }
+  function num(v) { var n = parseFloat(String(v).replace(",", ".")); return isFinite(n) ? n : 0; }
+
+  // Build group containers once
+  GROUPS.forEach(function (g) {
+    var sec = document.createElement("div");
+    sec.className = "pgroup";
+    sec.innerHTML = '<div class="pghead"><h3></h3><span class="pgsum"></span></div><div class="pgbody"></div>' +
+      '<button type="button" class="padd">+ Add part</button>';
+    sec.querySelector("h3").textContent = g[1];
+    sec.querySelector(".padd").addEventListener("click", function () { addPart(g[0]); });
+    sec.hidden = true;
+    listEl.appendChild(sec);
+    groupEls[g[0]] = sec;
+  });
+
+  document.querySelectorAll(".pfilter button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      filter = b.getAttribute("data-f");
+      document.querySelectorAll(".pfilter button").forEach(function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+      render();
+    });
+  });
+
+  function write(id, data) {
+    if (!col || !canWrite) return Promise.resolve();
+    var prev = chains[id] || Promise.resolve();
+    var next = prev.then(function () { return col.doc(id).update(data); }).catch(function (e) { onWriteError(e); });
+    chains[id] = next;
+    return next;
+  }
+  function onWriteError(e) {
+    if (e && (e.code === "invalid_argument" || e.code === "not_granted" || e.code === "revoked")) {
+      canWrite = false; root.classList.add("ro");
+      stateEl.hidden = false; stateEl.textContent = "You can view this list but not change it.";
+      render();
+    } else if (e && e.code === "quota_exceeded") {
+      stateEl.hidden = false; stateEl.textContent = "The list is full. Delete a part before adding another.";
+    } else {
+      stateEl.hidden = false; stateEl.textContent = "A change didn't save. Check your connection and try again.";
+    }
+  }
+
+  function addPart(group) {
+    if (!col || !canWrite) return;
+    var maxOrder = 0;
+    parts.forEach(function (p) { if ((p.order || 0) > maxOrder) maxOrder = p.order || 0; });
+    var ref = col.doc();
+    pendingFocus = ref.id;
+    ref.set({ name: "New part", group: group, price: 0, weight: 0, have: false, wstat: "est", src: "you", note: "", order: maxOrder + 1 })
+      .catch(onWriteError);
+  }
+
+  function makeRow(id) {
+    var r = document.createElement("div");
+    r.className = "prow";
+    r.innerHTML =
+      '<label class="chk"><input type="checkbox" aria-label="Have it"></label>' +
+      '<div class="nm"><input class="pin name" type="text" aria-label="Part name"><div class="nline"></div></div>' +
+      '<div class="pr numw"><input class="pin price" type="number" inputmode="decimal" min="0" step="1" aria-label="Price in euros"><span class="u">€</span></div>' +
+      '<div class="wt numw"><input class="pin weight" type="number" inputmode="numeric" min="0" step="1" aria-label="Weight in grams"><span class="u">g</span></div>' +
+      '<div class="dl"><button type="button" class="pdel" aria-label="Delete part">×</button></div>';
+    var chk = r.querySelector(".chk input"), nm = r.querySelector(".pin.name"),
+        pr = r.querySelector(".pin.price"), wt = r.querySelector(".pin.weight"), del = r.querySelector(".pdel");
+    var uid = "p-" + id;
+    chk.id = uid + "-have"; nm.id = uid + "-name"; pr.id = uid + "-price"; wt.id = uid + "-weight";
+    chk.addEventListener("change", function () { write(id, { have: chk.checked }); });
+    nm.addEventListener("change", function () { var v = nm.value.trim() || "Unnamed part"; write(id, { name: v }); });
+    pr.addEventListener("change", function () { write(id, { price: num(pr.value) }); });
+    wt.addEventListener("change", function () { write(id, { weight: num(wt.value), wstat: "weighed" }); });
+    [nm, pr, wt].forEach(function (inp) {
+      inp.addEventListener("keydown", function (e) { if (e.key === "Enter") inp.blur(); });
+    });
+    var armTimer = null;
+    del.addEventListener("click", function () {
+      if (!del.classList.contains("armed")) {
+        del.classList.add("armed"); r.classList.add("armed"); del.textContent = "Delete";
+        clearTimeout(armTimer);
+        armTimer = setTimeout(function () { del.classList.remove("armed"); r.classList.remove("armed"); del.textContent = "×"; }, 3000);
+        return;
+      }
+      clearTimeout(armTimer);
+      if (col && canWrite) col.doc(id).delete().catch(onWriteError);
+    });
+    return r;
+  }
+
+  function setVal(inp, v) { if (document.activeElement !== inp && inp.value !== String(v)) inp.value = v; }
+
+  function fillRow(r, p) {
+    var chk = r.querySelector(".chk input"), nm = r.querySelector(".pin.name"),
+        pr = r.querySelector(".pin.price"), wt = r.querySelector(".pin.weight"), line = r.querySelector(".nline");
+    chk.checked = !!p.have;
+    r.classList.toggle("have", !!p.have);
+    setVal(nm, p.name || "");
+    setVal(pr, p.price != null ? p.price : 0);
+    setVal(wt, p.weight != null ? p.weight : 0);
+    [chk, nm, pr, wt].forEach(function (x) { x.disabled = !canWrite; });
+    line.textContent = "";
+    var ws = p.wstat || "est";
+    var w = document.createElement("span");
+    w.className = "wst " + ws; w.textContent = ws === "est" ? "est." : ws;
+    line.appendChild(w);
+    if (p.src === "added") { var t = document.createElement("span"); t.className = "tag add"; t.textContent = "added"; line.appendChild(t); }
+    if (p.note) { var n = document.createElement("span"); n.textContent = p.note; line.appendChild(n); }
+  }
+
+  function visible(p) { return filter === "all" || (filter === "have" ? !!p.have : !p.have); }
+
+  function render() {
+    var sorted = Array.from(parts.entries()).sort(function (a, b) {
+      return (a[1].order || 0) - (b[1].order || 0) || String(a[1].name).localeCompare(String(b[1].name));
+    });
+    // remove deleted rows
+    rowEls.forEach(function (el, id) { if (!parts.has(id)) { el.remove(); rowEls.delete(id); } });
+    var tot = 0, spent = 0, wsum = 0, have = 0, known = 0, sheet = 0, added = 0;
+    var gs = {};
+    GROUPS.forEach(function (g) { gs[g[0]] = { ids: [], price: 0, buy: 0, w: 0 }; });
+    sorted.forEach(function (e) {
+      var id = e[0], p = e[1];
+      var g = gs[p.group] ? p.group : "small";
+      var price = num(p.price), w = num(p.weight);
+      tot += price; wsum += w;
+      if (p.have) { spent += price; have++; } else gs[g].buy += price;
+      if ((p.wstat || "est") !== "est") known++;
+      if (p.src === "added") added += price; else sheet += price;
+      gs[g].ids.push(id); gs[g].price += price; gs[g].w += w;
+      var r = rowEls.get(id);
+      if (!r) { r = makeRow(id); rowEls.set(id, r); }
+      fillRow(r, p);
+      r.hidden = !visible(p);
+    });
+    GROUPS.forEach(function (g) {
+      var sec = groupEls[g[0]], body = sec.querySelector(".pgbody"), info = gs[g[0]];
+      var want = info.ids.map(function (id) { return rowEls.get(id); });
+      var same = body.children.length === want.length && want.every(function (el, i) { return body.children[i] === el; });
+      if (!same) want.forEach(function (el) { body.appendChild(el); });
+      sec.hidden = parts.size === 0 ? false : (info.ids.length === 0 && !canWrite);
+      var anyVisible = want.some(function (el) { return !el.hidden; });
+      if (filter !== "all" && !anyVisible) sec.hidden = true;
+      sec.querySelector(".pgsum").textContent = eur(info.price) + (info.buy ? " · " + eur(info.buy) + " to buy" : " · all owned") + " · " + grams(info.w);
+    });
+    var n = parts.size;
+    document.getElementById("pl-tobuy").textContent = eur(tot - spent);
+    document.getElementById("pl-tobuy-n").textContent = (n - have) + " part" + (n - have === 1 ? "" : "s") + " left";
+    document.getElementById("pl-spent").textContent = eur(spent);
+    document.getElementById("pl-spent-n").textContent = have + " of " + n + " parts";
+    document.getElementById("pl-total").textContent = eur(tot);
+    document.getElementById("pl-total-n").textContent = added ? "your sheet " + eur(sheet) + " + added " + eur(added) : " ";
+    document.getElementById("pl-weight").textContent = (wsum / 1000).toFixed(2) + " kg";
+    document.getElementById("pl-weight-n").textContent = known + " of " + n + " weights from a spec or scale";
+    document.getElementById("pl-bar").style.width = (n ? Math.round(have / n * 100) : 0) + "%";
+    if (n === 0) { stateEl.hidden = false; stateEl.textContent = canWrite ? "No parts yet. Add the first one in any group below." : "No parts yet."; }
+    else if (stateEl.textContent === "Loading your parts list…") stateEl.hidden = true;
+    if (pendingFocus && rowEls.get(pendingFocus)) {
+      var f = rowEls.get(pendingFocus).querySelector(".pin.name");
+      pendingFocus = null;
+      if (f) { f.focus(); f.select(); }
+    }
+  }
+
+  function noDb() {
+    stateEl.hidden = false;
+    stateEl.textContent = "The parts list needs saved data, which isn't available in this view. Open the page on claude.ai while signed in.";
+    root.classList.add("ro");
+  }
+
+  (async function init() {
+    var d = null;
+    try { d = window.claude && window.claude.use ? await window.claude.use("db") : null; } catch (e) { d = null; }
+    if (!d) { noDb(); return; }
+    db = d; col = db.collection("parts");
+    try {
+      var u = await window.claude.use("user");
+      if (u) { var c = await u.can("data.write"); if (c === false) { canWrite = false; root.classList.add("ro"); } }
+    } catch (e) {}
+    col.onSnapshot(function (snap) {
+      var m = new Map();
+      snap.docs.forEach(function (s) { var o = s.data(); if (o) m.set(s.id, Object.assign({}, o)); });
+      parts = m;
+      render();
+    }, function (err) {
+      stateEl.hidden = false;
+      stateEl.textContent = "The parts list stopped updating. Reload the page to reconnect.";
+    });
+  })();
+})();
+</script>
+
+<script>
+(function () {
+  var BASE = 9700, BASE_UNC = 250, REF_FORK = 300, STOCK_PEDALS = 470, STOCK_SADDLE = 378;
   var DT = [
     { id: "b2", name: "Brompton 2-speed", short: "Brompton 2-speed", detail: "Superlight front + stock 1/2-speed rear", wheels: "1,370 g", delta: -64, unc: 50, cost: 490, gears: "2 · ≈135%", rel: 5,
       note: "Simplest system; all parts at any Brompton dealer." },
     { id: "b3", name: "2-speed + third cog", short: "2-speed + 3rd cog", detail: "MiniMODs 12-14-17 kit, 10-speed chain", wheels: "≈ 1,390 g", wEst: true, delta: -44, unc: 60, cost: 545, gears: "3 · 142%", rel: 3,
       note: "Friction or modified shifter; shifting has to be precise." },
-    { id: "bwr6", name: "Brompton BWR 6-speed", short: "BWR 6-speed", detail: "3-speed hub × 2-speed derailleur", wheels: "2,033 g", delta: 669, unc: 80, cost: 625, gears: "6 · 302%", rel: 4,
-      note: "Same system as your M6L. Two shifters. €0 if you take it from the M6L." },
+    { id: "bwr6", name: "BWR 6-speed · Brompton wheels", short: "BWR 6 · Brompton", detail: "Stock BWR rear + Superlight front", wheels: "2,033 g", delta: 669, unc: 80, cost: 625, gears: "6 · 302%", rel: 4,
+      note: "Same system as your M6L. €0 if you take it from the M6L." },
+    { id: "bpbwr", name: "BWR 6-speed · BrommiePlus wheels", short: "BWR 6 · BrommiePlus", detail: "Sturmey BWR hub in BrommiePlus rims + Brompton 2-speed parts", wheels: "≈ 1,950–2,000 g", wEst: true, delta: 619, unc: 120, cost: 600, costEst: true, gears: "6 · 302%", rel: 4,
+      note: "Same hub as stock, so only 50–100 g lighter. Must be the BWR, not a plain 3-speed." },
     { id: "bwr9", name: "BWR + third cog (9-speed)", short: "BWR 9-speed", detail: "BWR hub + MiniMODs 3-cog kit", wheels: "≈ 2,050 g", wEst: true, delta: 689, unc: 90, cost: 680, gears: "9 · ≈350%", rel: 3,
       note: "Widest range that fits your frame; same caveats as the 3-cog kit." },
-    { id: "srf5", name: "Sturmey S-RF5(W) 5-speed", short: "Sturmey 5-speed hub", detail: "BrommiePlus R002 polished silver wheelset, $350", wheels: "≈ 2,070 g", wEst: true, delta: 596, unc: 150, cost: 465, gears: "5 · 256%", rel: 3,
-      note: "One shifter. BrommiePlus warns the hub is hard to adjust. Includes shifter and cables." },
+    { id: "srf5", name: "Sturmey S-RF5(W) 5-speed", short: "Sturmey 5-sp hub", detail: "BrommiePlus R002 polished silver wheelset, $350", wheels: "≈ 2,070 g", wEst: true, delta: 596, unc: 150, cost: 465, gears: "5 · 256%", rel: 3,
+      note: "One shifter. BrommiePlus warns the hub is hard to adjust." },
     { id: "kin", name: "5-speed derailleur · Kinlin", short: "5-sp derailleur, Kinlin", detail: "BrommiePlus XR22T / Hubsmith wheelset, $360", wheels: "895 g + fittings", delta: -319, unc: 100, cost: 600, gears: "5 · ≈190%", rel: 2,
       note: "Rider limit 85 kg. Needs derailleur, hanger, shifter, cassette, chain (≈€150 est.)." },
     { id: "r002", name: "5-speed derailleur · R002", short: "5-sp derailleur, R002", detail: "BrommiePlus R002 black / Hubsmith wheelset, $400", wheels: "965 g + fittings", delta: -249, unc: 100, cost: 650, gears: "5 · ≈190%", rel: 3,
@@ -364,29 +724,44 @@ tr.na td { color: var(--muted); }
     { id: "carb", name: "5-speed derailleur · carbon", short: "5-sp derailleur, carbon", detail: "AliExpress 349 carbon wheelset, €331.55", wheels: "≈ 850–950 g", wEst: true, delta: -359, unc: 150, cost: 510, gears: "5 · ≈190%", rel: 1,
       note: "Weight not listed. Carbon brake track under Brompton rim calipers." }
   ];
+  // delta: grams vs reference bike; "fn" deltas read the "Your parts" inputs.
   var GROUPS = {
     fork: { el: "fork-opts", items: [
-      { id: "carbon", name: "RIRO carbon", delta: 0, unc: 60, cost: 145, est: true, dl: "≈ Ti weight · €145" },
-      { id: "ti", name: "Titanium", delta: 0, unc: 50, cost: 300, est: true, dl: "260–350 g · ≈€300" },
-      { id: "steel", name: "Steel", delta: 260, unc: 20, cost: 80, est: true, dl: "+260 g · ≈€80" } ] },
+      { id: "carbon", name: "Carbon (yours)", fn: function (v) { return v.fork - REF_FORK; }, unc: 10, cost: 145, dl: "from input · €145" },
+      { id: "ti", name: "Titanium", delta: 0, unc: 50, cost: 300, dl: "≈ 300 g · ≈€300" },
+      { id: "steel", name: "Steel", delta: 260, unc: 20, cost: 80, dl: "+260 g · ≈€80" } ] },
+    brake: { el: "brake-opts", items: [
+      { id: "rim", name: "Rim caliper", delta: 0, unc: 0, cost: 0, dl: "Brompton, 204 g" },
+      { id: "disc", name: "Disc, 140 mm", delta: 125, unc: 75, cost: 250, dl: "≈ +125 g · ≈ +€250" } ] },
     tyre: { el: "tyre-opts", items: [
-      { id: "mr", name: "Marathon Racer", delta: 0, unc: 0, cost: 70, est: true, dl: "280 g each" },
-      { id: "one", name: "Schwalbe One", delta: -200, unc: 0, cost: 110, est: true, dl: "180 g each · −200 g" } ] },
+      { id: "mr", name: "Marathon Racer", delta: 0, unc: 0, cost: 70, dl: "280 g each" },
+      { id: "one", name: "Schwalbe One", delta: -200, unc: 0, cost: 110, dl: "180 g each · −200 g" } ] },
+    tube: { el: "tube-opts", items: [
+      { id: "av4", name: "Schwalbe AV4 tubes", delta: 0, unc: 0, cost: 0, dl: "85 g each" },
+      { id: "tpu", name: "Tubolito tubes", delta: -102, unc: 0, cost: 58, dl: "34 g each · −102 g" } ] },
     post: { el: "post-opts", items: [
       { id: "steel", name: "Steel + Pentaclip", delta: 0, unc: 0, cost: 39, dl: "stock · €39" },
       { id: "ti", name: "Titanium", delta: -125, unc: 0, cost: 161, dl: "−125 g · ≈€160" } ] },
     guard: { el: "guard-opts", items: [
       { id: "no", name: "None", delta: 0, unc: 0, cost: 0, dl: "as reference" },
-      { id: "yes", name: "Mudguards", delta: 300, unc: 60, cost: 80, est: true, dl: "≈ +300 g" } ] },
-    extra: { el: "extra-opts", items: [
-      { id: "no", name: "Stock", delta: 0, unc: 0, cost: 0, dl: "as reference" },
-      { id: "yes", name: "Light set", delta: -400, unc: 100, cost: 250, est: true, dl: "saddle, TPU tubes, pedals, Ti bolts · ≈ −400 g" } ] }
+      { id: "carbon", name: "Carbon (yours)", fn: function (v) { return v.guards; }, unc: 30, cost: 0, dl: "from input" },
+      { id: "carbonti", name: "Carbon + Ti stays", fn: function (v) { return v.guards - 30; }, unc: 40, cost: 40, dl: "≈ −30 g · ≈€40" } ] }
   };
-  var state = { dt: "bwr6", fork: "carbon", tyre: "one", post: "ti", guard: "no", extra: "no" };
+  var state = { dt: "bpbwr", fork: "carbon", brake: "rim", tyre: "one", tube: "av4", post: "ti", guard: "carbon" };
+  var INPUTS = { fork: "in-fork", pedals: "in-pedals", guards: "in-guards", ti: "in-ti", saddle: "in-saddle" };
+  var DEFAULTS = { fork: 240, pedals: 300, guards: 200, ti: 120, saddle: 378 };
 
+  function vals() {
+    var v = {};
+    Object.keys(INPUTS).forEach(function (k) {
+      var n = parseFloat(document.getElementById(INPUTS[k]).value);
+      v[k] = isFinite(n) ? n : DEFAULTS[k];
+    });
+    return v;
+  }
   function kg(g) { return (g / 1000).toFixed(1); }
   function eur(n) { return "€" + Math.round(n / 5) * 5; }
-  function signed(g) { return (g > 0 ? "+" : g < 0 ? "−" : "±") + Math.abs(g).toLocaleString("en-US") + " g"; }
+  function signed(g) { return (g > 0 ? "+" : g < 0 ? "−" : "±") + Math.abs(Math.round(g)).toLocaleString("en-US") + " g"; }
   function relHTML(n) {
     var cls = n <= 1 ? "rel vlo" : n <= 2 ? "rel lo" : "rel";
     var words = ["", "Low", "Low–medium", "Medium", "High", "Very high"];
@@ -395,6 +770,7 @@ tr.na td { color: var(--muted); }
     return s + "</span> <span class=\"small\">" + words[n] + "</span>";
   }
   function find(list, id) { for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i]; }
+  function itemDelta(it, v) { return it.fn ? it.fn(v) : it.delta; }
 
   function radio(name, item, checked, label, detail, dl) {
     var id = name + "-" + item.id;
@@ -403,12 +779,11 @@ tr.na td { color: var(--muted); }
       '<span class="dl">' + dl + '</span></label>';
   }
 
-  // Build controls
-  var dtBox = document.getElementById("dt-opts"), html = "";
+  var html = "";
   DT.forEach(function (d) {
-    html += radio("dt", d, d.id === state.dt, d.name, d.detail, signed(d.delta) + "<br>" + eur(d.cost));
+    html += radio("dt", d, d.id === state.dt, d.name, d.detail, signed(d.delta) + "<br>" + (d.costEst ? "≈" : "") + eur(d.cost));
   });
-  dtBox.innerHTML = html;
+  document.getElementById("dt-opts").innerHTML = html;
   Object.keys(GROUPS).forEach(function (k) {
     var g = GROUPS[k], h = "";
     g.items.forEach(function (it) { h += radio(k, it, state[k] === it.id, it.name, "", it.dl); });
@@ -418,36 +793,24 @@ tr.na td { color: var(--muted); }
     var t = e.target;
     if (t && t.type === "radio" && (t.name in state)) { state[t.name] = t.value; render(); }
   });
-
-  // Comparison table (fixed reference config)
-  var tb = "";
-  DT.forEach(function (d) {
-    var bike = BASE + d.delta;
-    tb += "<tr><td class=\"tname\">" + d.name + "<span class=\"sub\">" + d.detail + "</span></td>" +
-      "<td class=\"num\">≈ " + eur(d.cost) + "</td>" +
-      "<td class=\"num\">" + (d.wEst ? '<span class="est" title="Estimate">' + d.wheels + "</span>" : d.wheels) + "</td>" +
-      "<td class=\"num\">" + signed(d.delta) + "</td>" +
-      "<td class=\"num\"><b>" + kg(bike) + " kg</b></td>" +
-      "<td class=\"num\">" + kg(bike + LIGHT) + " kg</td>" +
-      "<td style=\"white-space:nowrap\">" + d.gears + "</td>" +
-      "<td style=\"white-space:nowrap\">" + relHTML(d.rel) + "</td>" +
-      "<td class=\"tnote\">" + d.note + "</td></tr>";
+  document.addEventListener("input", function (e) {
+    if (e.target && e.target.type === "number") render();
   });
-  tb += "<tr class=\"na\"><td class=\"tname\">Brompton 4- / 12-speed<span class=\"sub\">Advance derailleur, 60 g</span></td><td class=\"num\">—</td><td class=\"num\">—</td><td class=\"num\">—</td><td class=\"num\">—</td><td class=\"num\">—</td><td>4 or 12 · 402%</td><td>—</td><td class=\"tnote\">Needs the Advance rear frame; doesn't fit your Ti rear frame.</td></tr>";
-  document.getElementById("cmp-body").innerHTML = tb;
 
-  // Dot plot
-  var LO = 8000, HI = 11500;
-  function pct(g) { return Math.max(0, Math.min(100, (g - LO) / (HI - LO) * 100)); }
-
+  // Everything except the drivetrain, from current settings
   function others() {
-    var d = 0, u = BASE_UNC, c = 0;
+    var v = vals(), d = 0, u = BASE_UNC, c = 0;
     Object.keys(GROUPS).forEach(function (k) {
       var it = find(GROUPS[k].items, state[k]);
-      d += it.delta; u += it.unc; c += it.cost;
+      d += itemDelta(it, v); u += it.unc; c += it.cost;
     });
+    d += (v.pedals - STOCK_PEDALS) - v.ti + (v.saddle - STOCK_SADDLE);
+    u += 40; // estimates for stock pedals and screw savings
     return { delta: d, unc: u, cost: c };
   }
+
+  var LO = 8000, HI = 11500;
+  function pct(g) { return Math.max(0, Math.min(100, (g - LO) / (HI - LO) * 100)); }
 
   function render() {
     var o = others(), dt = find(DT, state.dt);
@@ -457,6 +820,8 @@ tr.na td { color: var(--muted); }
     document.getElementById("r-gears").textContent = dt.gears;
     document.getElementById("r-cost").textContent = "≈ " + eur(o.cost + dt.cost);
     document.getElementById("r-rel").innerHTML = relHTML(dt.rel);
+    document.getElementById("pick1").innerHTML = kg(BASE + o.delta + find(DT, "bpbwr").delta) + "<small>kg</small>";
+    document.getElementById("pick2").innerHTML = kg(BASE + o.delta + find(DT, "b2").delta) + "<small>kg</small>";
 
     var p = "", ticks = "", grid = "";
     for (var t = LO; t <= HI; t += 500) {
@@ -474,6 +839,23 @@ tr.na td { color: var(--muted); }
     p += '<div class="axis"><span></span><div class="ticks">' + ticks + "</div></div>";
     p += '<div class="axis"><span></span><div class="small" style="text-align:center">Finished bike, kg</div></div>';
     document.getElementById("plot").innerHTML = p;
+
+    var tb = "";
+    DT.forEach(function (d) {
+      var ref = BASE + d.delta;
+      var costTxt = "≈ " + eur(d.cost);
+      tb += "<tr><td class=\"tname\">" + d.name + "<span class=\"sub\">" + d.detail + "</span></td>" +
+        "<td class=\"num\">" + (d.costEst ? '<span class="est" title="Estimate; BrommiePlus price not checked">' + costTxt + "</span>" : costTxt) + "</td>" +
+        "<td class=\"num\">" + (d.wEst ? '<span class="est" title="Estimate">' + d.wheels + "</span>" : d.wheels) + "</td>" +
+        "<td class=\"num\">" + signed(d.delta) + "</td>" +
+        "<td class=\"num\">" + kg(ref) + " kg</td>" +
+        "<td class=\"num\"><b>" + kg(ref + o.delta) + " kg</b></td>" +
+        "<td style=\"white-space:nowrap\">" + d.gears + "</td>" +
+        "<td style=\"white-space:nowrap\">" + relHTML(d.rel) + "</td>" +
+        "<td class=\"tnote\">" + d.note + "</td></tr>";
+    });
+    tb += "<tr class=\"na\"><td class=\"tname\">Brompton 4- / 12-speed<span class=\"sub\">Advance derailleur, 60 g</span></td><td class=\"num\">—</td><td class=\"num\">—</td><td class=\"num\">—</td><td class=\"num\">—</td><td class=\"num\">—</td><td>4 or 12 · 402%</td><td>—</td><td class=\"tnote\">Needs the Advance rear frame; doesn't fit your Ti rear frame.</td></tr>";
+    document.getElementById("cmp-body").innerHTML = tb;
   }
   render();
 })();
