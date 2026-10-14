@@ -10,7 +10,7 @@ Runs in GitHub Actions (.github/workflows/shroomzn-data.yml):
 refreshes the last-24-hours files for Germany and Czechia, whose servers
 can't be read from a visitor's browser.
 
-Daily station sums, last ~46 days, one file per country:
+Daily station sums, last ~49 days, one file per country:
   stations.json      Austria   GeoSphere klima-v2-1d "rr"        (CC BY 4.0)
   ch_stations.json   Switzerland MeteoSwiss SwissMetNet "rre150d0" (Source: MeteoSwiss)
   de_stations.json   Germany   DWD daily "more_precip" RS       (Source: Deutscher Wetterdienst)
@@ -55,7 +55,7 @@ import numpy as np
 API = "https://dataset.api.hub.geosphere.at/v1"
 STATION_DATASET = "klima-v2-1d"
 GRID_DATASET = "spartacus-v3-1d-1km"
-STATION_DAYS = 46            # 45 full days + today
+STATION_DAYS = 49            # 45 days + up to 3 days until the data is in + today
 PERIODS = (7, 14, 30, 45)    # grid overlay presets, days
 GRID_DAYS = max(PERIODS) + 3 # fetched per grid, so a common end day up to 3 days earlier still works
 OVERLAY_WIDTH = 800          # px across Austria (~0.75 km per px)
