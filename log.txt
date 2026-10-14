@@ -1,0 +1,14 @@
+stations: {'stations': 272, 'through': '2026-10-12', 'not_reporting': 1}
+ch_stations: {'smn_meta': 159, 'smn-precip_meta': 141, 'stations': 280, 'through': '2026-10-12', 'not_reporting': 1, 'without_file': 0}
+de_stations: {'stations': 2188, 'through': '2026-10-12', 'not_reporting': 0, 'listed': 2192, 'failed': 0}
+cz_stations: {'stations': 452, 'through': '2026-10-12', 'not_reporting': 245, 'months': {'202608': '08/', '202609': '09/', '202610': 'root'}}
+alignment: {'common_through': '2026-10-12', 'own': {'AT': '2026-10-12', 'CH': '2026-10-12', 'DE': '2026-10-12', 'CZ': '2026-10-12'}}
+fetch_AT_grid: {'last': '2026-10-12', 'days': 48}
+fetch_CH_grid: {'last': '2026-10-12', 'days': 48}
+fetch_DE_grid: {'last': '2026-10-12', 'days': 52}
+grid: {'periods': ['7', '14', '30', '45'], 'last_day': '2026-10-12', 'own_last_day': '2026-10-12'}
+ch_grid: {'periods': ['7', '14', '30', '45'], 'last_day': '2026-10-12', 'own_last_day': '2026-10-12', 'monthly_used': [], 'missing_days': [], 'file': {'var': 'RprelimD', 'dims': ['time', 'N', 'E'], 'crs': 'EPSG:2056', 'shape': [265, 370], 'x0': 2474500.0, 'dx': 1000.0, 'y0': 1059500.0, 'dy': 1000.0}}
+de_grid: {'periods': ['7', '14', '30', '45'], 'last_day': '2026-10-12', 'own_last_day': '2026-10-12', 'file': {'files': ['pr_hyras_1_2026_v6-1_de.nc']}}
+de_now: {'stations': 1344, 'end': '2026-10-14T05:00Z'}
+cz_now: {'stations': 417, 'end': '2026-10-14T05:00Z'}
+full run took 323 s

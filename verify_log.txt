@@ -1,0 +1,255 @@
+{
+ "ran": "2026-10-14T05:50:38+00:00",
+ "through": {
+  "AT": "2026-10-12",
+  "CH": "2026-10-12",
+  "DE": "2026-10-12",
+  "CZ": "2026-10-12"
+ },
+ "stations": {
+  "AT": 272,
+  "CH": 280,
+  "DE": 2188,
+  "CZ": 452
+ },
+ "cross_border": {
+  "AT-CH": {
+   "pairs": 16,
+   "best_shift_0": 1.0,
+   "best_shift_minus1": 0.0,
+   "best_shift_plus1": 0.0,
+   "median_r": {
+    "-1": -0.051,
+    "0": 0.935,
+    "1": -0.098
+   }
+  },
+  "AT-CZ": {
+   "pairs": 10,
+   "best_shift_0": 1.0,
+   "best_shift_minus1": 0.0,
+   "best_shift_plus1": 0.0,
+   "median_r": {
+    "-1": -0.13,
+    "0": 0.965,
+    "1": -0.149
+   }
+  },
+  "AT-DE": {
+   "pairs": 67,
+   "best_shift_0": 1.0,
+   "best_shift_minus1": 0.0,
+   "best_shift_plus1": 0.0,
+   "median_r": {
+    "-1": -0.1,
+    "0": 0.955,
+    "1": -0.099
+   }
+  },
+  "CH-DE": {
+   "pairs": 25,
+   "best_shift_0": 1.0,
+   "best_shift_minus1": 0.0,
+   "best_shift_plus1": 0.0,
+   "median_r": {
+    "-1": -0.049,
+    "0": 0.963,
+    "1": -0.051
+   }
+  },
+  "CZ-DE": {
+   "pairs": 109,
+   "best_shift_0": 1.0,
+   "best_shift_minus1": 0.0,
+   "best_shift_plus1": 0.0,
+   "median_r": {
+    "-1": -0.099,
+    "0": 0.939,
+    "1": -0.09
+   }
+  }
+ },
+ "grid_alignment": {
+  "SPARTACUS_vs_CH_CZ_DE": {
+   "CH": {
+    "pairs": 5,
+    "best_shift_0": 1.0,
+    "best_shift_minus1": 0.0,
+    "best_shift_plus1": 0.0,
+    "median_r": {
+     "-1": 0.106,
+     "0": 0.948,
+     "1": 0.007
+    }
+   },
+   "CZ": {
+    "pairs": 1,
+    "best_shift_0": 1.0,
+    "best_shift_minus1": 0.0,
+    "best_shift_plus1": 0.0,
+    "median_r": {
+     "-1": 0.065,
+     "0": 0.938,
+     "1": -0.046
+    }
+   },
+   "DE": {
+    "pairs": 63,
+    "best_shift_0": 1.0,
+    "best_shift_minus1": 0.0,
+    "best_shift_plus1": 0.0,
+    "median_r": {
+     "-1": -0.101,
+     "0": 0.959,
+     "1": -0.104
+    }
+   }
+  },
+  "HYRAS_vs_AT_CH_CZ": {
+   "AT": {
+    "pairs": 2,
+    "best_shift_0": 1.0,
+    "best_shift_minus1": 0.0,
+    "best_shift_plus1": 0.0,
+    "median_r": {
+     "-1": -0.09,
+     "0": 0.991,
+     "1": -0.091
+    }
+   },
+   "CH": {
+    "pairs": 2,
+    "best_shift_0": 1.0,
+    "best_shift_minus1": 0.0,
+    "best_shift_plus1": 0.0,
+    "median_r": {
+     "-1": -0.038,
+     "0": 0.919,
+     "1": -0.06
+    }
+   },
+   "CZ": {
+    "pairs": 2,
+    "best_shift_0": 1.0,
+    "best_shift_minus1": 0.0,
+    "best_shift_plus1": 0.0,
+    "median_r": {
+     "-1": -0.122,
+     "0": 0.965,
+     "1": -0.08
+    }
+   }
+  }
+ },
+ "grid_vs_station": {
+  "AT": {
+   "window_end": "2026-10-12",
+   "periods": {
+    "7": {
+     "stations": 271,
+     "same_class": 0.823,
+     "within_one_class": 0.996
+    },
+    "14": {
+     "stations": 271,
+     "same_class": 0.801,
+     "within_one_class": 0.996
+    },
+    "30": {
+     "stations": 270,
+     "same_class": 0.7,
+     "within_one_class": 1.0
+    },
+    "45": {
+     "stations": 268,
+     "same_class": 0.716,
+     "within_one_class": 0.989
+    }
+   }
+  },
+  "CH": {
+   "window_end": "2026-10-12",
+   "periods": {
+    "7": {
+     "stations": 272,
+     "same_class": 0.812,
+     "within_one_class": 1.0
+    },
+    "14": {
+     "stations": 271,
+     "same_class": 0.731,
+     "within_one_class": 0.993
+    },
+    "30": {
+     "stations": 269,
+     "same_class": 0.729,
+     "within_one_class": 0.996
+    },
+    "45": {
+     "stations": 269,
+     "same_class": 0.725,
+     "within_one_class": 0.989
+    }
+   }
+  },
+  "DE": {
+   "window_end": "2026-10-12",
+   "periods": {
+    "7": {
+     "stations": 2062,
+     "same_class": 0.968,
+     "within_one_class": 1.0
+    },
+    "14": {
+     "stations": 2056,
+     "same_class": 0.961,
+     "within_one_class": 0.999
+    },
+    "30": {
+     "stations": 2042,
+     "same_class": 0.965,
+     "within_one_class": 1.0
+    },
+    "45": {
+     "stations": 2015,
+     "same_class": 0.963,
+     "within_one_class": 1.0
+    }
+   }
+  }
+ },
+ "raw_spotcheck": {
+  "AT": {
+   "stations": 6,
+   "values_compared": 282,
+   "max_abs_diff": 0.0,
+   "mismatches": 0,
+   "examples": [],
+   "through": "2026-10-12"
+  },
+  "CH": {
+   "stations": 6,
+   "values_compared": 282,
+   "max_abs_diff": 0.0,
+   "mismatches": 0,
+   "examples": [],
+   "through": "2026-10-12"
+  },
+  "DE": {
+   "stations": 6,
+   "values_compared": 282,
+   "max_abs_diff": 0.0,
+   "mismatches": 0,
+   "examples": [],
+   "through": "2026-10-12"
+  },
+  "CZ": {
+   "stations": 6,
+   "values_compared": 282,
+   "max_abs_diff": 0.0,
+   "mismatches": 0,
+   "examples": [],
+   "through": "2026-10-12"
+  }
+ }
+}

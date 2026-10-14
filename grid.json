@@ -1,0 +1,90 @@
+{
+ "generated": "2026-10-14T05:49:31+00:00",
+ "source": "spartacus-v3-1d-1km",
+ "bounds": [
+  [
+   46.16132856869247,
+   9.393909734939893
+  ],
+  [
+   49.177527691779716,
+   17.382180045432914
+  ]
+ ],
+ "last_day": "2026-10-12",
+ "own_last_day": "2026-10-12",
+ "periods": {
+  "7": {
+   "start": "2026-10-06",
+   "end": "2026-10-12",
+   "file": "grid_7d.png",
+   "mean": {
+    "Vorarlberg": 43.8,
+    "Tirol": 15.7,
+    "Wien": 1.7,
+    "Oberösterreich": 12.1,
+    "Niederösterreich": 5.5,
+    "Steiermark": 10.1,
+    "Salzburg": 16.1,
+    "Kärnten": 14.8,
+    "Burgenland": 6.1,
+    "Österreich": 12.0
+   },
+   "max": 79.0
+  },
+  "14": {
+   "start": "2026-09-29",
+   "end": "2026-10-12",
+   "file": "grid_14d.png",
+   "mean": {
+    "Vorarlberg": 64.4,
+    "Tirol": 28.4,
+    "Wien": 1.7,
+    "Oberösterreich": 12.1,
+    "Niederösterreich": 5.5,
+    "Steiermark": 10.1,
+    "Salzburg": 16.1,
+    "Kärnten": 14.8,
+    "Burgenland": 6.1,
+    "Österreich": 14.6
+   },
+   "max": 106.7
+  },
+  "30": {
+   "start": "2026-09-13",
+   "end": "2026-10-12",
+   "file": "grid_30d.png",
+   "mean": {
+    "Vorarlberg": 92.3,
+    "Tirol": 70.6,
+    "Wien": 27.5,
+    "Oberösterreich": 68.2,
+    "Niederösterreich": 37.7,
+    "Steiermark": 31.8,
+    "Salzburg": 68.4,
+    "Kärnten": 34.3,
+    "Burgenland": 17.3,
+    "Österreich": 48.8
+   },
+   "max": 145.9
+  },
+  "45": {
+   "start": "2026-08-29",
+   "end": "2026-10-12",
+   "file": "grid_45d.png",
+   "mean": {
+    "Vorarlberg": 116.1,
+    "Tirol": 118.3,
+    "Wien": 54.4,
+    "Oberösterreich": 93.8,
+    "Niederösterreich": 69.6,
+    "Steiermark": 94.7,
+    "Salzburg": 128.9,
+    "Kärnten": 129.2,
+    "Burgenland": 54.8,
+    "Österreich": 97.9
+   },
+   "max": 244.3
+  }
+ }
+}

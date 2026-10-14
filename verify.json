@@ -1,0 +1,671 @@
+{
+ "ran": "2026-10-14T05:50:38+00:00",
+ "through": {
+  "AT": "2026-10-12",
+  "CH": "2026-10-12",
+  "DE": "2026-10-12",
+  "CZ": "2026-10-12"
+ },
+ "stations": {
+  "AT": 272,
+  "CH": 280,
+  "DE": 2188,
+  "CZ": 452
+ },
+ "raw_spotcheck": {
+  "AT": {
+   "stations": 6,
+   "values_compared": 282,
+   "max_abs_diff": 0.0,
+   "mismatches": 0,
+   "examples": [],
+   "through": "2026-10-12",
+   "detail": [
+    {
+     "id": 1,
+     "name": "Aflenz",
+     "state": "Steiermark",
+     "sums_page": {
+      "7": 4.8,
+      "14": 4.8,
+      "30": 24.4,
+      "45": 71.1
+     },
+     "sums_source": {
+      "7": 4.8,
+      "14": 4.8,
+      "30": 24.4,
+      "45": 71.1
+     }
+    },
+    {
+     "id": 14,
+     "name": "Bischofshofen",
+     "state": "Salzburg",
+     "sums_page": {
+      "7": 7.2,
+      "14": 7.2,
+      "30": 45.4,
+      "45": 80.5
+     },
+     "sums_source": {
+      "7": 7.2,
+      "14": 7.2,
+      "30": 45.4,
+      "45": 80.5
+     }
+    },
+    {
+     "id": 1711,
+     "name": "Liebenau-Gugu",
+     "state": "Oberösterreich",
+     "sums_page": {
+      "7": 6.1,
+      "14": 6.1,
+      "30": 49.6,
+      "45": 61.8
+     },
+     "sums_source": {
+      "7": 6.1,
+      "14": 6.1,
+      "30": 49.6,
+      "45": 61.8
+     }
+    },
+    {
+     "id": 222,
+     "name": "Wolkersdorf",
+     "state": "Niederösterreich",
+     "sums_page": {
+      "7": 2.1,
+      "14": 2.1,
+      "30": 36.6,
+      "45": 59.9
+     },
+     "sums_source": {
+      "7": 2.1,
+      "14": 2.1,
+      "30": 36.6,
+      "45": 59.9
+     }
+    },
+    {
+     "id": 5935,
+     "name": "Wien Donaufeld",
+     "state": "Wien",
+     "sums_page": {
+      "7": 0.3,
+      "14": 0.3,
+      "30": 25.7,
+      "45": 44.3
+     },
+     "sums_source": {
+      "7": 0.3,
+      "14": 0.3,
+      "30": 25.7,
+      "45": 44.3
+     }
+    },
+    {
+     "id": 9925,
+     "name": "Rottenmann",
+     "state": "Steiermark",
+     "sums_page": {
+      "7": 15.5,
+      "14": 15.5,
+      "30": 32.5,
+      "45": 100.7
+     },
+     "sums_source": {
+      "7": 15.5,
+      "14": 15.5,
+      "30": 32.5,
+      "45": 100.7
+     }
+    }
+   ]
+  },
+  "CH": {
+   "stations": 6,
+   "values_compared": 282,
+   "max_abs_diff": 0.0,
+   "mismatches": 0,
+   "examples": [],
+   "through": "2026-10-12",
+   "detail": [
+    {
+     "id": "ABE",
+     "name": "Aarberg",
+     "state": "BE",
+     "sums_page": {
+      "7": 18.0,
+      "14": 23.3,
+      "30": 25.0,
+      "45": 38.9
+     },
+     "sums_source": {
+      "7": 18.0,
+      "14": 23.3,
+      "30": 25.0,
+      "45": 38.9
+     }
+    },
+    {
+     "id": "CIM",
+     "name": "Cimetta",
+     "state": "TI",
+     "sums_page": {
+      "7": 38.9,
+      "14": 38.9,
+      "30": 43.8,
+      "45": 114.4
+     },
+     "sums_source": {
+      "7": 38.9,
+      "14": 38.9,
+      "30": 43.8,
+      "45": 114.4
+     }
+    },
+    {
+     "id": "HUT",
+     "name": "Huttwil",
+     "state": "BE",
+     "sums_page": {
+      "7": 23.4,
+      "14": 36.7,
+      "30": 41.1,
+      "45": 51.1
+     },
+     "sums_source": {
+      "7": 23.4,
+      "14": 36.7,
+      "30": 41.1,
+      "45": 51.1
+     }
+    },
+    {
+     "id": "OTL",
+     "name": "Locarno / Monti",
+     "state": "TI",
+     "sums_page": {
+      "7": 36.3,
+      "14": 36.3,
+      "30": 40.2,
+      "45": 140.0
+     },
+     "sums_source": {
+      "7": 36.3,
+      "14": 36.3,
+      "30": 40.2,
+      "45": 140.0
+     }
+    },
+    {
+     "id": "VAB",
+     "name": "Valbella",
+     "state": "GR",
+     "sums_page": {
+      "7": 9.7,
+      "14": 11.6,
+      "30": 28.7,
+      "45": 56.1
+     },
+     "sums_source": {
+      "7": 9.7,
+      "14": 11.6,
+      "30": 28.7,
+      "45": 56.1
+     }
+    },
+    {
+     "id": "ZWK",
+     "name": "Zwillikon",
+     "state": "ZH",
+     "sums_page": {
+      "7": 27.6,
+      "14": 35.8,
+      "30": 48.0,
+      "45": 75.6
+     },
+     "sums_source": {
+      "7": 27.6,
+      "14": 35.8,
+      "30": 48.0,
+      "45": 75.6
+     }
+    }
+   ]
+  },
+  "DE": {
+   "stations": 6,
+   "values_compared": 282,
+   "max_abs_diff": 0.0,
+   "mismatches": 0,
+   "examples": [],
+   "through": "2026-10-12",
+   "detail": [
+    {
+     "id": "1001",
+     "name": "Doberlug-Kirchhain",
+     "state": "BB",
+     "sums_page": {
+      "7": 11.3,
+      "14": 11.6,
+      "30": 27.0,
+      "45": 40.2
+     },
+     "sums_source": {
+      "7": 11.3,
+      "14": 11.6,
+      "30": 27.0,
+      "45": 40.2
+     }
+    },
+    {
+     "id": "173",
+     "name": "Annweiler",
+     "state": "RP",
+     "sums_page": {
+      "7": 13.5,
+      "14": 23.3,
+      "30": 24.0,
+      "45": 32.0
+     },
+     "sums_source": {
+      "7": 13.5,
+      "14": 23.3,
+      "30": 24.0,
+      "45": 32.0
+     }
+    },
+    {
+     "id": "2733",
+     "name": "Kremmen-Groß Ziethen",
+     "state": "BB",
+     "sums_page": {
+      "7": 10.6,
+      "14": 11.6,
+      "30": 25.3,
+      "45": 44.5
+     },
+     "sums_source": {
+      "7": 10.6,
+      "14": 11.6,
+      "30": 25.3,
+      "45": 44.5
+     }
+    },
+    {
+     "id": "4057",
+     "name": "Ratscher",
+     "state": "TH",
+     "sums_page": {
+      "7": 28.0,
+      "14": 35.3,
+      "30": 66.1,
+      "45": 90.9
+     },
+     "sums_source": {
+      "7": 28.0,
+      "14": 35.3,
+      "30": 66.1,
+      "45": 90.9
+     }
+    },
+    {
+     "id": "5542",
+     "name": "Wiesbaden-Biebrich",
+     "state": "HE",
+     "sums_page": {
+      "7": 13.5,
+      "14": 24.8,
+      "30": 35.9,
+      "45": 59.4
+     },
+     "sums_source": {
+      "7": 13.5,
+      "14": 24.8,
+      "30": 35.9,
+      "45": 59.4
+     }
+    },
+    {
+     "id": "991",
+     "name": "Dippoldiswalde-Reinberg",
+     "state": "SN",
+     "sums_page": {
+      "7": 15.6,
+      "14": 16.0,
+      "30": 64.3,
+      "45": 75.6
+     },
+     "sums_source": {
+      "7": 15.6,
+      "14": 16.0,
+      "30": 64.3,
+      "45": 75.6
+     }
+    }
+   ]
+  },
+  "CZ": {
+   "stations": 6,
+   "values_compared": 282,
+   "max_abs_diff": 0.0,
+   "mismatches": 0,
+   "examples": [],
+   "through": "2026-10-12",
+   "detail": [
+    {
+     "id": "0-20000-0-11406",
+     "name": "Cheb",
+     "state": "KA",
+     "sums_page": {
+      "7": 15.7,
+      "14": 17.4,
+      "30": 36.6,
+      "45": 46.7
+     },
+     "sums_source": {
+      "7": 15.7,
+      "14": 17.4,
+      "30": 36.6,
+      "45": 46.7
+     }
+    },
+    {
+     "id": "0-203-0-10503002001",
+     "name": "Katusice",
+     "state": "ST",
+     "sums_page": {
+      "7": 16.8,
+      "14": 16.8,
+      "30": 44.2,
+      "45": 57.9
+     },
+     "sums_source": {
+      "7": 16.8,
+      "14": 16.8,
+      "30": 44.2,
+      "45": 57.9
+     }
+    },
+    {
+     "id": "0-203-0-11301161001",
+     "name": "Nejdek",
+     "state": "KA",
+     "sums_page": {
+      "7": 17.1,
+      "14": 17.4,
+      "30": 41.0,
+      "45": 60.1
+     },
+     "sums_source": {
+      "7": 17.1,
+      "14": 17.4,
+      "30": 41.0,
+      "45": 60.1
+     }
+    },
+    {
+     "id": "0-203-0-11585",
+     "name": "Borkovice",
+     "state": "JC",
+     "sums_page": {
+      "7": 8.8,
+      "14": 8.8,
+      "30": 33.7,
+      "45": 41.6
+     },
+     "sums_source": {
+      "7": 8.8,
+      "14": 8.8,
+      "30": 33.7,
+      "45": 41.6
+     }
+    },
+    {
+     "id": "0-203-0-11788",
+     "name": "Vsetín",
+     "state": "ZL",
+     "sums_page": {
+      "7": 2.0,
+      "14": 2.0,
+      "30": 38.6,
+      "45": 65.5
+     },
+     "sums_source": {
+      "7": 2.0,
+      "14": 2.0,
+      "30": 38.6,
+      "45": 65.5
+     }
+    },
+    {
+     "id": "0-203-0-42108066001",
+     "name": "Valašské Klobouky",
+     "state": "ZL",
+     "sums_page": {
+      "7": 4.2,
+      "14": 4.2,
+      "30": 32.5,
+      "45": 52.5
+     },
+     "sums_source": {
+      "7": 4.2,
+      "14": 4.2,
+      "30": 32.5,
+      "45": 52.5
+     }
+    }
+   ]
+  }
+ },
+ "cross_border": {
+  "AT-CH": {
+   "pairs": 16,
+   "best_shift_0": 1.0,
+   "best_shift_minus1": 0.0,
+   "best_shift_plus1": 0.0,
+   "median_r": {
+    "-1": -0.051,
+    "0": 0.935,
+    "1": -0.098
+   }
+  },
+  "AT-CZ": {
+   "pairs": 10,
+   "best_shift_0": 1.0,
+   "best_shift_minus1": 0.0,
+   "best_shift_plus1": 0.0,
+   "median_r": {
+    "-1": -0.13,
+    "0": 0.965,
+    "1": -0.149
+   }
+  },
+  "AT-DE": {
+   "pairs": 67,
+   "best_shift_0": 1.0,
+   "best_shift_minus1": 0.0,
+   "best_shift_plus1": 0.0,
+   "median_r": {
+    "-1": -0.1,
+    "0": 0.955,
+    "1": -0.099
+   }
+  },
+  "CH-DE": {
+   "pairs": 25,
+   "best_shift_0": 1.0,
+   "best_shift_minus1": 0.0,
+   "best_shift_plus1": 0.0,
+   "median_r": {
+    "-1": -0.049,
+    "0": 0.963,
+    "1": -0.051
+   }
+  },
+  "CZ-DE": {
+   "pairs": 109,
+   "best_shift_0": 1.0,
+   "best_shift_minus1": 0.0,
+   "best_shift_plus1": 0.0,
+   "median_r": {
+    "-1": -0.099,
+    "0": 0.939,
+    "1": -0.09
+   }
+  }
+ },
+ "grid_alignment": {
+  "SPARTACUS_vs_CH_CZ_DE": {
+   "CH": {
+    "pairs": 5,
+    "best_shift_0": 1.0,
+    "best_shift_minus1": 0.0,
+    "best_shift_plus1": 0.0,
+    "median_r": {
+     "-1": 0.106,
+     "0": 0.948,
+     "1": 0.007
+    }
+   },
+   "CZ": {
+    "pairs": 1,
+    "best_shift_0": 1.0,
+    "best_shift_minus1": 0.0,
+    "best_shift_plus1": 0.0,
+    "median_r": {
+     "-1": 0.065,
+     "0": 0.938,
+     "1": -0.046
+    }
+   },
+   "DE": {
+    "pairs": 63,
+    "best_shift_0": 1.0,
+    "best_shift_minus1": 0.0,
+    "best_shift_plus1": 0.0,
+    "median_r": {
+     "-1": -0.101,
+     "0": 0.959,
+     "1": -0.104
+    }
+   }
+  },
+  "HYRAS_vs_AT_CH_CZ": {
+   "AT": {
+    "pairs": 2,
+    "best_shift_0": 1.0,
+    "best_shift_minus1": 0.0,
+    "best_shift_plus1": 0.0,
+    "median_r": {
+     "-1": -0.09,
+     "0": 0.991,
+     "1": -0.091
+    }
+   },
+   "CH": {
+    "pairs": 2,
+    "best_shift_0": 1.0,
+    "best_shift_minus1": 0.0,
+    "best_shift_plus1": 0.0,
+    "median_r": {
+     "-1": -0.038,
+     "0": 0.919,
+     "1": -0.06
+    }
+   },
+   "CZ": {
+    "pairs": 2,
+    "best_shift_0": 1.0,
+    "best_shift_minus1": 0.0,
+    "best_shift_plus1": 0.0,
+    "median_r": {
+     "-1": -0.122,
+     "0": 0.965,
+     "1": -0.08
+    }
+   }
+  }
+ },
+ "grid_vs_station": {
+  "AT": {
+   "window_end": "2026-10-12",
+   "periods": {
+    "7": {
+     "stations": 271,
+     "same_class": 0.823,
+     "within_one_class": 0.996
+    },
+    "14": {
+     "stations": 271,
+     "same_class": 0.801,
+     "within_one_class": 0.996
+    },
+    "30": {
+     "stations": 270,
+     "same_class": 0.7,
+     "within_one_class": 1.0
+    },
+    "45": {
+     "stations": 268,
+     "same_class": 0.716,
+     "within_one_class": 0.989
+    }
+   }
+  },
+  "CH": {
+   "window_end": "2026-10-12",
+   "periods": {
+    "7": {
+     "stations": 272,
+     "same_class": 0.812,
+     "within_one_class": 1.0
+    },
+    "14": {
+     "stations": 271,
+     "same_class": 0.731,
+     "within_one_class": 0.993
+    },
+    "30": {
+     "stations": 269,
+     "same_class": 0.729,
+     "within_one_class": 0.996
+    },
+    "45": {
+     "stations": 269,
+     "same_class": 0.725,
+     "within_one_class": 0.989
+    }
+   }
+  },
+  "DE": {
+   "window_end": "2026-10-12",
+   "periods": {
+    "7": {
+     "stations": 2062,
+     "same_class": 0.968,
+     "within_one_class": 1.0
+    },
+    "14": {
+     "stations": 2056,
+     "same_class": 0.961,
+     "within_one_class": 0.999
+    },
+    "30": {
+     "stations": 2042,
+     "same_class": 0.965,
+     "within_one_class": 1.0
+    },
+    "45": {
+     "stations": 2015,
+     "same_class": 0.963,
+     "within_one_class": 1.0
+    }
+   }
+  }
+ }
+}
