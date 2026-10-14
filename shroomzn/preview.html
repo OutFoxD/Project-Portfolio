@@ -73,6 +73,38 @@
   .legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin:12px 0 4px;font-size:.9rem}
   .legend .item{display:flex;align-items:center;gap:6px}
   .legend .swatch{width:16px;height:16px;border-radius:4px;border:1px solid #0006}
+  .legend .lg-title{color:var(--muted)}
+
+  /* full-screen map: the map covers the window; a small bar on top keeps region, period and verdict */
+  body.map-full{overflow:hidden}
+  body.map-full #map{position:fixed!important;inset:0;width:auto;height:auto!important;z-index:1000;border:none;border-radius:0}
+  .fs-btn{width:34px;height:34px;display:grid;place-items:center;padding:0;background:#fff;color:#333;
+    border:2px solid rgba(0,0,0,.2);border-radius:4px;background-clip:padding-box;cursor:pointer}
+  .fs-btn:hover{background:#f4f4f4}
+  .fs-btn svg{width:18px;height:18px;display:block}
+  .fs-bar,.fs-legend{display:none}
+  body.map-full .fs-bar{display:block;position:absolute;z-index:1000;top:10px;left:54px;right:54px;max-width:440px;margin:0 auto;
+    background:rgba(27,36,28,.93);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:6px;
+    font:14px/1.3 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;box-shadow:0 4px 16px #0006;cursor:default}
+  .fs-row{display:flex;gap:6px;align-items:center}
+  .fs-row+.fs-row{margin-top:5px;padding:0 2px}
+  .fs-row select{flex:1 1 0;min-width:0;min-height:34px;padding:3px 6px;font-size:16px;border-radius:8px}
+  #fs-region{color:var(--amber-soft);font-weight:600;border-color:var(--amber);flex-grow:1.3}
+  #fs-verdict{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.88rem;transition:opacity .2s}
+  #fs-verdict.busy{opacity:.4}
+  @media (max-width:520px){ #fs-verdict .mx{display:none} }
+  #fs-verdict b.good{color:var(--good)} #fs-verdict b.mid{color:var(--mid)} #fs-verdict b.bad{color:var(--bad)} #fs-verdict b.none{color:var(--muted)}
+  .fs-tg{display:flex;gap:4px;flex:0 0 auto}
+  .fs-tg button{background:transparent;border:1px solid var(--amber);color:var(--amber-soft);border-radius:999px;
+    padding:3px 9px;min-height:28px;font:600 .78rem system-ui,sans-serif;cursor:pointer}
+  .fs-tg button[aria-pressed="true"]{background:var(--amber);color:#20180a}
+  body.map-full .fs-legend{display:flex;flex-wrap:wrap;gap:3px 9px;position:absolute;z-index:1000;left:10px;bottom:24px;
+    max-width:calc(100% - 20px);background:rgba(255,255,255,.9);color:#222;border-radius:8px;padding:5px 8px;
+    font:12px/1.2 system-ui,sans-serif;box-shadow:0 1px 5px #0004;cursor:default}
+  .fs-legend .item{display:flex;align-items:center;gap:4px}
+  .fs-legend .swatch{width:11px;height:11px;border-radius:3px;border:1px solid #0005}
+  .fs-legend .lg-title{color:#555}
+  .area-tip{font:600 13px system-ui,sans-serif}
 
   .note{color:var(--muted);font-size:.9rem;margin:8px 0}
   .status{margin:8px 0;padding:10px 12px;border-radius:10px;font-size:.92rem;display:none}
@@ -180,7 +212,19 @@
 
   <div class="status" id="status"></div>
 
-  <div id="map"></div>
+  <div id="map">
+    <div class="fs-bar" id="fs-bar">
+      <div class="fs-row">
+        <select id="fs-region" aria-label="Country or region"></select>
+        <select id="fs-period" aria-label="Time range"></select>
+      </div>
+      <div class="fs-row">
+        <span id="fs-verdict">Loading…</span>
+        <span class="fs-tg"><button type="button" id="fs-grid" aria-pressed="true">Grid</button><button type="button" id="fs-st" aria-pressed="true">Stations</button></span>
+      </div>
+    </div>
+    <div class="fs-legend" id="fs-legend"></div>
+  </div>
 
   <div class="key" id="key">
     <span class="kitem"><span class="kdot"></span>One station</span>
@@ -188,7 +232,7 @@
   </div>
   <div class="legend" id="legend"></div>
   <p class="note" id="grid-note"></p>
-  <p class="note">Tap a circle for daily values. Circles show the rain measured at each country's weather stations; the coloured background is each country's interpolated 1&nbsp;km grid. Gray dashed circles: no data, or too many days missing to count (a station may miss 1 day in 14, 2 in 30, 3 in 45).</p>
+  <p class="note">Tap a circle for daily values, or tap an area on the map to switch to it. Circles show the rain measured at each country's weather stations; the coloured background is each country's interpolated 1&nbsp;km grid. Gray dashed circles: no data, or too many days missing to count (a station may miss 1 day in 14, 2 in 30, 3 in 45).</p>
 
   <details class="spartacus" id="spartacus">
     <summary>Rain map image (1 km grid, downloadable)</summary>
@@ -471,8 +515,11 @@ const blName = () => isWholeCountry() ? COUNTRIES[country()].name
 /* the region id a station belongs to (s.country is set when its file loads) */
 const stationRegion = s => s.country === "AT" ? s.state : `${s.country}-${s.state}`;
 const inBl = s => s.country === country() && (isWholeCountry() || stationRegion(s) === state.bl);
-const regionBounds = () => isWholeCountry() ? COUNTRIES[country()].bounds
-  : country() === "AT" ? BL_BOUNDS[state.bl] : COUNTRIES[country()].regions[state.bl.slice(3)];
+const boundsFor = id => {
+  const c = regionCountry(id);
+  return id === c ? COUNTRIES[c].bounds : c === "AT" ? BL_BOUNDS[id] : COUNTRIES[c].regions[id.slice(3)];
+};
+const regionBounds = () => boundsFor(state.bl);
 /* key of the selected region in a grid's "mean" table */
 const meanKey = () => isWholeCountry() ? COUNTRIES[country()].total
   : country() === "AT" ? state.bl : state.bl.slice(3);
@@ -878,9 +925,63 @@ function updateGridLayer(range) {
   for (const c of COUNTRY_ORDER) {
     const p = gridPeriod(range, c), g = gridDoc(c);
     if (!p) continue;
-    state.gridLayers.push(L.imageOverlay(`${DATA}${p.file}?v=${encodeURIComponent(g.generated)}`, g.bounds,
-      { opacity: 0.85, pane: "gridPane", interactive: false }).addTo(state.map));
+    const url = `${DATA}${p.file}?v=${encodeURIComponent(g.generated)}`;
+    const layer = L.imageOverlay(url, g.bounds, { opacity: 0.85, pane: "gridPane", interactive: false }).addTo(state.map);
+    state.gridLayers.push(layer);
+    indexGrid(url, g.bounds).then(ix => { layer._pwIdx = ix; renderLegend(); });
   }
+  renderLegend();
+}
+
+/* Which colour classes each grid image holds, per 8×8-pixel block, so the legend can list only
+   what's on screen. The PNGs are palette images in Web Mercator, so rows are linear in mercY. */
+const gridIndexes = new Map();     // url -> Promise<index | null>
+function indexGrid(url, bounds) {
+  if (!gridIndexes.has(url)) gridIndexes.set(url, new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const W = img.naturalWidth, H = img.naturalHeight, BS = 8;
+        const cv = document.createElement("canvas");
+        cv.width = W; cv.height = H;
+        const ctx = cv.getContext("2d", { willReadFrequently: true });
+        ctx.drawImage(img, 0, 0);
+        const px = ctx.getImageData(0, 0, W, H).data;
+        const bw = Math.ceil(W / BS), bh = Math.ceil(H / BS), masks = new Uint16Array(bw * bh), memo = new Map();
+        for (let y = 0; y < H; y++) {
+          const row = (y / BS | 0) * bw;
+          for (let x = 0; x < W; x++) {
+            const i = (y * W + x) * 4;
+            if (px[i + 3] < 8) continue;                     // outside the country
+            const key = (px[i] << 16) | (px[i + 1] << 8) | px[i + 2];
+            let k = memo.get(key);
+            if (k === undefined) { k = nearestBin(px[i], px[i + 1], px[i + 2]); memo.set(key, k); }
+            masks[row + (x / BS | 0)] |= 1 << k;
+          }
+        }
+        resolve({ W, H, BS, bw, bh, masks, s: bounds[0][0], w: bounds[0][1], n: bounds[1][0], e: bounds[1][1] });
+      } catch (_) { resolve(null); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  }));
+  return gridIndexes.get(url);
+}
+const BIN_RGB = BINS.map(b => [1, 3, 5].map(k => parseInt(b[1].slice(k, k + 2), 16)));
+function nearestBin(r, g, b) {
+  let best = 0, bd = Infinity;
+  BIN_RGB.forEach(([R, G, B], k) => { const d = (r - R) ** 2 + (g - G) ** 2 + (b - B) ** 2; if (d < bd) { bd = d; best = k; } });
+  return best;
+}
+/* bitmask of the classes a grid shows inside the given map bounds */
+function gridMaskIn(ix, view) {
+  const X = lon => (lon - ix.w) / (ix.e - ix.w) * ix.W / ix.BS;
+  const Y = lat => (mercY(ix.n) - mercY(lat)) / (mercY(ix.n) - mercY(ix.s)) * ix.H / ix.BS;
+  const x0 = Math.max(0, Math.floor(X(view.getWest()))), x1 = Math.min(ix.bw - 1, Math.floor(X(view.getEast())));
+  const y0 = Math.max(0, Math.floor(Y(Math.min(85, view.getNorth())))), y1 = Math.min(ix.bh - 1, Math.floor(Y(Math.max(-85, view.getSouth()))));
+  let m = 0;
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) m |= ix.masks[y * ix.bw + x];
+  return m;
 }
 
 /* ================= verdict ================= */
@@ -892,7 +993,7 @@ function renderVerdict(res) {
   if (!withData.length) {
     wordEl.textContent = "No data"; wordEl.className = "word serif mid";
     numsEl.textContent = ""; metaEl.textContent = `No station in ${blName()} reported precipitation for this period yet.`;
-    hintEl.textContent = ""; return;
+    hintEl.textContent = ""; fsVerdict("No data", "mid", ""); return;
   }
   const avg = withData.reduce((a, s) => a + s.sum, 0) / withData.length;
   const maxSt = withData.reduce((a, s) => (s.sum > a.sum ? s : a), withData[0]);
@@ -903,6 +1004,7 @@ function renderVerdict(res) {
   else                    { word = "Too dry";      cls = "bad";  }
   wordEl.textContent = word; wordEl.className = `word serif ${cls}`;
   numsEl.innerHTML = `<b>${fmt1(avg)}</b> mm avg · <b>${fmt1(maxSt.sum)}</b> mm max`;
+  fsVerdict(word, cls, `Ø ${fmt1(avg)} mm`, ` · max ${fmt1(maxSt.sum)}`);
 
   let when;
   const c = country();
@@ -955,12 +1057,193 @@ function initMap() {
   state.map.getPane("bordersPane").style.pointerEvents = "none";
   state.markerLayer = L.layerGroup().addTo(state.map);
   state.map.on("moveend", () => renderMarkers());     // after zoom and pan: only stations in view are drawn
+  new FullscreenControl().addTo(state.map);
+  for (const id of ["fs-bar", "fs-legend"]) {
+    L.DomEvent.disableClickPropagation($(id));
+    L.DomEvent.disableScrollPropagation($(id));
+  }
+  initAreaPicking();
 }
 
+/* fit the selected region; in full screen leave room for the bar on top and the legend below */
+const fitPadding = () => mapFull ? { paddingTopLeft: [12, 96], paddingBottomRight: [12, 44] } : { padding: [8, 8] };
 function fitRegion() {
   const b = regionBounds();
   sizeMap();
-  state.map.fitBounds([[b.s, b.w], [b.n, b.e]], { padding: [8, 8] });
+  state.map.fitBounds([[b.s, b.w], [b.n, b.e]], fitPadding());
+}
+
+/* the one place a region gets picked: menu, full-screen menu or a tap on the map */
+function selectRegion(id, { fit = true } = {}) {
+  if (!id || id === state.bl) return;
+  state.bl = id;
+  $("bl").value = id; $("fs-region").value = id;
+  state.lastRes = null;                     // don't redraw the old region's dots while zooming
+  closeSheet();
+  renderBorders();
+  if (fit) fitRegion(); else renderMarkers();
+  refresh();
+}
+
+/* ================= tap an area to pick it ================= */
+function bboxOf(f) {
+  if (!f._bb) {
+    let s = 90, w = 180, n = -90, e = -180;
+    const g = f.geometry, polys = g.type === "Polygon" ? [g.coordinates] : g.coordinates;
+    for (const p of polys) for (const [x, y] of p[0]) { if (y < s) s = y; if (y > n) n = y; if (x < w) w = x; if (x > e) e = x; }
+    f._bb = { s, w, n, e };
+  }
+  return f._bb;
+}
+function ringHas(ring, x, y) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i], [xj, yj] = ring[j];
+    if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+function featureHas(f, lon, lat) {
+  const b = bboxOf(f);
+  if (lat < b.s || lat > b.n || lon < b.w || lon > b.e) return false;
+  const g = f.geometry, polys = g.type === "Polygon" ? [g.coordinates] : g.coordinates;
+  return polys.some(p => ringHas(p[0], lon, lat) && !p.slice(1).some(h => ringHas(h, lon, lat)));
+}
+const outlineOf = c => ((state.outlines || {}).features || []).find(f => f.properties.country === c);
+const regionFeatureId = (c, f) => c === "AT" ? f.properties.name : `${c}-${f.properties.code}`;
+
+/* the menu entry under a point: a Bundesland, Land or kraj; Switzerland as a whole; null outside */
+function areaAt(ll) {
+  for (const c of COUNTRY_ORDER) {
+    if (!PICK_REGIONS[c] || !state.bd[c]) continue;
+    const f = state.bd[c].features.find(f => featureHas(f, ll.lng, ll.lat));
+    if (f) { const id = regionFeatureId(c, f); return state.pickable.has(id) ? id : c; }
+  }
+  for (const c of COUNTRY_ORDER) {
+    if (PICK_REGIONS[c] && state.bd[c]) continue;          // those are covered by their regions
+    const o = outlineOf(c);
+    if (o && featureHas(o, ll.lng, ll.lat)) return c;
+  }
+  return null;
+}
+function areaFeature(id) {
+  const c = regionCountry(id);
+  if (id === c || !state.bd[c]) return outlineOf(c);
+  return state.bd[c].features.find(f => regionFeatureId(c, f) === id);
+}
+const areaName = id => { const c = regionCountry(id); return id === c ? COUNTRIES[c].name : c === "AT" ? id : regionName(c, id.slice(3)); };
+
+function initAreaPicking() {
+  const map = state.map;
+  let timer = null;
+  /* A single tap picks the area under it. Leaflet sends no click after a drag; the short wait lets a
+     double-tap zoom cancel it, and a tap that only closes the open sheet picks nothing. */
+  map.on("click", e => {
+    clearTimeout(timer);
+    if (sheetOpen) return;
+    const id = areaAt(e.latlng);
+    if (!id || id === state.bl) return;
+    timer = setTimeout(() => {
+      /* zoomed out (overview): go to the area like the menu does; zoomed in closer: keep the view */
+      const b = boundsFor(id);
+      const fitZoom = map.getBoundsZoom([[b.s, b.w], [b.n, b.e]], false, L.point(16, 16));
+      setHover(null);
+      selectRegion(id, { fit: map.getZoom() <= fitZoom });
+    }, 280);
+  });
+  map.on("dblclick zoomstart", () => clearTimeout(timer));
+
+  /* mouse only: outline the area under the pointer and name it */
+  if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+  let raf = 0, last = null;
+  map.on("mousemove", e => {
+    last = e;
+    if (!raf) raf = requestAnimationFrame(() => {
+      raf = 0;
+      const t = last.originalEvent.target;
+      const onTop = t && t.closest && t.closest(".leaflet-interactive, .leaflet-marker-icon, .leaflet-control, .fs-bar, .fs-legend");
+      const id = onTop ? null : areaAt(last.latlng);
+      setHover(id && id !== state.bl ? id : null, last.latlng);
+    });
+  });
+  map.on("mouseout", () => setHover(null));
+}
+const hover = { id: null, layer: null, tip: null };
+function setHover(id, ll) {
+  const map = state.map;
+  if (id !== hover.id) {
+    if (hover.layer) { map.removeLayer(hover.layer); hover.layer = null; }
+    if (hover.tip) { map.removeLayer(hover.tip); hover.tip = null; }
+    hover.id = id;
+    map.getContainer().style.cursor = id ? "pointer" : "";
+    const f = id && areaFeature(id);
+    if (f) hover.layer = L.geoJSON(f, { pane: "bordersPane", interactive: false,
+      style: { color: "#b8680c", weight: 1.6, opacity: 0.9, dashArray: "5 4", fill: false } }).addTo(map);
+    if (id) hover.tip = L.tooltip({ direction: "top", offset: [0, -12], className: "area-tip" })
+      .setLatLng(ll).setContent(areaName(id)).addTo(map);
+  } else if (hover.tip && ll) hover.tip.setLatLng(ll);
+}
+
+/* ================= full screen ================= */
+let mapFull = false;
+const FS_ICON = {
+  open: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>`,
+  close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>`,
+};
+const FullscreenControl = L.Control.extend({
+  options: { position: "topright" },
+  onAdd() {
+    const b = L.DomUtil.create("button", "fs-btn");
+    b.type = "button"; b.id = "fs-btn";
+    L.DomEvent.disableClickPropagation(b);
+    L.DomEvent.on(b, "click", e => { L.DomEvent.stop(e); setMapFull(!mapFull); });
+    updateFsButton(b);
+    return b;
+  },
+});
+function updateFsButton(b = $("fs-btn")) {
+  if (!b) return;
+  b.innerHTML = mapFull ? FS_ICON.close : FS_ICON.open;
+  b.title = mapFull ? "Exit full screen" : "Full screen map";
+  b.setAttribute("aria-label", b.title);
+}
+/* The whole page goes full screen (where the browser allows it, so the address bar hides) and
+   CSS stretches the map over it; the station sheet stays on top. On iPhones, which only allow
+   videos to go full screen, the map still fills the window. Back or Esc leave full screen. */
+function setMapFull(on, fromHistory = false) {
+  if (on === mapFull) return;
+  const map = state.map, c = map.getCenter(), z = map.getZoom();
+  closeSheet();
+  setHover(null);
+  mapFull = on;
+  document.body.classList.toggle("map-full", on);
+  updateFsButton();
+  const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+  if (on) {
+    pushLayer("full");
+    const de = document.documentElement, req = de.requestFullscreen || de.webkitRequestFullscreen;
+    if (req) { try { const p = req.call(de, { navigationUI: "hide" }); if (p && p.catch) p.catch(() => {}); } catch (_) {} }
+  } else {
+    if (fsEl) { try { const p = (document.exitFullscreen || document.webkitExitFullscreen).call(document); if (p && p.catch) p.catch(() => {}); } catch (_) {} }
+    if (!fromHistory) dropLayer("full");
+    sizeMap();
+  }
+  map.invalidateSize({ pan: false });
+  map.setView(c, z, { animate: false });
+  renderLegend();
+}
+for (const ev of ["fullscreenchange", "webkitfullscreenchange"])
+  document.addEventListener(ev, () => {
+    if (mapFull && !(document.fullscreenElement || document.webkitFullscreenElement)) setMapFull(false);
+  });
+
+/* the verdict line in the full-screen bar */
+function fsVerdict(word, cls, nums, extra = "") {
+  const el = $("fs-verdict");
+  el.innerHTML = `<b class="${cls}"></b>${nums ? " · " : ""}<span></span><span class="mx"></span>`;
+  el.querySelector("b").textContent = word;
+  el.querySelector("span").textContent = nums;
+  el.querySelector(".mx").textContent = extra;      // hidden on narrow screens
 }
 
 /* is this border feature the selected region? (Austrian Bundesland by name, others by code) */
@@ -1009,6 +1292,7 @@ function renderMarkers(res) {
   if (res) state.lastRes = res;
   res = state.lastRes;
   state.markerLayer.clearLayers();
+  renderLegend();
   if (!res || !state.stationsOn) return;    // "Stations" off: rain grid only
   const z = state.map.getZoom(), r = dotRadius(z);
   const view = state.map.getBounds().pad(0.3);          // only what's (nearly) on screen
@@ -1071,6 +1355,7 @@ function addDot(st, r, range) {
   const opts = st.hasData
     ? { radius: r, color: "#223", weight: r < 7 ? 1.5 : 2, fillColor: colorFor(st.sum), fillOpacity: 0.95 }
     : { radius: Math.max(4, r - 2), color: "#777", weight: 1.5, dashArray: "3 3", fillColor: "#eee", fillOpacity: 0.4 };
+  opts.bubblingMouseEvents = false;         // a tap on a dot must not also pick the area below it
   const m = L.circleMarker([st.lat, st.lon], opts).addTo(state.markerLayer);
   m.bindTooltip(`${st.name}: ${st.hasData ? fmt1(st.sum) + " mm" : st.incomplete ? "incomplete" : "no data"}`, { direction: "top" });
   m.on("click", () => openSheet(st, range));
@@ -1131,10 +1416,26 @@ function openSummary(list, at, range) {
   showSheet();
 }
 
+/* The legend lists only the colours on screen: from the lowest to the highest class among the
+   station dots and grid cells in view (all classes when nothing is in view yet). */
+const binIndex = mm => BINS.findIndex(b => mm < b[0]);
+function classesInView() {
+  if (!state.map) return null;
+  const view = state.map.getBounds();
+  let mask = 0;
+  if (state.stationsOn && state.lastRes)
+    for (const s of state.lastRes.stations) if (s.hasData && view.contains([s.lat, s.lon])) mask |= 1 << binIndex(s.sum);
+  if (state.gridOn) for (const l of state.gridLayers) if (l._pwIdx) mask |= gridMaskIn(l._pwIdx, view);
+  if (!mask) return null;
+  const lo = 31 - Math.clz32(mask & -mask), hi = 31 - Math.clz32(mask);
+  return [lo, hi];
+}
 function renderLegend() {
-  $("legend").innerHTML = BINS.map(b =>
-    `<span class="item"><span class="swatch" style="background:${b[1]}"></span>${b[2]}${b[0] === 1e9 ? " mm" : ""}</span>`
-  ).join("");
+  const span = classesInView(), [lo, hi] = span || [0, BINS.length - 1];
+  const items = BINS.slice(lo, hi + 1).map((b, i) =>
+    `<span class="item"><span class="swatch" style="background:${b[1]}"></span>${b[2]}${lo + i === hi ? " mm" : ""}</span>`).join("");
+  const html = (span ? `<span class="item lg-title">In view:</span>` : "") + items;
+  if (html !== renderLegend.last) { $("legend").innerHTML = $("fs-legend").innerHTML = html; renderLegend.last = html; }
 }
 
 /* One menu: the four countries first, then the regions of Austria, Germany and Czechia
@@ -1155,31 +1456,37 @@ function buildRegionOptions() {
     return `<optgroup label="${REGION_GROUP[c]}">${opts}</optgroup>`;
   }).join("");
   sel.innerHTML = countries + groups;
-  if (![...sel.options].some(o => o.value === state.bl)) state.bl = "Oberösterreich";
+  state.pickable = new Set([...sel.options].map(o => o.value));
+  if (!state.pickable.has(state.bl)) state.bl = "Oberösterreich";
   sel.value = state.bl;
+  $("fs-region").innerHTML = sel.innerHTML;     // the full-screen bar has the same menu
+  $("fs-region").value = state.bl;
+}
+
+function setStationsOn(on) {
+  state.stationsOn = on;
+  $("st-toggle").checked = on;
+  $("fs-st").setAttribute("aria-pressed", String(on));
+  $("key").hidden = !on;
+  if (!on) closeSheet();
+  if (state.map) renderMarkers();
+}
+function setGridOn(on) {
+  state.gridOn = on;
+  $("grid-toggle").checked = on;
+  $("fs-grid").setAttribute("aria-pressed", String(on));
+  if (state.map) { updateGridLayer(currentRange()); renderLegend(); }
 }
 
 function fillBlSelect() {
-  const sel = $("bl");
   buildRegionOptions();
-  sel.onchange = () => {
-    state.bl = sel.value;
-    state.lastRes = null;                   // don't redraw the old region's dots while zooming
-    closeSheet();
-    renderBorders(); fitRegion(); refresh();
-  };
-  $("st-toggle").checked = state.stationsOn;
-  $("st-toggle").onchange = e => {
-    state.stationsOn = e.target.checked;
-    $("key").hidden = !state.stationsOn;
-    if (!state.stationsOn) closeSheet();
-    renderMarkers();
-  };
-  $("grid-toggle").checked = state.gridOn;
-  $("grid-toggle").onchange = e => {
-    state.gridOn = e.target.checked;
-    updateGridLayer(currentRange());
-  };
+  $("bl").onchange = e => selectRegion(e.target.value);
+  $("fs-region").onchange = e => selectRegion(e.target.value);
+  $("st-toggle").onchange = e => setStationsOn(e.target.checked);
+  $("grid-toggle").onchange = e => setGridOn(e.target.checked);
+  $("fs-st").onclick = () => setStationsOn(!state.stationsOn);
+  $("fs-grid").onclick = () => setGridOn(!state.gridOn);
+  setStationsOn(state.stationsOn); setGridOn(state.gridOn);
 }
 
 /* ================= station sheet ================= */
@@ -1212,28 +1519,51 @@ function openSheet(st, range, parent) {
   showSheet();
 }
 
-/* ---- opening and closing the sheet: ×, swipe down, tap outside, Esc, Android back ---- */
+/* ---- Back button: the sheet and the full-screen map each add one history entry ---- */
+const overlayStack = [];                 // overlays that own a history entry, bottom to top
+let pendingPops = 0;
+function pushLayer(name) {
+  overlayStack.push(name);
+  try { history.pushState({ pwDepth: overlayStack.length }, ""); } catch (_) {}
+}
+/* closed on the page (×, Esc, tap outside…): drop its entry; several closes in one go become one jump */
+function dropLayer(name) {
+  const i = overlayStack.lastIndexOf(name);
+  if (i < 0) return;
+  pendingPops += overlayStack.length - i;
+  overlayStack.length = i;
+  queueMicrotask(() => { const n = pendingPops; pendingPops = 0; if (n) history.go(-n); });
+}
+window.addEventListener("popstate", e => {
+  const depth = (e.state && e.state.pwDepth) || 0;
+  while (overlayStack.length > depth) {                  // Back pressed: close from the top
+    const name = overlayStack.pop();
+    if (name === "sheet") hideSheet(); else setMapFull(false, true);
+  }
+});
+
+/* ---- opening and closing the sheet: ×, swipe down, tap outside, Esc, Back ---- */
 let sheetOpen = false;
 function showSheet() {
   const el = $("sheet");
   el.scrollTop = 0;
   el.classList.add("open");
-  if (!sheetOpen) {
-    sheetOpen = true;
-    try { history.pushState({ pwSheet: true }, ""); } catch (_) {}
-  }
+  if (!sheetOpen) { sheetOpen = true; pushLayer("sheet"); }
+}
+function hideSheet() {
+  sheetOpen = false;
+  $("sheet").classList.remove("open");
 }
 function closeSheet() {
   if (!sheetOpen) return;
-  sheetOpen = false;
-  $("sheet").classList.remove("open");
-  if (history.state && history.state.pwSheet) history.back();
+  hideSheet();
+  dropLayer("sheet");
 }
-window.addEventListener("popstate", () => {
-  if (sheetOpen) { sheetOpen = false; $("sheet").classList.remove("open"); }
-});
 $("sheet-close").onclick = closeSheet;
-document.addEventListener("keydown", e => { if (e.key === "Escape") closeSheet(); });
+document.addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  if (sheetOpen) closeSheet(); else if (mapFull) setMapFull(false);
+});
 document.addEventListener("click", e => {
   if (!sheetOpen) return;
   /* composedPath is fixed when the tap happens, so it still holds the sheet even if
@@ -1581,12 +1911,7 @@ function renderChips() {
     b.textContent = r.label;
     b.setAttribute("aria-pressed",
       String(state.range.type === "preset" && state.range.idx === i));
-    b.onclick = () => {
-      state.range = { type: "preset", idx: i };
-      $("customrange").classList.remove("open");
-      closeSheet();                          // its numbers belong to the old period
-      renderChips(); refresh();
-    };
+    b.onclick = () => setPreset(i);
     el.appendChild(b);
   });
   const c = document.createElement("button");
@@ -1596,6 +1921,18 @@ function renderChips() {
   c.setAttribute("aria-pressed", String(state.range.type === "custom"));
   c.onclick = () => $("customrange").classList.toggle("open");
   el.appendChild(c);
+  /* the same periods in the full-screen bar (a custom range is set on the page) */
+  const fp = $("fs-period");
+  fp.innerHTML = PRESETS.map((p, i) => `<option value="${i}">${p.label}</option>`).join("") +
+    (state.range.type === "custom" ? `<option value="custom">${dm(state.range.start)} → ${dm(state.range.end)}</option>` : "");
+  fp.value = state.range.type === "custom" ? "custom" : String(state.range.idx);
+  fp.onchange = () => { if (fp.value !== "custom") setPreset(+fp.value); };
+}
+function setPreset(i) {
+  state.range = { type: "preset", idx: i };
+  $("customrange").classList.remove("open");
+  closeSheet();                          // its numbers belong to the old period
+  renderChips(); refresh();
 }
 
 function initCustomRange() {
@@ -1626,8 +1963,9 @@ async function refresh() {
   spUpdateLinks();
   setStatus($("status"), "", "");
   // dim the verdict while loading, so an old verdict is never read as the new one
-  const busy = setTimeout(() => { if (seq === refresh.seq) $("verdict").classList.add("busy"); }, 150);
-  const done = () => { clearTimeout(busy); $("verdict").classList.remove("busy"); };
+  const busyEls = [$("verdict"), $("fs-verdict")];
+  const busy = setTimeout(() => { if (seq === refresh.seq) busyEls.forEach(el => el.classList.add("busy")); }, 150);
+  const done = () => { clearTimeout(busy); busyEls.forEach(el => el.classList.remove("busy")); };
   try {
     const res = await loadRangeData();
     if (seq !== refresh.seq) return;
@@ -1642,7 +1980,8 @@ async function refresh() {
     setStatus($("status"), e.soft ? "info" : "err", e.message);
     $("v-word").textContent = e.soft ? "Out of range" : "Error"; $("v-word").className = "word serif " + (e.soft ? "none" : "bad");
     $("v-nums").textContent = ""; $("v-meta").textContent = e.message; $("v-hint").textContent = "";
-    state.lastRes = null; state.markerLayer.clearLayers();   // don't leave another region's dots up
+    fsVerdict(e.soft ? "Out of range" : "Error", e.soft ? "none" : "bad", e.soft ? "pick another period" : "");
+    state.lastRes = null; renderMarkers();   // don't leave another region's dots up
     $("stcount").textContent = "";
   }
 }
