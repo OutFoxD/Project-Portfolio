@@ -282,7 +282,11 @@
     <span id="cache-info">Station sums and the rain grids are precomputed a few times a day;</span>
     the 24 h view for Austria and Switzerland and Austrian custom ranges outside the cache query the services live
     (GeoSphere limit: 240 requests/hour); the 24 h view for Germany and Czechia is refreshed every 3 hours.
-    Custom ranges outside Austria cover the last 45 days.
+    Daily station values are archived from January 2025 (Switzerland from January 2026, Czechia from
+    late 2025), so custom ranges can reach that far back everywhere; for Austria, older ranges are
+    queried live from GeoSphere.
+    <br><br>Pilzwetter was built by <a href="https://protofox.at" target="_blank" rel="noopener">OutFoxD</a>
+    together with Claude, Anthropic's AI.
   </footer>
 </div>
 
@@ -511,6 +515,8 @@ const isoDate = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate(
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const parseDay = s => { const d = new Date(s + "T00:00:00"); return isNaN(d) ? null : d; };
 const dm = iso => `${iso.slice(8, 10)}.${iso.slice(5, 7)}.`;
+/* with the year when it isn't this year (custom ranges can reach into the archive) */
+const dmy = iso => dm(iso) + (iso.slice(0, 4) === String(new Date().getFullYear()) ? "" : iso.slice(0, 4));
 const country = () => regionCountry(state.bl);
 const isWholeCountry = () => state.bl === country();
 const regionName = (c, code) => c === "AT" ? code : c === "CH" ? cantonName(code) : ((COUNTRIES[c].regions || {})[code] || {}).name || code;
@@ -624,6 +630,7 @@ function cacheSet(key, v) {
 async function loadSiteData() {
   const local = async name => { try { const r = await fetch(name); return r.ok ? await r.json() : null; } catch (_) { return null; } };
   const jobs = [siteJson("regions.json").then(v => { state.regionCounts = v; }),
+                siteJson("hist_index.json").then(v => { state.histIndex = v; }),
                 local("countries.geojson").then(v => { state.outlines = v; })];
   for (const c of COUNTRY_ORDER) {
     const cfg = COUNTRIES[c];
@@ -676,6 +683,8 @@ function rangeFromCache(range) {
   if (i1 < 0 || i0 < 0 || i0 > i1) return null;
 
   const stations = [], days = i1 - i0 + 1, allowed = allowedGaps(days);
+  /* the same days one year earlier, precomputed per station for the presets */
+  const ly = range.type === "preset" && c.ly_periods ? c.ly_periods.indexOf(days) : -1;
   for (const st of c.stations) {
     if (!inBl(st)) continue;
     let sum = 0, have = 0;
@@ -688,10 +697,65 @@ function rangeFromCache(range) {
     const counted = have > 0 && days - have <= allowed;     // a sum with too many gaps would understate the rain
     stations.push({ id: st.id, name: st.name, state: st.state, country: st.country, src: st.src,
                     lat: st.lat, lon: st.lon, altitude: st.alt, sum: counted ? sum : null, daily, hasData: counted,
-                    missing: days - have, incomplete: have > 0 && !counted });
+                    missing: days - have, incomplete: have > 0 && !counted, ly: ly >= 0 && st.ly ? st.ly[ly] : null });
   }
-  const r = { ...range, startIso: dates[i0], endIso: dates[i1], days: i1 - i0 + 1, cached: true };
+  const r = { ...range, startIso: dates[i0], endIso: dates[i1], days: i1 - i0 + 1, cached: true,
+              lyThrough: ly >= 0 ? c.ly_through : null };
   return { range: r, stations, lastDataTs: c.through };
+}
+
+/* ================= history archive (hist_<cc>_<year>.json, see precompute.py) ================= */
+const dayNo = iso => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) / 864e5;
+const isoOf = n => new Date(n * 864e5).toISOString().slice(0, 10);
+const histFiles = {};
+const loadHist = file => histFiles[file] || (histFiles[file] = siteJson(file));
+
+/* first and last archived day of a country, or null */
+function archiveCoverage(c = country()) {
+  const years = (((state.histIndex || {}).countries || {})[c] || {}).years || {};
+  const ys = Object.values(years);
+  if (!ys.length) return null;
+  return { first: ys.map(y => y.first).sort()[0], last: ys.map(y => y.last).sort().pop(), years };
+}
+
+/* A custom range from the archive (all four countries; for Austria it saves live API requests). */
+async function rangeFromArchive(range) {
+  const c = country(), cov = archiveCoverage(c);
+  if (!cov || range.type !== "custom" || range.startIso < cov.first || range.endIso > cov.last) return null;
+  const y0 = +range.startIso.slice(0, 4), y1 = +range.endIso.slice(0, 4), files = [];
+  for (let y = y0; y <= y1; y++) {
+    if (!cov.years[y]) return null;
+    files.push(cov.years[y].file);
+  }
+  setStatus($("status"), "info", "Loading archived daily values…");
+  const docs = await Promise.all(files.map(loadHist));
+  setStatus($("status"), "", "");
+  if (docs.some(d => !d || !d.stations)) return null;
+  const n0 = dayNo(range.startIso), n1 = dayNo(range.endIso), days = n1 - n0 + 1, allowed = allowedGaps(days);
+  const byId = new Map();                  // a station's values may span two year files
+  for (const doc of docs) {
+    const f0 = dayNo(doc.first);
+    for (const s of doc.stations) {
+      if (!byId.has(s.id)) byId.set(s.id, { meta: s, vals: new Array(days).fill(null) });
+      const e = byId.get(s.id);
+      for (let n = Math.max(n0, f0); n <= Math.min(n1, f0 + s.rr.length - 1); n++) e.vals[n - n0] = s.rr[n - f0];
+    }
+  }
+  const stations = [];
+  let last = null;
+  for (const { meta: s, vals } of byId.values()) {
+    const st = { ...s, country: c };
+    if (!inBl(st)) continue;
+    const have = vals.filter(v => v != null).length;
+    if (!have) continue;                   // not reporting in this period
+    const sum = vals.reduce((a, v) => a + (v || 0), 0), counted = days - have <= allowed;
+    vals.forEach((v, k) => { if (v != null && (!last || isoOf(n0 + k) > last)) last = isoOf(n0 + k); });
+    stations.push({ id: s.id, name: s.name, state: s.state, country: c, lat: s.lat, lon: s.lon, altitude: s.alt,
+                    sum: counted ? sum : null, hasData: counted, missing: days - have, incomplete: !counted,
+                    daily: vals.map((v, k) => ({ label: dm(isoOf(n0 + k)), mm: v })) });
+  }
+  if (!stations.length) return null;
+  return { range: { ...range, days, cached: true, archive: true }, stations, lastDataTs: last };
 }
 
 /* ================= station metadata for live queries (7-day cache) ================= */
@@ -744,13 +808,14 @@ async function loadRangeData() {
   if (c !== "AT") {
     if (!state.st[c]) throw new Error(`Data for ${COUNTRIES[c].name} isn't available right now. Try again later.`);
     if (range.src === "tawes") return c === "CH" ? loadCH24h(range) : loadNow(c, range);
-    const fromCache = rangeFromCache(range);
+    const fromCache = rangeFromCache(range) || await rangeFromArchive(range);
     if (fromCache) return fromCache;
-    const cc = state.st[c];
-    throw Object.assign(new Error(`For ${COUNTRIES[c].name}, daily data covers ${dm(cc.dates[0])} – ${dm(cc.through)}${cc.through.slice(0, 4)}. Pick a range inside that window, or use a preset.`), { soft: true });
+    const cc = state.st[c], cov = archiveCoverage(c);
+    const [a, b] = cov ? [cov.first, cov.last] : [cc.dates[0], cc.through];
+    throw Object.assign(new Error(`For ${COUNTRIES[c].name}, daily data covers ${dm(a)}${a.slice(0, 4)} – ${dm(b)}${b.slice(0, 4)}. Pick a range inside that window, or use a preset.`), { soft: true });
   }
   if (range.src === "klima") {
-    const fromCache = rangeFromCache(range);
+    const fromCache = rangeFromCache(range) || await rangeFromArchive(range);
     if (fromCache) return fromCache;
   }
   return loadRangeLive(range);
@@ -1009,6 +1074,15 @@ function gridMaskIn(ix, view) {
 }
 
 /* ================= verdict ================= */
+/* " Same days last year (06.10.–12.10.2025): Ø 18,2 mm." when enough stations have last year's sum */
+function lastYearText(res) {
+  const r = res.range;
+  if (!r.lyThrough) return "";
+  const vals = res.stations.filter(s => s.ly != null).map(s => s.ly);
+  if (!vals.length || vals.length < 0.5 * res.stations.filter(s => s.hasData).length) return "";
+  const end = r.lyThrough, start = isoOf(dayNo(end) - r.days + 1);
+  return ` Same days last year (${dm(start)}–${dm(end)}${end.slice(0, 4)}): Ø ${fmt1(vals.reduce((a, b) => a + b, 0) / vals.length)} mm.`;
+}
 function renderVerdict(res) {
   const r = res.range;
   const withData = res.stations.filter(s => s.hasData);
@@ -1032,7 +1106,7 @@ function renderVerdict(res) {
 
   let when;
   const c = country();
-  if (r.days !== 1) when = `${dm(r.startIso)} → ${dm(r.endIso)} (${r.days} days)`;
+  if (r.days !== 1) when = `${dmy(r.startIso)} → ${dmy(r.endIso)} (${r.days} days)` + (r.archive ? ", from the archive" : "");
   else if (r.nowEnd) {
     const e = new Date(r.nowEnd);
     when = `last 24 h until ${pad(e.getHours())}:00 ${dm(isoDate(e))} (${COUNTRIES[c].live24}, refreshed every 3 h)`;
@@ -1053,6 +1127,7 @@ function renderVerdict(res) {
   const per = r.days === 1 ? null : gridPeriod(r);      // the 24 h grid is a different period
   const gm = per && per.mean && per.mean[meanKey()];
   if (gm != null) hint += ` Area mean (1 km grid): ${fmt1(gm)} mm.`;
+  hint += lastYearText(res);
   if (!r.cached && r.days > 1 && res.lastDataTs) {
     const last = res.lastDataTs.slice(0, 10);
     if (last < r.endIso) hint += ` Daily data currently available through ${dm(last)}.`;
@@ -1410,7 +1485,7 @@ function nearestName(list, at) {
   return best.name;
 }
 
-const periodText = range => range.days !== 1 ? `${dm(range.startIso)} → ${dm(range.endIso)}`
+const periodText = range => range.days !== 1 ? `${dmy(range.startIso)} → ${dmy(range.endIso)}`
   : range.chHours && range.chHours < 23 ? `last ${range.chHours} h` : "last 24 h";
 
 function openSummary(list, at, range) {
@@ -1550,7 +1625,8 @@ function openSheet(st, range, parent) {
     (st.altitude != null ? ` · ${Math.round(st.altitude)} m` : "");
   const days = st.daily.length, gaps = st.missing || 0;
   $("sheet-total").textContent = st.hasData
-    ? `${fmt1(st.sum)} mm total (${periodText(range)})` + (gaps ? ` · ${gaps} day${gaps > 1 ? "s" : ""} not reported` : "")
+    ? `${fmt1(st.sum)} mm total (${periodText(range)})` + (gaps ? ` · ${gaps} day${gaps > 1 ? "s" : ""} not reported` : "") +
+      (st.ly != null ? ` · same days last year: ${fmt1(st.ly)} mm` : "")
     : st.incomplete
       ? `Not counted: ${gaps != null ? `only ${days - gaps} of ${days} days` : "too few values"} reported for this period (${periodText(range)}).`
       : "No precipitation data reported for this period.";

@@ -315,6 +315,7 @@ def build_stations(out_dir, prev_dir=None):
         series.update(s)
     for st in stations:
         st["rr"] = series.get(st["id"]) or series.get(str(st["id"])) or [None] * len(dates or [])
+    feed_archive("AT", {st["id"]: st for st in stations}, {st["id"]: dict(zip(dates or [], st["rr"])) for st in stations})
     doc = station_doc(STATION_DATASET, dates or [], stations)
     write_json(out_dir, STATION_FILES["AT"], doc)
     return {"stations": len(doc["stations"]), "through": doc["through"], "not_reporting": doc["not_reporting_dropped"]}
@@ -405,6 +406,8 @@ def build_ch_stations(out_dir, prev_dir=None):
         return s, (parse_ch_daily(r.content.decode("cp1252")) if r is not None else None)
 
     results = pmap(fetch, stations, 6)
+    feed_archive("CH", {s["abbr"]: {"name": s["name"], "state": s["canton"], "lat": s["lat"], "lon": s["lon"], "alt": s["alt"]}
+                        for s, _ in results}, {s["abbr"]: series for s, series in results if series})
     prev = load_prev_series(prev_dir, STATION_FILES["CH"]) if prev_dir else {}
     out, no_file = [], 0
     for s, series in results:
@@ -505,14 +508,16 @@ def build_de_stations(out_dir, prev_dir=None):
         except Exception:
             return sid, None
 
-    out, failed = [], 0
+    out, failed, full = [], 0, {}
     for sid, series in pmap(fetch, todo, 12):
         if series is None:
             failed += 1
             continue
         s = meta[sid]
+        full[s["id"]] = series
         out.append({"id": s["id"], "name": s["name"], "state": s["state"], "lat": s["lat"],
                     "lon": s["lon"], "alt": s["alt"], "rr": [series.get(d) for d in dates]})
+    feed_archive("DE", {s["id"]: s for s in out}, full)
     doc = station_doc("DWD daily precipitation (more_precip, RS)", dates, out)
     write_json(out_dir, STATION_FILES["DE"], doc)
     return {"stations": len(doc["stations"]), "through": doc["through"], "not_reporting": doc["not_reporting_dropped"], "listed": len(todo), "failed": failed}
@@ -610,6 +615,7 @@ def build_cz_stations(out_dir, prev_dir=None):
         series.setdefault(wsi, {}).update(part)
     out = [{"id": w, "name": s["name"], "state": s["state"], "lat": s["lat"], "lon": s["lon"], "alt": s["alt"],
             "rr": [series.get(w, {}).get(d) for d in dates]} for w, s in stations.items()]
+    feed_archive("CZ", stations, series, months=set(months))
     doc = station_doc("CHMI daily precipitation (SRA)", dates, out)
     write_json(out_dir, STATION_FILES["CZ"], doc)
     return {"stations": len(doc["stations"]), "through": doc["through"], "not_reporting": doc["not_reporting_dropped"], "months": {k: v[0] or "root" for k, v in where.items()}}
@@ -1196,6 +1202,211 @@ def align_station_files(out_dir, prev_dir):
     return {"common_through": common, "own": own}
 
 
+# ------------------------------------------------------- history archive ----
+#
+# hist_{cc}_{year}.json: every station's daily values, one file per country and year, kept on
+# the data branch and carried from run to run. Each full run merges what the sources currently
+# offer: newer values replace older ones (late corrections), nothing is ever removed. Filled
+# once, as far back as HIST_START, where the source makes that cheap: Austria via the API,
+# Czechia from the monthly files CHMI still serves; Germany's files hold ~500 days anyway,
+# Switzerland's start on 1 January.
+
+HIST_START = dt.date(2025, 1, 1)
+HIST_INDEX = "hist_index.json"
+META_KEYS = ("name", "state", "lat", "lon", "alt")
+ARCHIVE_FEED = {}           # country -> {"meta": {id: {...}}, "series": {id: {date: mm}}, ...}, set by the builders
+
+
+def feed_archive(cc, meta, series, **extra):
+    ARCHIVE_FEED[cc] = {"meta": {sid: {k: m.get(k) for k in META_KEYS} for sid, m in meta.items()},
+                        "series": {sid: v for sid, v in series.items() if v}, **extra}
+
+
+def hist_name(cc, year):
+    return f"hist_{cc.lower()}_{year}.json"
+
+
+def load_archive(prev_dir, info):
+    """The previous run's archive of one country -> {id: {"meta": {...}, "v": {date: mm}}}.
+    Raises if a listed file can't be read, so a damaged copy is never written over."""
+    arch = {}
+    for yi in info.get("years", {}).values():
+        with open(os.path.join(prev_dir, yi["file"]), encoding="utf-8") as f:
+            doc = json.load(f)
+        d0 = dt.date.fromisoformat(doc["first"])
+        for s in doc["stations"]:
+            a = arch.setdefault(s["id"], {"meta": {k: s.get(k) for k in META_KEYS}, "v": {}})
+            for k, v in enumerate(s["rr"]):
+                if v is not None:
+                    a["v"][(d0 + dt.timedelta(days=k)).isoformat()] = v
+    return arch
+
+
+def merge_into_archive(arch, feed, last_day):
+    """New values win; returns how many values were added or changed."""
+    lo, hi, n = HIST_START.isoformat(), last_day.isoformat(), 0
+    for sid, series in feed["series"].items():
+        m = feed["meta"].get(sid)
+        if m is None:
+            continue
+        a = arch.setdefault(sid, {"meta": m, "v": {}})
+        a["meta"] = m
+        for d, v in series.items():
+            if v is not None and lo <= d <= hi and a["v"].get(d) != v:
+                a["v"][d] = v
+                n += 1
+    return n
+
+
+def write_archive(out_dir, cc, arch):
+    years = {}
+    for y in range(HIST_START.year, utc_today().year + 1):
+        ys, ye = f"{y}-01-01", f"{y}-12-31"
+        have = sorted({d for a in arch.values() for d in a["v"] if ys <= d <= ye})
+        if not have:
+            continue
+        first = dt.date.fromisoformat(have[0])
+        dates = [(first + dt.timedelta(days=k)).isoformat()
+                 for k in range((dt.date.fromisoformat(have[-1]) - first).days + 1)]
+        stations = []
+        for sid, a in arch.items():
+            rr = [a["v"].get(d) for d in dates]
+            if any(v is not None for v in rr):
+                stations.append({"id": sid, **a["meta"], "rr": rr})
+        name = hist_name(cc, y)
+        write_json(out_dir, name, {"country": cc, "year": y, "first": dates[0], "last": dates[-1],
+                                   "generated": now_iso(), "stations": stations})
+        years[str(y)] = {"file": name, "first": dates[0], "last": dates[-1], "stations": len(stations),
+                         "values": sum(v is not None for s in stations for v in s["rr"])}
+    return years
+
+
+def backfill_at(feed, end):
+    """Austria from HIST_START up to the day before the station window (once)."""
+    ids, n = list(feed["meta"]), 0
+    for y in range(HIST_START.year, end.year + 1):
+        a, b = max(HIST_START, dt.date(y, 1, 1)), min(end, dt.date(y, 12, 31))
+        if a > b:
+            continue
+        for i in range(0, len(ids), 25):
+            chunk = ids[i:i + 25]
+            js = api_get(f"{API}/station/historical/{STATION_DATASET}", params={
+                "parameters": "rr", "station_ids": ",".join(str(x) for x in chunk),
+                "start": a.isoformat(), "end": b.isoformat()})
+            dates, series = parse_station_series(js)
+            for sid in chunk:
+                vals = series.get(sid) or series.get(str(sid)) or []
+                d = feed["series"].setdefault(sid, {})
+                for day, v in zip(dates, vals):
+                    if v is not None and day not in d:
+                        d[day] = v
+                        n += 1
+    return n
+
+
+def backfill_cz(feed):
+    """Czechia: every monthly file still on the server (the last ~12 months), once."""
+    want = HIST_START.strftime("%Y%m")
+    jobs = {}
+    for sub in [""] + [f"{m:02d}/" for m in range(1, 13)]:
+        try:
+            names = dir_listing(f"{CHMI}/recent/data/daily/{sub}")
+        except Exception:
+            continue
+        for n in names:
+            m = re.match(r"dly-(.+)-(\d{6})\.json$", n)
+            if m and m.group(1) in feed["meta"] and m.group(2) >= want and m.group(2) not in feed.get("months", ()):
+                jobs.setdefault((m.group(1), m.group(2)), f"{sub}{n}")
+
+    def fetch(job):
+        (wsi, _), path = job
+        r = http_get(f"{CHMI}/recent/data/daily/{path}", ok404=True)
+        try:
+            return wsi, parse_chmi_daily(r.json()) if r is not None else {}
+        except Exception:
+            return wsi, {}
+
+    n = 0
+    for wsi, part in pmap(fetch, list(jobs.items()), 8):
+        d = feed["series"].setdefault(wsi, {})
+        for day, v in part.items():
+            if v is not None and day not in d:
+                d[day] = v
+                n += 1
+    return {"files": len(jobs), "values": n}
+
+
+def add_last_year(out_dir, cc, arch):
+    """Each station's sums over the same days one year earlier, for the 7-45 day presets."""
+    p = os.path.join(out_dir, STATION_FILES[cc])
+    if not os.path.exists(p):
+        return None
+    with open(p, encoding="utf-8") as f:
+        doc = json.load(f)
+    if not doc.get("through"):
+        return None
+    t = dt.date.fromisoformat(doc["through"])
+    end = t.replace(year=t.year - 1) if not (t.month == 2 and t.day == 29) else dt.date(t.year - 1, 2, 28)
+    have_any = 0
+    for s in doc["stations"]:
+        v = arch.get(s["id"], {}).get("v", {})
+        sums = []
+        for days in PERIODS:
+            vals = [v.get((end - dt.timedelta(days=k)).isoformat()) for k in range(days)]
+            got = sum(x is not None for x in vals)
+            allowed = round(days / 15) if days >= 14 else 0          # same rule as the page
+            sums.append(round(sum(x for x in vals if x is not None), 1) if got and days - got <= allowed else None)
+        s["ly"] = sums
+        have_any += any(x is not None for x in sums)
+    doc["ly_through"], doc["ly_periods"] = end.isoformat(), list(PERIODS)
+    write_json(out_dir, STATION_FILES[cc], doc)
+    return have_any
+
+
+def build_archive(out_dir, prev_dir):
+    prev_index = {}
+    if prev_dir and os.path.exists(os.path.join(prev_dir, HIST_INDEX)):
+        with open(os.path.join(prev_dir, HIST_INDEX), encoding="utf-8") as f:
+            prev_index = json.load(f)
+    last_day = utc_today() - dt.timedelta(days=1)       # day D is complete at 06 UTC on D+1
+    index = {"generated": now_iso(), "start": HIST_START.isoformat(), "countries": {}}
+    report = {}
+    for cc in STATION_FILES:
+        info = prev_index.get("countries", {}).get(cc, {})
+        try:
+            arch = load_archive(prev_dir, info) if info else {}
+        except Exception as e:                           # keep the old files untouched
+            index["countries"][cc] = info
+            report[cc] = {"error": f"previous archive unreadable, kept as is: {e}"}
+            continue
+        r = {"stations_before": len(arch)}
+        feed = ARCHIVE_FEED.get(cc)
+        backfilled = info.get("backfilled", False)
+        if feed:
+            if not backfilled:
+                try:
+                    if cc == "AT":
+                        first = min((d for s in feed["series"].values() for d in s), default=None)
+                        end = dt.date.fromisoformat(first) - dt.timedelta(days=1) if first else last_day
+                        r["backfill"] = backfill_at(feed, end)
+                    elif cc == "CZ":
+                        r["backfill"] = backfill_cz(feed)
+                    backfilled = True
+                except Exception as e:                   # try again next run
+                    r["backfill_error"] = f"{type(e).__name__}: {e}"
+            r["merged"] = merge_into_archive(arch, feed, last_day)
+        years = write_archive(out_dir, cc, arch) if arch else info.get("years", {})
+        index["countries"][cc] = {"years": years, "backfilled": backfilled}
+        r.update({"stations": len(arch), "years": {y: (v["first"], v["last"]) for y, v in years.items()}})
+        try:
+            r["last_year_stations"] = add_last_year(out_dir, cc, arch)
+        except Exception as e:
+            r["last_year_error"] = str(e)
+        report[cc] = r
+    write_json(out_dir, HIST_INDEX, index, compact=False)
+    return report
+
+
 # ---------------------------------------------------------------- main ----
 
 def run(report, name, fn, *args):
@@ -1223,6 +1434,7 @@ def main():
                          ("de_stations", build_de_stations), ("cz_stations", build_cz_stations)):
             run(report, name, fn, out_dir, prev_dir)
         run(report, "alignment", align_station_files, out_dir, prev_dir)
+        run(report, "archive", build_archive, out_dir, prev_dir)
 
         grids = {}
         for c, fn in (("AT", fetch_at_grid), ("CH", fetch_ch_grid), ("DE", fetch_de_grid)):
