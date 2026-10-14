@@ -508,7 +508,6 @@ const $ = id => document.getElementById(id);
 const fmt1 = n => (Math.round(n * 10) / 10).toLocaleString("de-AT");
 const pad = n => String(n).padStart(2, "0");
 const isoDate = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-const isoMin  = d => `${isoDate(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const parseDay = s => { const d = new Date(s + "T00:00:00"); return isNaN(d) ? null : d; };
 const dm = iso => `${iso.slice(8, 10)}.${iso.slice(5, 7)}.`;
@@ -823,7 +822,7 @@ async function loadCH24h(range) {
 async function loadRangeLive(range) {
   const status = $("status");
   const bucket = Math.floor(Date.now() / (15*60e3));
-  const key = `pw_data5_${range.src}_${range.startIso}_${range.endIso}_${state.bl}_${bucket}`;
+  const key = `pw_data6_${range.src}_${range.startIso}_${range.endIso}_${state.bl}_${bucket}`;
   const cached = cacheGet(key, 15*60e3);
   if (cached) return { range, ...cached };
 
@@ -839,10 +838,13 @@ async function loadRangeLive(range) {
   let url, paramName;
 
   if (range.src === "tawes") {
-    const now = new Date(), start = new Date(now.getTime() - 24*3600e3);
+    /* The API reads times as UTC (local time would shift the window 1–2 h into the future and
+       leave too few values). 144 ten-minute steps, ending at the last full 10 minutes. */
+    const end = new Date(Math.floor(Date.now() / 600e3) * 600e3), start = new Date(end.getTime() - 24 * 3600e3 + 600e3);
+    const utc = d => d.toISOString().slice(0, 16);
     paramName = "RR";
     url = `${API}/station/historical/tawes-v1-10min?parameters=RR&station_ids=${ids}` +
-          `&start=${encodeURIComponent(isoMin(start))}&end=${encodeURIComponent(isoMin(now))}`;
+          `&start=${encodeURIComponent(utc(start))}&end=${encodeURIComponent(utc(end))}`;
   } else {
     paramName = "rr";
     url = `${API}/station/historical/klima-v2-1d?parameters=rr&station_ids=${ids}` +
@@ -1035,7 +1037,10 @@ function renderVerdict(res) {
     const e = new Date(r.nowEnd);
     when = `last 24 h until ${pad(e.getHours())}:00 ${dm(isoDate(e))} (${COUNTRIES[c].live24}, refreshed every 3 h)`;
   }
-  else if (c === "AT") when = `last 24 h (${COUNTRIES.AT.live24})`;
+  else if (c === "AT") {
+    const e = res.lastDataTs && new Date(res.lastDataTs);
+    when = e ? `last 24 h until ${pad(e.getHours())}:${pad(e.getMinutes())} (${COUNTRIES.AT.live24})` : `last 24 h (${COUNTRIES.AT.live24})`;
+  }
   else if ((r.chHours || 0) >= 23) when = `last 24 h (${COUNTRIES.CH.live24})`;
   else {
     /* MeteoSwiss' live hourly files start at 12:00 UTC yesterday */
