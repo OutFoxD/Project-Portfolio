@@ -1,0 +1,20 @@
+name: shroomzn probe (temporary)
+on:
+  push:
+    branches: ["shroomzn-probe"]
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install requests numpy
+      - run: python probe/probe.py
+      - name: Publish probe output
+        run: |
+          cd out && git init -q -b shroomzn-probe-out && git config user.name probe && git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A && git commit -q -m "probe output" && git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" shroomzn-probe-out
