@@ -13,11 +13,11 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - run: pip install requests numpy scipy xarray netCDF4 pyproj pillow playwright
-      - name: DEM decode check
+      - name: Live site screenshots
         run: |
           python -m playwright install --with-deps chromium > /dev/null 2>&1
-          mkdir -p "$RUNNER_TEMP/out"
-          python probe/demcheck.py "$RUNNER_TEMP/out" > "$RUNNER_TEMP/out/demcheck_log.txt" 2>&1 || true
+          mkdir -p "$RUNNER_TEMP/out" site
+          python probe/shots.py site "$RUNNER_TEMP/out/live" "https://protofox.at/skitour/" > "$RUNNER_TEMP/out/live_log.txt" 2>&1 || true
       - name: Publish probe output
         run: |
           cd "$RUNNER_TEMP/out" && git init -q -b skitour-probe-out && git config user.name probe && git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

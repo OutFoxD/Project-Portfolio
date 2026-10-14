@@ -3,6 +3,7 @@ import functools, http.server, os, sys, threading
 from playwright.sync_api import sync_playwright
 
 SITE, OUT = sys.argv[1], sys.argv[2]
+BASE = sys.argv[3] if len(sys.argv) > 3 else "http://127.0.0.1:8765/skitour/"
 os.makedirs(OUT, exist_ok=True)
 
 
@@ -14,7 +15,7 @@ class Q(http.server.SimpleHTTPRequestHandler):
 srv = http.server.ThreadingHTTPServer(("127.0.0.1", 8765), functools.partial(Q, directory=SITE))
 threading.Thread(target=srv.serve_forever, daemon=True).start()
 logs = []
-VIEWS = [
+VIEWS_ALL = [
     # name, hash, setup clicks (wx, terr, window)
     ("1_alps_snow_p72", "#7/47.15/12.6", "snow", "off", "p72"),
     ("2_alps_snow_f48", "#7/47.15/12.6", "snow", "off", "f48"),
@@ -26,6 +27,7 @@ VIEWS = [
     ("8_stubai_lee_z13", "#13/47.10/11.20", "wind", "lee", "f24"),
     ("9_depth", "#8/47.2/12.8", "depth", "off", "p72"),
 ]
+VIEWS = [v for v in VIEWS_ALL if v[0][0] in "1478"]
 with sync_playwright() as pw:
     br = pw.chromium.launch()
     for vp, tag, dpr in [({"width": 390, "height": 844}, "m", 2), ({"width": 1280, "height": 860}, "d", 1)]:
@@ -34,7 +36,7 @@ with sync_playwright() as pw:
         page.on("console", lambda m, tag=tag: logs.append(f"[{tag}] {m.type}: {m.text}"))
         page.on("pageerror", lambda e, tag=tag: logs.append(f"[{tag}] PAGEERROR: {e}"))
         page.on("requestfailed", lambda r, tag=tag: logs.append(f"[{tag}] FAILED {r.url[:120]} {r.failure}"))
-        page.goto("http://127.0.0.1:8765/skitour/")
+        page.goto(BASE)
         page.wait_for_timeout(3000)
         for name, h, wx, terr, win in VIEWS:
             page.evaluate(f"""() => {{
