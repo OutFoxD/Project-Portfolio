@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1a24">
+<title>Skitour – Neuschnee, Schneefallgrenze &amp; Wind</title>
+<meta name="description" content="Neuschnee, Schneefallgrenze und Windverfrachtung auf einer Topo-Karte mit Hangneigung und Exposition – für die Skitourenplanung in den Ostalpen.">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root{
+    --bg:#0f1a24; --panel:#132230f2; --panel2:#1b2d3f; --line:#2b4258;
+    --text:#e9f1f7; --muted:#9fb3c5; --ice:#9ad5ff; --ice2:#4fb3ff;
+    --warn:#f2a33a; --bad:#ff8a7a;
+    --sheet-h:0px; --top-h:0px;
+    --font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;-webkit-text-size-adjust:100%}
+  #map{position:fixed;inset:0;background:#d9dde0}
+  button,select,input{font:inherit;color:inherit}
+  a{color:var(--ice)}
+
+  /* ---------- top bar: title + time windows */
+  .topbar{position:fixed;z-index:1001;top:calc(env(safe-area-inset-top) + 8px);left:8px;right:8px;
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px 10px 8px;
+    box-shadow:0 6px 24px #0006;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  .brand{display:flex;align-items:baseline;gap:8px;margin:0 2px 6px;white-space:nowrap;overflow:hidden}
+  .brand b{font-size:1.05rem;letter-spacing:.2px}
+  .brand b i{font-style:normal;color:var(--ice)}
+  .brand span{color:var(--muted);font-size:.82rem;overflow:hidden;text-overflow:ellipsis}
+  .chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:1 0 auto;min-width:58px;min-height:38px;padding:6px 10px;border-radius:10px;border:1px solid var(--line);
+    background:var(--panel2);font-weight:650;font-size:.95rem;cursor:pointer;font-variant-numeric:tabular-nums}
+  .chip.fc{border-style:dashed}
+  .chip[aria-pressed="true"]{background:var(--ice);color:#06223a;border-color:var(--ice);border-style:solid}
+  .chip .now{display:inline-block;width:1px}
+  .sep{flex:0 0 2px;align-self:stretch;margin:4px 2px;background:var(--line);border-radius:2px}
+  .when{color:var(--muted);font-size:.8rem;margin:6px 2px 0;min-height:1em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .when b{color:var(--text);font-weight:600}
+  .when .stale{color:var(--warn)}
+
+  /* ---------- bottom sheet (mobile) / side panel (desktop) */
+  .sheet{position:fixed;z-index:1002;left:0;right:0;bottom:0;max-height:78vh;overflow:auto;
+    background:var(--panel);border-top:1px solid var(--line);border-radius:16px 16px 0 0;
+    padding:0 12px calc(env(safe-area-inset-bottom) + 10px);box-shadow:0 -8px 28px #0007;
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);overscroll-behavior:contain}
+  .grip{display:flex;justify-content:center;align-items:center;width:100%;height:26px;border:0;background:none;cursor:pointer;position:sticky;top:0;z-index:2;
+    background:linear-gradient(var(--panel) 70%, transparent)}
+  .grip span{width:44px;height:5px;border-radius:3px;background:#5d7890}
+  .more{display:none}
+  .sheet.open .more{display:block}
+  section{padding:6px 0 10px;border-bottom:1px solid #ffffff12}
+  section:last-child{border-bottom:0}
+  h3{margin:4px 0 8px;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:650}
+  .seg{display:flex;flex-wrap:wrap;gap:6px}
+  #wx{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -12px;padding:0 12px}
+  #wx::-webkit-scrollbar{display:none}
+  #wx button{flex:0 0 auto}
+  .seg button{flex:1 1 auto;min-height:40px;padding:7px 10px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);cursor:pointer;font-size:.9rem;font-weight:600}
+  .seg button[aria-pressed="true"]{background:var(--ice);border-color:var(--ice);color:#06223a}
+  .legend{display:flex;flex-wrap:wrap;gap:4px 10px;margin:8px 0 0;font-size:.8rem;color:var(--muted);align-items:center}
+  .legend .bar{display:flex;width:100%;border-radius:6px;overflow:hidden;border:1px solid #0005}
+  .legend .bar span{flex:1;height:12px}
+  .legend .ticks{display:flex;width:100%;justify-content:space-between;font-variant-numeric:tabular-nums;color:var(--text);font-size:.75rem}
+  .legend .ticks span{flex:1;text-align:left}
+  .legend .it{display:inline-flex;align-items:center;gap:5px}
+  .legend .sw{width:14px;height:14px;border-radius:4px;border:1px solid #0006;display:inline-block}
+  .legend .cap{width:100%;color:var(--muted)}
+  .hint{color:var(--muted);font-size:.8rem;margin:6px 0 0;line-height:1.4}
+  .hint.warn{color:var(--warn)}
+  .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0}
+  .row label{display:inline-flex;align-items:center;gap:8px;min-height:36px;cursor:pointer}
+  .row input[type=checkbox]{width:20px;height:20px;accent-color:var(--ice2);margin:0}
+  .row input[type=range]{flex:1;min-width:120px;accent-color:var(--ice2)}
+  .row .val{min-width:5.5em;text-align:right;font-variant-numeric:tabular-nums}
+  select{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-height:40px;flex:1}
+  .btn{min-height:40px;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);cursor:pointer;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+  .btn.primary{background:var(--ice);border-color:var(--ice);color:#06223a}
+  .btns{display:flex;flex-wrap:wrap;gap:8px}
+
+  /* aspect rose for "Gefahrenstellen" */
+  .dcfg{display:none;gap:14px;align-items:center;margin-top:10px;flex-wrap:wrap}
+  .dcfg.on{display:flex}
+  .rose{display:grid;grid-template-columns:repeat(3,42px);grid-template-rows:repeat(3,42px);gap:4px}
+  .rose button{border-radius:50%;border:1px solid var(--line);background:var(--panel2);font-size:.78rem;font-weight:700;cursor:pointer;padding:0}
+  .rose button[aria-pressed="true"]{background:#2b6cb0;border-color:#6aa8ec;color:#fff}
+  .rose .mid{border-radius:10px;font-size:.68rem;font-weight:600;color:var(--muted)}
+  .dsliders{flex:1;min-width:180px}
+
+  .track{display:none}
+  .track.on{display:block}
+  .track .stats{font-variant-numeric:tabular-nums;margin:4px 0 8px}
+  .about p{color:var(--muted);font-size:.8rem;line-height:1.45;margin:6px 0}
+  .about .err{color:var(--bad)}
+
+  /* Leaflet tweaks */
+  .leaflet-top{top:var(--top-h)}
+  .leaflet-bottom{bottom:var(--sheet-h)}
+  .leaflet-control-attribution{font-size:10px;max-width:70vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .leaflet-control-attribution:hover,.leaflet-control-attribution:focus-within{white-space:normal}
+  .leaflet-bar a{width:40px;height:40px;line-height:40px;font-size:20px}
+  .locbtn{font-size:22px!important}
+  .leaflet-popup-content-wrapper{border-radius:12px}
+  .leaflet-popup-content{margin:10px 12px;font:13px/1.35 var(--font);color:#16232e;min-width:220px}
+  .pp-head{font-weight:700;font-size:14px;margin-bottom:4px}
+  .pp-sub{color:#4b5d6c;margin-bottom:6px}
+  .pp table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+  .pp th,.pp td{padding:2px 4px;text-align:right;white-space:nowrap}
+  .pp th:first-child,.pp td:first-child{text-align:left}
+  .pp thead th{color:#4b5d6c;font-weight:600;font-size:11px;border-bottom:1px solid #d5dde3}
+  .pp tr.cur td{background:#e3f2ff;font-weight:700}
+  .pp .note{color:#4b5d6c;font-size:12px;margin-top:6px}
+  .pp .tag{display:inline-block;padding:0 6px;border-radius:6px;font-weight:700;font-size:12px}
+  .toast{position:fixed;z-index:1003;left:50%;transform:translateX(-50%);top:calc(var(--top-h) + 6px);
+    background:#0d1822e6;color:var(--text);padding:8px 12px;border-radius:10px;font-size:.85rem;border:1px solid var(--line);
+    pointer-events:none;opacity:0;transition:opacity .25s;max-width:90vw;text-align:center}
+  .toast.on{opacity:1}
+
+  @media (min-width:900px){
+    .topbar{left:384px;right:auto;max-width:640px}
+    .sheet{top:12px;left:12px;bottom:12px;right:auto;width:360px;max-height:none;border:1px solid var(--line);border-radius:14px;padding:4px 14px 14px}
+    .grip{display:none}
+    .more{display:block}
+    .leaflet-bottom{bottom:0}
+    .leaflet-bottom.leaflet-left{left:384px}
+    #wx{flex-wrap:wrap;margin:0;padding:0}
+    #wx button{flex:1 1 auto}
+  }
+  @media (max-width:899px){ .leaflet-control-zoom{display:none} }
+</style>
+</head>
+<body>
+<div id="map" aria-label="Karte"></div>
+
+<header class="topbar" id="topbar">
+  <div class="brand"><b>Ski<i>tour</i></b><span>Neuschnee · Schneefallgrenze · Wind · Gelände</span></div>
+  <div class="chips" id="wins" role="group" aria-label="Zeitraum"></div>
+  <div class="when" id="when">Lade Wetterdaten…</div>
+</header>
+
+<aside class="sheet" id="sheet" aria-label="Ebenen und Einstellungen">
+  <button class="grip" id="grip" aria-label="Einstellungen ein- oder ausklappen" aria-expanded="false"><span></span></button>
+  <section>
+    <div class="seg" id="wx" role="group" aria-label="Wetter-Ebene">
+      <button data-v="snow">Neuschnee</button>
+      <button data-v="sl">Schneefallgrenze</button>
+      <button data-v="wind">Wind</button>
+      <button data-v="depth">Schneehöhe</button>
+      <button data-v="off">aus</button>
+    </div>
+    <div class="legend" id="wx-legend"></div>
+  </section>
+
+  <div class="more">
+    <section>
+      <h3>Gelände</h3>
+      <div class="seg" id="terr" role="group" aria-label="Gelände-Ebene">
+        <button data-v="off">aus</button>
+        <button data-v="slope">Neigung</button>
+        <button data-v="aspect">Exposition</button>
+        <button data-v="danger">Gefahrenstellen</button>
+        <button data-v="lee">Triebschnee</button>
+      </div>
+      <div class="dcfg" id="dcfg">
+        <div class="rose" id="rose" role="group" aria-label="Expositionen"></div>
+        <div class="dsliders">
+          <div class="row"><span>ab</span><input type="range" id="minElev" min="0" max="3600" step="100"><span class="val" id="minElevV"></span></div>
+          <div class="row"><span>Neigung</span><select id="minSlope"><option value="30">ab 30°</option><option value="35">ab 35°</option><option value="40">ab 40°</option></select></div>
+        </div>
+      </div>
+      <div class="legend" id="terr-legend"></div>
+      <p class="hint" id="terr-hint"></p>
+    </section>
+
+    <section>
+      <h3>Anzeige</h3>
+      <div class="row"><label><input type="checkbox" id="arrows"> Windpfeile (Verfrachtungsrichtung)</label></div>
+      <div class="row"><span>Wetter</span><input type="range" id="wxOp" min="0.2" max="1" step="0.05" aria-label="Deckkraft Wetter"><span class="val" id="wxOpV"></span></div>
+      <div class="row"><span>Gelände</span><input type="range" id="terrOp" min="0.2" max="1" step="0.05" aria-label="Deckkraft Gelände"><span class="val" id="terrOpV"></span></div>
+      <div class="row"><select id="base" aria-label="Basiskarte"></select></div>
+    </section>
+
+    <section>
+      <h3>Tour</h3>
+      <div class="btns">
+        <button class="btn" id="gpx-btn">GPX laden</button>
+        <a class="btn" href="https://lawinen-warnung.eu/" target="_blank" rel="noopener">Lawinenlage AT ↗</a>
+        <a class="btn" href="https://avalanche.report/" target="_blank" rel="noopener">Euregio ↗</a>
+      </div>
+      <div class="track" id="track">
+        <div class="stats" id="track-stats"></div>
+        <div class="legend" id="track-legend"></div>
+        <div class="btns" style="margin-top:8px"><button class="btn" id="track-zoom">Zur Spur</button><button class="btn" id="track-del">Entfernen</button></div>
+      </div>
+      <p class="hint">Tippe auf die Karte für Höhe, Neigung, Exposition und alle Zeiträume an diesem Punkt.</p>
+    </section>
+
+    <section class="about">
+      <h3>Daten</h3>
+      <div id="status"></div>
+      <p><b>Neuschnee</b>: vergangene Stunden aus der INCA-Analyse (Niederschlag aus Radar und Stationen, Schnee-/Regenanteil über die Feuchttemperatur), Prognose aus dem 1-km-Modell (C-LAEF). Umrechnung Wasserwert → cm über eine temperaturabhängige Neuschneedichte (ca. 70–150 kg/m³), ohne Setzung.</p>
+      <p><b>Schneefallgrenze</b>: niederschlagsgewichtetes Mittel im Zeitraum, nur wo mindestens 0,5 mm fielen. Ab Zoom 11 mit Geländehöhe: weiß = fällt als Schnee, Linie = Schneefallgrenze.</p>
+      <p><b>Wind</b>: höchstes Stundenmittel in 10 m über Grund (1 km Raster, Kämme sind geglättet). Pfeile zeigen, wohin der Schnee verfrachtet wird. <b>Triebschnee</b>: Hänge ≥ 30°, die im Lee dieser Richtung liegen (±67,5°), ab 20 km/h; blass, wo in den letzten 72 h und im Zeitraum kaum Neuschnee fiel.</p>
+      <p><b>Gelände</b>: berechnet aus AWS Terrain Tiles (Österreich: 10-m-Geländemodell von data.gv.at, sonst SRTM ~30 m – dort eher zu flach). Gefahrenstellen: Neigung, Exposition und Höhe wie im Lawinenlagebericht einstellen.</p>
+      <p>Quellen: <a href="https://data.hub.geosphere.at/" target="_blank" rel="noopener">GeoSphere Austria Data Hub</a> (CC BY 4.0: INCA, C-LAEF 1 km, SNOWGRID), Karten: OpenTopoMap, basemap.at, swisstopo, Esri.</p>
+      <p><b>Kein Ersatz für den Lawinenlagebericht.</b> Modelldaten können lokal deutlich daneben liegen.</p>
+    </section>
+  </div>
+</aside>
+
+<div class="toast" id="toast"></div>
+<input type="file" id="gpx-file" accept=".gpx,application/gpx+xml,application/xml,text/xml" hidden>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+"use strict";
+
+// ------------------------------------------------------------ settings ----
+const DATA = "data/";
+const DEM_URL = (z, x, y) => `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${z}/${x}/${y}.png`;
+const TZ = "Europe/Vienna";
+const DIRS = ["N", "NO", "O", "SO", "S", "SW", "W", "NW"];
+const $ = s => document.querySelector(s);
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("skitour." + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem("skitour." + k, JSON.stringify(v)); } catch (e) {} },
+};
+const S = {
+  win: store.get("win", "p72"),
+  wx: store.get("wx", "snow"),
+  terr: store.get("terr", "slope"),
+  arrows: store.get("arrows", false),
+  base: store.get("base", "otm"),
+  wxOp: store.get("wxOp", 0.6),
+  terrOp: store.get("terrOp", 0.7),
+  aspects: store.get("aspects", [true, true, false, false, false, false, true, true]),   // N NO O SO S SW W NW
+  minElev: store.get("minElev", 1800),
+  minSlope: store.get("minSlope", 30),
+};
+function save(k) { store.set(k, S[k]); }
+
+// ------------------------------------------------------------- colours ----
+// [lower bound, r, g, b, alpha]
+const C_SNOW = [[1, 227, 242, 255, 150], [5, 179, 219, 255, 200], [10, 124, 188, 255, 220], [20, 74, 144, 240, 230],
+  [30, 47, 95, 208, 235], [50, 91, 60, 196, 240], [80, 147, 48, 181, 245], [120, 208, 38, 143, 250]];
+const C_SL = [[0, 59, 31, 143, 220], [600, 74, 63, 191, 220], [900, 63, 111, 216, 220], [1200, 63, 160, 216, 220],
+  [1500, 69, 192, 176, 220], [1800, 140, 207, 106, 220], [2100, 217, 210, 74, 220], [2400, 242, 163, 58, 220],
+  [2700, 234, 106, 47, 220], [3000, 200, 50, 58, 220]];
+const C_WIND = [[20, 246, 224, 94, 170], [40, 246, 173, 85, 215], [60, 224, 95, 60, 235], [80, 155, 44, 111, 245]];
+const C_DEPTH = [[1, 238, 246, 251, 170], [20, 207, 230, 245, 200], [50, 156, 203, 236, 215], [100, 95, 165, 220, 225],
+  [150, 52, 121, 196, 235], [200, 42, 79, 168, 240], [300, 58, 42, 140, 245], [400, 106, 31, 138, 250]];
+const C_SLOPE = [[30, 245, 228, 0, 255], [35, 243, 146, 0, 255], [40, 226, 0, 26, 255], [45, 139, 26, 143, 255]];
+const C_LEE = [[20, 240, 160, 220, 255], [40, 214, 80, 200, 255], [60, 120, 25, 150, 255]];
+const C_ASPECT = [[43, 108, 176], [63, 167, 214], [89, 195, 106], [183, 216, 75], [242, 201, 76], [242, 153, 74], [235, 87, 87], [155, 81, 224]];
+
+function cls(table, v) {
+  if (!(v === v)) return null;
+  for (let i = table.length - 1; i >= 0; i--) if (v >= table[i][0]) return table[i];
+  return null;
+}
+const hex = c => "#" + [c[1], c[2], c[3]].map(x => x.toString(16).padStart(2, "0")).join("");
+const fmtN = v => Math.round(v).toLocaleString("de-AT");
+
+// ------------------------------------------------------- web mercator ----
+const x01 = lon => (lon + 180) / 360;
+const y01 = lat => { const s = Math.sin(lat * Math.PI / 180); return 0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI); };
+const lat01 = y => { const n = Math.PI - 2 * Math.PI * y; return 180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n))); };
+
+// ---------------------------------------------------------------- data ----
+let META = null, W = 0, H = 0, BX = null, DEPTH = null;
+const WIN = {};           // id -> {snow, sl, p, wind, gust, dir}
+const winLoads = {};
+
+async function loadPixels(url, crossOrigin) {
+  const r = await fetch(url, crossOrigin ? { mode: "cors", cache: "force-cache" } : {});
+  if (!r.ok) throw new Error(url + ": " + r.status);
+  const blob = await r.blob();
+  let src;
+  try { src = await createImageBitmap(blob, { colorSpaceConversion: "none", premultiplyAlpha: "none" }); }
+  catch (e) {
+    src = await new Promise((res, rej) => {
+      const img = new Image(); img.onload = () => res(img); img.onerror = () => rej(new Error("decode " + url));
+      img.src = URL.createObjectURL(blob);
+    });
+  }
+  const c = document.createElement("canvas");
+  c.width = src.width; c.height = src.height;
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(src, 0, 0);
+  return { w: src.width, h: src.height, d: ctx.getImageData(0, 0, src.width, src.height).data };
+}
+
+function ensureWin(id) {
+  if (WIN[id]) return Promise.resolve(WIN[id]);
+  if (winLoads[id]) return winLoads[id];
+  const w = META && META.windows.find(x => x.id === id);
+  if (!w) return Promise.resolve(null);
+  const v = "?v=" + encodeURIComponent(META.generated);
+  winLoads[id] = Promise.all([loadPixels(DATA + w.a + v), loadPixels(DATA + w.b + v)]).then(([a, b]) => {
+    const n = W * H, f = {
+      snow: new Float32Array(n), sl: new Float32Array(n), p: new Float32Array(n),
+      wind: new Float32Array(n), gust: new Float32Array(n), dir: new Float32Array(n),
+    };
+    for (let i = 0, j = 0; i < n; i++, j += 4) {
+      const out = a.d[j] === 255;
+      f.snow[i] = out ? NaN : a.d[j];
+      f.sl[i] = a.d[j + 1] === 0 || out ? NaN : a.d[j + 1] * 20;
+      f.p[i] = out ? NaN : a.d[j + 2];
+      f.wind[i] = b.d[j] === 255 ? NaN : b.d[j];
+      f.gust[i] = b.d[j + 1] === 255 ? NaN : b.d[j + 1];
+      f.dir[i] = b.d[j + 2] === 255 ? NaN : b.d[j + 2] * 2;
+    }
+    WIN[id] = f;
+    return f;
+  }).catch(err => { console.error(err); delete winLoads[id]; return null; });
+  return winLoads[id];
+}
+
+async function loadDepth() {
+  if (DEPTH || !META || !META.snowdepth) return DEPTH;
+  try {
+    const px = await loadPixels(DATA + META.snowdepth.file + "?v=" + encodeURIComponent(META.generated));
+    const n = W * H, f = new Float32Array(n);
+    for (let i = 0, j = 0; i < n; i++, j += 4) f[i] = px.d[j + 2] === 255 ? NaN : px.d[j] * 256 + px.d[j + 1];
+    DEPTH = f;
+  } catch (e) { console.error(e); }
+  return DEPTH;
+}
+
+// raster position (fractional px) of a normalised mercator coordinate
+const rx = X => (X - BX.x0) / (BX.x1 - BX.x0) * W - 0.5;
+const ry = Y => (Y - BX.y0) / (BX.y1 - BX.y0) * H - 0.5;
+
+function bilinear(f, fx, fy) {
+  if (!(fx > -0.5 && fy > -0.5 && fx < W - 0.5 && fy < H - 0.5)) return NaN;
+  const x0 = Math.floor(fx), y0 = Math.floor(fy), tx = fx - x0, ty = fy - y0;
+  let s = 0, ws = 0;
+  for (let dy = 0; dy < 2; dy++) {
+    const yy = Math.min(H - 1, Math.max(0, y0 + dy)), wy = dy ? ty : 1 - ty;
+    for (let dx = 0; dx < 2; dx++) {
+      const xx = Math.min(W - 1, Math.max(0, x0 + dx)), w = (dx ? tx : 1 - tx) * wy;
+      const v = f[yy * W + xx];
+      if (v === v && w > 0) { s += v * w; ws += w; }
+    }
+  }
+  return ws > 1e-6 ? s / ws : NaN;
+}
+function nearest(f, fx, fy) {
+  const x = Math.round(fx), y = Math.round(fy);
+  return x < 0 || y < 0 || x >= W || y >= H ? NaN : f[y * W + x];
+}
+function atLatLng(f, lat, lng, near) {
+  if (!f || !BX) return NaN;
+  const fx = rx(x01(lng)), fy = ry(y01(lat));
+  return near ? nearest(f, fx, fy) : bilinear(f, fx, fy);
+}
+
+// ------------------------------------------------------------ terrain ----
+// Terrarium tiles: elevation = R*256 + G + B/256 - 32768
+const demCache = new Map();
+function demTile(z, x, y) {
+  const n = 1 << z;
+  if (y < 0 || y >= n) return Promise.resolve(null);
+  x = ((x % n) + n) % n;
+  const k = z + "/" + x + "/" + y;
+  let p = demCache.get(k);
+  if (p) { demCache.delete(k); demCache.set(k, p); return p; }
+  p = loadPixels(DEM_URL(z, x, y), true).then(px => {
+    const out = new Float32Array(65536), d = px.d;
+    for (let i = 0, j = 0; i < 65536; i++, j += 4) out[i] = d[j] * 256 + d[j + 1] + d[j + 2] / 256 - 32768;
+    return out;
+  }).catch(() => null);
+  demCache.set(k, p);
+  while (demCache.size > 100) demCache.delete(demCache.keys().next().value);
+  return p;
+}
+
+// elevation block for display tile z/x/y from DEM zoom demZ, with a 1-px border
+async function demBlock(z, x, y, demZ) {
+  const k = 1 << (demZ - z), N = 256 * k, NB = N + 2;
+  const bx0 = x * k, by0 = y * k;
+  const jobs = [];
+  for (let ty = by0 - 1; ty <= by0 + k; ty++)
+    for (let tx = bx0 - 1; tx <= bx0 + k; tx++)
+      jobs.push(demTile(demZ, tx, ty).then(t => ({ tx, ty, t })));
+  const tiles = await Promise.all(jobs);
+  const e = new Float32Array(NB * NB).fill(NaN);
+  const GX0 = bx0 * 256 - 1, GY0 = by0 * 256 - 1;
+  let any = false;
+  for (const { tx, ty, t } of tiles) {
+    if (!t) continue;
+    const gx0 = Math.max(GX0, tx * 256), gx1 = Math.min(GX0 + NB, tx * 256 + 256);
+    const gy0 = Math.max(GY0, ty * 256), gy1 = Math.min(GY0 + NB, ty * 256 + 256);
+    if (gx0 >= gx1 || gy0 >= gy1) continue;
+    if (tx >= bx0 && tx < bx0 + k && ty >= by0 && ty < by0 + k) any = true;
+    for (let gy = gy0; gy < gy1; gy++) {
+      const src = (gy - ty * 256) * 256 + (gx0 - tx * 256);
+      e.set(t.subarray(src, src + (gx1 - gx0)), (gy - GY0) * NB + (gx0 - GX0));
+    }
+  }
+  if (!any) return null;
+  // missing neighbours: repeat the edge
+  for (let i = 0; i < NB; i++) {
+    if (!(e[i] === e[i])) e[i] = e[NB + i];
+    if (!(e[(NB - 1) * NB + i] === e[(NB - 1) * NB + i])) e[(NB - 1) * NB + i] = e[(NB - 2) * NB + i];
+  }
+  for (let j = 0; j < NB; j++) {
+    if (!(e[j * NB] === e[j * NB])) e[j * NB] = e[j * NB + 1];
+    if (!(e[j * NB + NB - 1] === e[j * NB + NB - 1])) e[j * NB + NB - 1] = e[j * NB + NB - 2];
+  }
+  return { e, N, NB, k, demZ, by0 };
+}
+
+const demZoomFor = z => z >= 13 ? Math.min(z, 15) : z + 1;     // z11 -> 12, z12 -> 13: finer DEM, then max-slope downsampling
+
+// slope [deg], aspect [deg, direction the slope faces], elevation [m] for a 256x256 display tile
+const terrCache = new Map();
+function terrainTile(z, x, y) {
+  const key = z + "/" + x + "/" + y;
+  let p = terrCache.get(key);
+  if (p) { terrCache.delete(key); terrCache.set(key, p); return p; }
+  p = demBlock(z, x, y, demZoomFor(z)).then(b => b && computeTerrain(b)).catch(e => { console.error(e); return null; });
+  terrCache.set(key, p);
+  while (terrCache.size > 48) terrCache.delete(terrCache.keys().next().value);
+  return p;
+}
+
+function computeTerrain(b) {
+  const { e, N, NB, k, demZ, by0 } = b;
+  const n = 256 * Math.pow(2, demZ);
+  const slope = new Float32Array(N * N), aspect = new Float32Array(N * N);
+  for (let j = 0; j < N; j++) {
+    const lat = lat01((by0 * 256 + j + 0.5) / n);
+    const res = 40075016.686 * Math.cos(lat * Math.PI / 180) / n;
+    const inv = 1 / (8 * res);
+    let c = (j + 1) * NB + 1;
+    for (let i = 0; i < N; i++, c++) {
+      const a = e[c - NB - 1], bb = e[c - NB], cc = e[c - NB + 1], d = e[c - 1], f = e[c + 1],
+        g = e[c + NB - 1], h = e[c + NB], ii = e[c + NB + 1];
+      const dzdx = ((cc + 2 * f + ii) - (a + 2 * d + g)) * inv;     // + : rising to the east
+      const dzdy = ((g + 2 * h + ii) - (a + 2 * bb + cc)) * inv;    // + : rising to the south
+      slope[j * N + i] = Math.atan(Math.sqrt(dzdx * dzdx + dzdy * dzdy)) * 57.29578;
+      let as = Math.atan2(-dzdx, dzdy) * 57.29578;
+      aspect[j * N + i] = as < 0 ? as + 360 : as;
+    }
+  }
+  const out = { slope: new Float32Array(65536), aspect: new Float32Array(65536), elev: new Float32Array(65536) };
+  for (let j = 0; j < 256; j++) for (let i = 0; i < 256; i++) {
+    // k x k block -> keep the steepest cell, so short steep steps stay visible
+    let best = -1, bi = 0;
+    for (let v = 0; v < k; v++) for (let u = 0; u < k; u++) {
+      const s = (j * k + v) * N + (i * k + u);
+      if (slope[s] > best) { best = slope[s]; bi = s; }
+    }
+    const o = j * 256 + i;
+    out.slope[o] = best; out.aspect[o] = aspect[bi];
+    out.elev[o] = e[(Math.floor(bi / N) + 1) * NB + (bi % N) + 1];
+  }
+  return out;
+}
+
+const angDiff = (a, b) => Math.abs(((a - b + 540) % 360) - 180);
+const sector = asp => Math.round(asp / 45) % 8;
+
+// -------------------------------------------------------------- layers ----
+const map = L.map("map", { zoomControl: false, attributionControl: true, maxZoom: 18, minZoom: 5, worldCopyJump: true });
+map.attributionControl.setPrefix(false);
+map.createPane("wx").style.zIndex = 350;
+map.createPane("terrain").style.zIndex = 360;
+map.createPane("arrows").style.zIndex = 390;
+L.control.zoom({ position: "topright" }).addTo(map);
+L.control.scale({ imperial: false, position: "bottomleft" }).addTo(map);
+
+const BM = "https://mapsneu.wien.gv.at/basemap";
+const BASES = {
+  otm: ["OpenTopoMap (Höhenlinien)", () => L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+    { subdomains: "abc", maxNativeZoom: 17, maxZoom: 18, attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)' })],
+  bmap: ["basemap.at", () => L.tileLayer(BM + "/bmaphidpi/normal/google3857/{z}/{y}/{x}.jpeg",
+    { maxNativeZoom: 19, maxZoom: 18, attribution: '<a href="https://basemap.at">basemap.at</a>' })],
+  relief: ["basemap.at Gelände grau", () => L.layerGroup([
+    L.tileLayer(BM + "/bmapgelaende/grau/google3857/{z}/{y}/{x}.jpeg", { maxNativeZoom: 17, maxZoom: 18, attribution: '<a href="https://basemap.at">basemap.at</a>' }),
+    L.tileLayer(BM + "/bmapoverlay/normal/google3857/{z}/{y}/{x}.png", { maxNativeZoom: 19, maxZoom: 18 })])],
+  ortho: ["Orthofoto", () => L.layerGroup([
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxNativeZoom: 18, maxZoom: 18, attribution: "Esri World Imagery" }),
+    L.tileLayer(BM + "/bmaporthofoto30cm/normal/google3857/{z}/{y}/{x}.jpeg", { maxNativeZoom: 19, maxZoom: 18, bounds: [[46.35, 9.5], [49.05, 17.2]], attribution: '<a href="https://basemap.at">basemap.at</a>' }),
+    L.tileLayer(BM + "/bmapoverlay/normal/google3857/{z}/{y}/{x}.png", { maxNativeZoom: 19, maxZoom: 18, bounds: [[46.35, 9.5], [49.05, 17.2]] })])],
+  swiss: ["swisstopo Landeskarte", () => L.tileLayer("https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg",
+    { maxNativeZoom: 18, maxZoom: 18, attribution: '© <a href="https://www.swisstopo.admin.ch">swisstopo</a>' })],
+};
+let baseLayer = null;
+function setBase(id) {
+  if (!BASES[id]) id = "otm";
+  S.base = id; save("base");
+  if (baseLayer) map.removeLayer(baseLayer);
+  baseLayer = BASES[id][1]().addTo(map);
+}
+
+// one canvas tile per display tile; tiles that need the terrain wait for it
+const CanvasLayer = L.GridLayer.extend({
+  createTile(coords, done) {
+    const tile = document.createElement("canvas");
+    tile.width = tile.height = 256;
+    Promise.resolve(this.options.paint(tile, coords)).then(() => done(null, tile), err => { console.error(err); done(null, tile); });
+    return tile;
+  },
+});
+
+// tile pixel -> data raster: fx = ax + bx*i, fy = ay + by*j
+function tileMap(c) {
+  const n = 256 * Math.pow(2, c.z);
+  const sx = W / (BX.x1 - BX.x0) / n, sy = H / (BX.y1 - BX.y0) / n;
+  return { ax: (c.x * 256 + 0.5) * sx - BX.x0 * W / (BX.x1 - BX.x0) - 0.5, bx: sx,
+           ay: (c.y * 256 + 0.5) * sy - BX.y0 * H / (BX.y1 - BX.y0) - 0.5, by: sy };
+}
+
+async function paintWx(tile, c) {
+  if (!META || S.wx === "off") return;
+  let f = null, depth = null;
+  if (S.wx === "depth") { depth = await loadDepth(); if (!depth) return; }
+  else { f = await ensureWin(S.win); if (!f) return; }
+  const terr = S.wx === "sl" && c.z >= 11 ? await terrainTile(c.z, c.x, c.y) : null;
+  const m = tileMap(c);
+  const ctx = tile.getContext("2d");
+  const img = ctx.createImageData(256, 256), d = img.data;
+  const above = terr ? new Int8Array(65536) : null;
+  for (let j = 0; j < 256; j++) {
+    const fy = m.ay + m.by * j;
+    for (let i = 0; i < 256; i++) {
+      const fx = m.ax + m.bx * i, o = (j * 256 + i), q = o * 4;
+      let col = null;
+      if (S.wx === "snow") col = cls(C_SNOW, bilinear(f.snow, fx, fy));
+      else if (S.wx === "wind") col = cls(C_WIND, bilinear(f.wind, fx, fy));
+      else if (S.wx === "depth") col = cls(C_DEPTH, bilinear(depth, fx, fy));
+      else if (S.wx === "sl") {
+        const p = bilinear(f.p, fx, fy);
+        if (!(p >= 0.5)) continue;
+        const sl = bilinear(f.sl, fx, fy);
+        if (!(sl === sl)) continue;
+        if (terr) {
+          const up = terr.elev[o] >= sl;
+          above[o] = up ? 1 : -1;
+          col = up ? [0, 246, 250, 255, 175] : cls(C_SL, sl);
+          if (!up) { d[q] = col[1]; d[q + 1] = col[2]; d[q + 2] = col[3]; d[q + 3] = 70; continue; }
+        } else col = cls(C_SL, sl);
+      }
+      if (col) { d[q] = col[1]; d[q + 1] = col[2]; d[q + 2] = col[3]; d[q + 3] = col[4]; }
+    }
+  }
+  if (above) {   // the snow line itself
+    for (let j = 0; j < 255; j++) for (let i = 0; i < 255; i++) {
+      const o = j * 256 + i, a = above[o];
+      if (a && ((above[o + 1] && above[o + 1] !== a) || (above[o + 256] && above[o + 256] !== a))) {
+        const q = o * 4; d[q] = 120; d[q + 1] = 20; d[q + 2] = 130; d[q + 3] = 255;
+      }
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+async function paintTerrain(tile, c) {
+  if (S.terr === "off") return;
+  const t = await terrainTile(c.z, c.x, c.y);
+  if (!t) return;
+  let f = null, p72 = null, m = null;
+  if (S.terr === "lee") {
+    if (!META) return;
+    f = await ensureWin(S.win); p72 = await ensureWin("p72");
+    if (!f) return;
+    m = tileMap(c);
+  }
+  const ctx = tile.getContext("2d");
+  const img = ctx.createImageData(256, 256), d = img.data;
+  const mode = S.terr, minS = +S.minSlope, minE = +S.minElev, asp = S.aspects;
+  for (let j = 0; j < 256; j++) {
+    for (let i = 0; i < 256; i++) {
+      const o = j * 256 + i, q = o * 4, s = t.slope[o];
+      if (mode === "slope") {
+        const col = cls(C_SLOPE, s);
+        if (col) { d[q] = col[1]; d[q + 1] = col[2]; d[q + 2] = col[3]; d[q + 3] = 230; }
+      } else if (mode === "aspect") {
+        if (s < 20) continue;
+        const col = C_ASPECT[sector(t.aspect[o])];
+        d[q] = col[0]; d[q + 1] = col[1]; d[q + 2] = col[2]; d[q + 3] = s >= 30 ? 235 : 120;
+      } else if (mode === "danger") {
+        if (s < minS || t.elev[o] < minE || !asp[sector(t.aspect[o])]) continue;
+        const col = cls(C_SLOPE, s);
+        if (col) { d[q] = col[1]; d[q + 1] = col[2]; d[q + 2] = col[3]; d[q + 3] = 240; }
+      } else if (mode === "lee") {
+        if (s < 30) continue;
+        const fx = m.ax + m.bx * i, fy = m.ay + m.by * j;
+        const dir = nearest(f.dir, fx, fy), wind = bilinear(f.wind, fx, fy);
+        if (!(dir === dir) || !(wind >= 20)) continue;
+        if (angDiff(t.aspect[o], (dir + 180) % 360) > 67.5) continue;
+        const col = cls(C_LEE, wind);
+        const sn = Math.max(bilinear(f.snow, fx, fy) || 0, p72 ? bilinear(p72.snow, fx, fy) || 0 : 0);
+        d[q] = col[1]; d[q + 1] = col[2]; d[q + 2] = col[3]; d[q + 3] = sn >= 5 ? 245 : 90;
+      }
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+async function paintArrows(tile, c) {
+  if (!META || !S.arrows) return;
+  const f = await ensureWin(S.win);
+  if (!f) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  tile.width = tile.height = 256 * dpr;
+  tile.style.width = tile.style.height = "256px";
+  const ctx = tile.getContext("2d");
+  ctx.scale(dpr, dpr);
+  const m = tileMap(c);
+  const step = c.z >= 11 ? 128 : 64;
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  for (let gy = step / 2; gy < 256; gy += step) for (let gx = step / 2; gx < 256; gx += step) {
+    const fx = m.ax + m.bx * gx, fy = m.ay + m.by * gy;
+    const dir = nearest(f.dir, fx, fy), spd = bilinear(f.wind, fx, fy);
+    if (!(dir === dir) || !(spd >= 10)) continue;
+    const to = (dir + 180) * Math.PI / 180, L2 = (12 + Math.min(spd, 90) / 90 * 24) / 2;
+    const ux = Math.sin(to), uy = -Math.cos(to);
+    const x0 = gx - ux * L2, y0 = gy - uy * L2, x1 = gx + ux * L2, y1 = gy + uy * L2;
+    const hx = -uy, hy = ux, hs = 6 + Math.min(spd, 90) / 30;
+    const col = spd >= 60 ? "#e05f3c" : spd >= 40 ? "#f6ad55" : spd >= 20 ? "#f6e05e" : "#ffffff";
+    for (const [w, s] of [[5, "#0b1620"], [2.2, col]]) {
+      ctx.strokeStyle = s; ctx.lineWidth = w;
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1);
+      ctx.moveTo(x1 - ux * hs + hx * hs * 0.6, y1 - uy * hs + hy * hs * 0.6); ctx.lineTo(x1, y1);
+      ctx.lineTo(x1 - ux * hs - hx * hs * 0.6, y1 - uy * hs - hy * hs * 0.6);
+      ctx.stroke();
+    }
+  }
+}
+
+const GEO = '<a href="https://data.hub.geosphere.at/">GeoSphere Austria</a> (CC BY 4.0)';
+const wxLayer = new CanvasLayer({ pane: "wx", paint: paintWx, maxNativeZoom: 14, maxZoom: 18, opacity: S.wxOp, attribution: GEO, updateWhenZooming: false });
+const terrLayer = new CanvasLayer({ pane: "terrain", paint: paintTerrain, minZoom: 11, maxNativeZoom: 15, maxZoom: 18, opacity: S.terrOp,
+  updateWhenZooming: false, attribution: 'Gelände: <a href="https://registry.opendata.aws/terrain-tiles/">AWS Terrain Tiles</a>' });
+const arrowLayer = new CanvasLayer({ pane: "arrows", paint: paintArrows, maxNativeZoom: 18, maxZoom: 18, updateWhenZooming: false });
+
+// ------------------------------------------------------------------ UI ----
+function toast(msg, ms = 2600) {
+  const t = $("#toast"); t.textContent = msg; t.classList.add("on");
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("on"), ms);
+}
+const fmtTime = iso => new Intl.DateTimeFormat("de-AT", { timeZone: TZ, day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(iso)).replace(",", "");
+const fmtDay = iso => new Intl.DateTimeFormat("de-AT", { timeZone: TZ, day: "2-digit", month: "2-digit" }).format(new Date(iso));
+const winLabel = w => (w.kind === "past" ? "−" : "+") + w.hours + " h";
+const curWin = () => META && META.windows.find(w => w.id === S.win);
+
+function renderChips() {
+  const box = $("#wins");
+  box.innerHTML = "";
+  if (!META || !META.windows.length) return;
+  if (!curWin()) S.win = META.windows[0].id;
+  let lastKind = null;
+  for (const w of META.windows) {
+    if (lastKind === "past" && w.kind === "forecast") { const s = document.createElement("span"); s.className = "sep"; s.title = "jetzt"; box.appendChild(s); }
+    lastKind = w.kind;
+    const b = document.createElement("button");
+    b.className = "chip" + (w.kind === "forecast" ? " fc" : "");
+    b.textContent = winLabel(w) + (w.stale ? " ⚠" : "");
+    b.title = (w.kind === "past" ? "Vergangene " : "Nächste ") + w.hours + " Stunden";
+    b.setAttribute("aria-pressed", w.id === S.win);
+    b.onclick = () => setWin(w.id);
+    box.appendChild(b);
+  }
+  renderWhen();
+}
+
+function renderWhen() {
+  const w = curWin(), el = $("#when");
+  if (!w) return;
+  const what = { snow: "Neuschnee", sl: "Schneefallgrenze", wind: "Wind", depth: "Schneehöhe", off: "Zeitraum" }[S.wx];
+  if (S.wx === "depth" && META.snowdepth) {
+    el.innerHTML = `<b>Schneehöhe</b> am ${fmtDay(META.snowdepth.day + "T12:00Z")} (SNOWGRID, nur Österreich)` + (META.snowdepth.stale ? ' <span class="stale">· veraltet</span>' : "");
+    return;
+  }
+  const src = w.kind === "past" ? "Analyse INCA" : "Prognose C-LAEF, Lauf " + fmtTime(w.ref);
+  const partial = w.hours_ok < w.hours ? ` <span class="stale">· nur ${w.hours_ok} h</span>` : "";
+  el.innerHTML = `<b>${what}</b> ${fmtTime(w.start)} → ${fmtTime(w.end)} · ${src}${partial}` + (w.stale ? ' <span class="stale">· veraltet</span>' : "");
+}
+
+function setWin(id) {
+  S.win = id; save("win");
+  renderChips();
+  ensureWin(id).then(() => { redrawWx(); if (S.terr === "lee") terrLayer.redraw(); renderLegends(); });
+}
+
+function redrawWx() {
+  wxLayer.redraw();
+  if (S.arrows) arrowLayer.redraw();
+}
+
+function segment(id, value, onPick) {
+  for (const b of document.querySelectorAll(`#${id} button`)) {
+    b.setAttribute("aria-pressed", b.dataset.v === value);
+    b.onclick = () => { for (const x of document.querySelectorAll(`#${id} button`)) x.setAttribute("aria-pressed", x === b); onPick(b.dataset.v); };
+  }
+}
+
+function legendBar(table, fmt, unit, cap) {
+  const cols = table.map(c => `<span style="background:${hex(c)}"></span>`).join("");
+  const ticks = table.map(c => `<span>${fmt(c[0])}</span>`).join("");
+  return `<div class="bar">${cols}</div><div class="ticks">${ticks}</div><div class="cap">${cap || ""} ${unit ? "[" + unit + "]" : ""}</div>`;
+}
+const item = (rgb, label) => `<span class="it"><span class="sw" style="background:rgb(${rgb.join(",")})"></span>${label}</span>`;
+
+function renderLegends() {
+  const lw = $("#wx-legend"), w = curWin(), st = w && w.stats;
+  if (S.wx === "snow") lw.innerHTML = legendBar(C_SNOW, v => v, "cm", "Neuschnee im Zeitraum" + (st && st.snow_max != null ? ` · max. ${fmtN(st.snow_max)} cm` : ""));
+  else if (S.wx === "sl") lw.innerHTML = legendBar(C_SL, v => (v / 1000).toLocaleString("de-AT"), "1000 m",
+    "Schneefallgrenze (wo ≥ 0,5 mm fielen)") + `<div class="cap">Ab Zoom 11 mit Geländehöhe: ${item([246, 250, 255], "fällt als Schnee")} ${item([120, 20, 130], "Grenze")} · blasse Farbe = Regen</div>`;
+  else if (S.wx === "wind") lw.innerHTML = legendBar(C_WIND, v => v, "km/h", "Höchstes Stundenmittel, 10 m") + `<div class="cap">20–40 mäßig · 40–60 stark · ab 60 stürmisch – Triebschnee ab ca. 20 km/h bei lockerem Schnee</div>`;
+  else if (S.wx === "depth") lw.innerHTML = legendBar(C_DEPTH, v => v, "cm", "Gesamtschneehöhe (Modell SNOWGRID, nur Österreich)");
+  else lw.innerHTML = "";
+
+  const lt = $("#terr-legend"), hint = $("#terr-hint");
+  hint.className = "hint";
+  if (S.terr === "slope" || S.terr === "danger") lt.innerHTML = [item([245, 228, 0], "30–35°"), item([243, 146, 0], "35–40°"), item([226, 0, 26], "40–45°"), item([139, 26, 143], "> 45°")].join("");
+  else if (S.terr === "aspect") lt.innerHTML = C_ASPECT.map((c, i) => item(c, DIRS[i])).join("") + '<span class="cap">ab 20° Neigung, kräftig ab 30°</span>';
+  else if (S.terr === "lee") lt.innerHTML = item(C_LEE[0].slice(1, 4), "20–40 km/h") + item(C_LEE[1].slice(1, 4), "40–60") + item(C_LEE[2].slice(1, 4), "> 60") + '<span class="cap">Lee-Hänge ≥ 30° zur Windrichtung des Zeitraums, blass = kaum Neuschnee</span>';
+  else lt.innerHTML = "";
+  if (S.terr !== "off" && map.getZoom() < 11) { hint.textContent = "Zum Anzeigen näher heranzoomen (ab Zoom 11)."; hint.className = "hint warn"; }
+  else if (S.terr === "danger") hint.textContent = "Expositionen und Höhe wie im Lawinenlagebericht wählen.";
+  else if (S.terr === "lee" && !META) hint.textContent = "Braucht die Winddaten – noch nicht geladen.";
+  else hint.textContent = "";
+  $("#dcfg").classList.toggle("on", S.terr === "danger");
+}
+
+function buildRose() {
+  const pos = { 0: [1, 0], 1: [2, 0], 2: [2, 1], 3: [2, 2], 4: [1, 2], 5: [0, 2], 6: [0, 1], 7: [0, 0] };
+  const rose = $("#rose");
+  rose.innerHTML = "";
+  for (let i = 0; i < 8; i++) {
+    const b = document.createElement("button");
+    b.textContent = DIRS[i];
+    b.style.gridColumn = pos[i][0] + 1; b.style.gridRow = pos[i][1] + 1;
+    b.setAttribute("aria-pressed", !!S.aspects[i]);
+    b.onclick = () => { S.aspects[i] = !S.aspects[i]; save("aspects"); b.setAttribute("aria-pressed", S.aspects[i]); terrLayer.redraw(); };
+    rose.appendChild(b);
+  }
+  const mid = document.createElement("button");
+  mid.className = "mid"; mid.textContent = "alle"; mid.style.gridColumn = 2; mid.style.gridRow = 2;
+  mid.onclick = () => { const all = !S.aspects.every(Boolean); S.aspects = S.aspects.map(() => all); save("aspects"); buildRose(); terrLayer.redraw(); };
+  rose.appendChild(mid);
+}
+
+function setTerr(v) {
+  S.terr = v; save("terr");
+  if (v === "off") map.removeLayer(terrLayer);
+  else { if (!map.hasLayer(terrLayer)) terrLayer.addTo(map); else terrLayer.redraw(); }
+  if (v !== "off" && map.getZoom() < 11) toast("Gelände ab Zoom 11 – näher heranzoomen");
+  renderLegends();
+}
+
+function setWx(v) {
+  S.wx = v; save("wx");
+  if (v === "wind" && !S.arrows) { S.arrows = true; save("arrows"); $("#arrows").checked = true; arrowLayer.addTo(map); }
+  if (v === "off") map.removeLayer(wxLayer);
+  else { if (!map.hasLayer(wxLayer)) wxLayer.addTo(map); else wxLayer.redraw(); }
+  renderLegends(); renderWhen();
+}
+
+function initUI() {
+  segment("wx", S.wx, setWx);
+  segment("terr", S.terr, setTerr);
+  buildRose();
+  const me = $("#minElev"), mev = $("#minElevV");
+  me.value = S.minElev; mev.textContent = "≥ " + fmtN(S.minElev) + " m";
+  me.oninput = () => { S.minElev = +me.value; mev.textContent = "≥ " + fmtN(S.minElev) + " m"; };
+  me.onchange = () => { save("minElev"); terrLayer.redraw(); };
+  const ms = $("#minSlope"); ms.value = S.minSlope;
+  ms.onchange = () => { S.minSlope = +ms.value; save("minSlope"); terrLayer.redraw(); };
+  const ar = $("#arrows"); ar.checked = S.arrows;
+  ar.onchange = () => { S.arrows = ar.checked; save("arrows"); if (S.arrows) arrowLayer.addTo(map); else map.removeLayer(arrowLayer); };
+  for (const [id, key, layer] of [["wxOp", "wxOp", wxLayer], ["terrOp", "terrOp", terrLayer]]) {
+    const r = $("#" + id), v = $("#" + id + "V");
+    r.value = S[key]; v.textContent = Math.round(S[key] * 100) + " %";
+    r.oninput = () => { S[key] = +r.value; v.textContent = Math.round(S[key] * 100) + " %"; layer.setOpacity(S[key]); };
+    r.onchange = () => save(key);
+  }
+  const bs = $("#base");
+  for (const [id, [name]] of Object.entries(BASES)) bs.add(new Option(name, id, false, id === S.base));
+  bs.onchange = () => setBase(bs.value);
+
+  const sheet = $("#sheet"), grip = $("#grip");
+  grip.onclick = () => { const open = !sheet.classList.contains("open"); sheet.classList.toggle("open", open); grip.setAttribute("aria-expanded", open); syncInsets(); };
+  $("#gpx-btn").onclick = () => $("#gpx-file").click();
+  $("#gpx-file").onchange = ev => { const f = ev.target.files[0]; if (f) f.text().then(t => loadGpx(t, f.name, true)); ev.target.value = ""; };
+  $("#track-del").onclick = clearTrack;
+  $("#track-zoom").onclick = () => track && map.fitBounds(track.bounds, { padding: [30, 30] });
+  new ResizeObserver(syncInsets).observe(sheet);
+  new ResizeObserver(syncInsets).observe($("#topbar"));
+  window.addEventListener("resize", syncInsets);
+  syncInsets();
+}
+
+function syncInsets() {
+  const desktop = matchMedia("(min-width:900px)").matches;
+  const sh = $("#sheet").getBoundingClientRect(), tb = $("#topbar").getBoundingClientRect();
+  document.documentElement.style.setProperty("--sheet-h", desktop ? "0px" : Math.round(window.innerHeight - sh.top) + "px");
+  document.documentElement.style.setProperty("--top-h", Math.round(tb.bottom + 4) + "px");
+}
+
+// --------------------------------------------------------- tap / popup ----
+async function pointInfo(ll) {
+  const z = 14, n = Math.pow(2, z);
+  const X = x01(ll.lng) * n * 256, Y = y01(ll.lat) * n * 256;
+  const tx = Math.floor(X / 256), ty = Math.floor(Y / 256);
+  const t = await terrainTile(z, tx, ty);
+  const o = t ? Math.min(255, Math.floor(Y - ty * 256)) * 256 + Math.min(255, Math.floor(X - tx * 256)) : -1;
+  const terr = t ? { elev: t.elev[o], slope: t.slope[o], aspect: t.aspect[o] } : null;
+  const rows = [];
+  if (META) {
+    await Promise.all(META.windows.map(w => ensureWin(w.id)));
+    for (const w of META.windows) {
+      const f = WIN[w.id];
+      if (!f) continue;
+      rows.push({ w, snow: atLatLng(f.snow, ll.lat, ll.lng), sl: atLatLng(f.sl, ll.lat, ll.lng), p: atLatLng(f.p, ll.lat, ll.lng),
+        wind: atLatLng(f.wind, ll.lat, ll.lng), gust: atLatLng(f.gust, ll.lat, ll.lng), dir: atLatLng(f.dir, ll.lat, ll.lng, true) });
+    }
+  }
+  const depth = META && META.snowdepth ? atLatLng(await loadDepth(), ll.lat, ll.lng, true) : NaN;
+  return { terr, rows, depth };
+}
+
+function popupHtml(ll, info) {
+  const t = info.terr;
+  let h = '<div class="pp">';
+  if (t && t.elev === t.elev) {
+    const sc = cls(C_SLOPE, t.slope);
+    const tag = sc ? `<span class="tag" style="background:${hex(sc)};color:${t.slope >= 40 ? "#fff" : "#000"}">${Math.round(t.slope)}°</span>` : `${Math.round(t.slope)}°`;
+    h += `<div class="pp-head">${fmtN(t.elev)} m · ${tag} ${t.slope >= 5 ? DIRS[sector(t.aspect)] : "eben"}</div>`;
+  }
+  h += `<div class="pp-sub">${ll.lat.toFixed(4)}, ${ll.lng.toFixed(4)}</div>`;
+  if (info.rows.length) {
+    h += "<table><thead><tr><th></th><th>Neuschnee</th><th>SFG</th><th>Wind</th></tr></thead><tbody>";
+    for (const r of info.rows) {
+      const cur = r.w.id === S.win ? ' class="cur"' : "";
+      const sn = r.snow === r.snow ? Math.round(r.snow) + " cm" : "–";
+      const sl = r.sl === r.sl ? fmtN(Math.round(r.sl / 50) * 50) + " m" : "–";
+      const wd = r.wind === r.wind ? (r.dir === r.dir ? DIRS[sector(r.dir)] + " " : "") + Math.round(r.wind) : "–";
+      h += `<tr${cur}><td>${winLabel(r.w)}</td><td>${sn}</td><td>${sl}</td><td>${wd}</td></tr>`;
+    }
+    h += "</tbody></table>";
+    const r = info.rows.find(x => x.w.id === S.win);
+    if (r) {
+      const bits = [];
+      if (r.p === r.p) bits.push(`Niederschlag ${Math.round(r.p)} mm`);
+      if (r.gust === r.gust) bits.push(`Böen bis ${Math.round(r.gust)} km/h`);
+      if (t && r.sl === r.sl && r.p >= 0.5) bits.push(t.elev >= r.sl ? "hier als <b>Schnee</b>" : "hier als <b>Regen</b>");
+      if (bits.length) h += `<div class="note">${winLabel(r.w)}: ${bits.join(" · ")}</div>`;
+    }
+    h += '<div class="note">Wind: höchstes Stundenmittel in km/h, Richtung = woher</div>';
+  } else h += '<div class="note">Keine Wetterdaten geladen.</div>';
+  if (info.depth === info.depth) h += `<div class="note">Schneehöhe ${fmtDay(META.snowdepth.day + "T12:00Z")}: <b>${Math.round(info.depth)} cm</b> (Modell)</div>`;
+  return h + "</div>";
+}
+
+map.on("click", async e => {
+  if (!matchMedia("(min-width:900px)").matches && $("#sheet").classList.contains("open")) {
+    $("#sheet").classList.remove("open"); $("#grip").setAttribute("aria-expanded", false); syncInsets();
+  }
+  const pop = L.popup({ maxWidth: 320, autoPanPaddingTopLeft: [10, 140], autoPanPaddingBottomRight: [10, 160] })
+    .setLatLng(e.latlng).setContent('<div class="pp">Lade…</div>').openOn(map);
+  try { pop.setContent(popupHtml(e.latlng, await pointInfo(e.latlng))); }
+  catch (err) { console.error(err); pop.setContent('<div class="pp">Fehler beim Laden.</div>'); }
+});
+
+// ------------------------------------------------------------- location ----
+const LocControl = L.Control.extend({
+  options: { position: "topright" },
+  onAdd() {
+    const div = L.DomUtil.create("div", "leaflet-bar");
+    const a = L.DomUtil.create("a", "locbtn", div);
+    a.href = "#"; a.title = "Mein Standort"; a.setAttribute("role", "button"); a.innerHTML = "◎";
+    L.DomEvent.on(a, "click", ev => { L.DomEvent.preventDefault(ev); L.DomEvent.stopPropagation(ev); map.locate({ setView: true, maxZoom: 14, enableHighAccuracy: true }); });
+    return div;
+  },
+});
+new LocControl().addTo(map);
+let locMarker = null;
+map.on("locationfound", e => {
+  if (locMarker) map.removeLayer(locMarker);
+  locMarker = L.layerGroup([
+    L.circle(e.latlng, { radius: e.accuracy, color: "#4fb3ff", weight: 1, fillOpacity: 0.12 }),
+    L.circleMarker(e.latlng, { radius: 7, color: "#fff", weight: 2, fillColor: "#1a73e8", fillOpacity: 1 }),
+  ]).addTo(map);
+});
+map.on("locationerror", e => toast("Standort nicht verfügbar: " + e.message));
+
+// ------------------------------------------------------------------ GPX ----
+let track = null;
+const C_TRACK = [[0, 120, 130, 140], [30, 245, 228, 0], [35, 243, 146, 0], [40, 226, 0, 26], [45, 139, 26, 143]];
+
+function haversine(a, b) {
+  const R = 6371000, r = Math.PI / 180;
+  const dla = (b[0] - a[0]) * r, dlo = (b[1] - a[1]) * r;
+  const s = Math.sin(dla / 2) ** 2 + Math.cos(a[0] * r) * Math.cos(b[0] * r) * Math.sin(dlo / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+
+async function loadGpx(text, name, fit) {
+  const xml = new DOMParser().parseFromString(text, "application/xml");
+  let pts = [...xml.getElementsByTagName("trkpt")];
+  if (!pts.length) pts = [...xml.getElementsByTagName("rtept")];
+  const raw = pts.map(p => [+p.getAttribute("lat"), +p.getAttribute("lon")]).filter(p => isFinite(p[0]) && isFinite(p[1]));
+  if (raw.length < 2) { toast("Keine Spur in der GPX-Datei gefunden"); return; }
+  if (text.length < 1500000) { store.set("gpx", text); store.set("gpxName", name); }
+  // densify to <= 25 m so short steep sections show up
+  const ptsD = [raw[0]];
+  for (let i = 1; i < raw.length; i++) {
+    const a = raw[i - 1], b = raw[i], d = haversine(a, b), k = Math.ceil(d / 25);
+    for (let s = 1; s <= k; s++) ptsD.push([a[0] + (b[0] - a[0]) * s / k, a[1] + (b[1] - a[1]) * s / k]);
+  }
+  const z = 14, n = Math.pow(2, z);
+  const samples = await Promise.all(ptsD.map(async p => {
+    const X = x01(p[1]) * n * 256, Y = y01(p[0]) * n * 256, tx = Math.floor(X / 256), ty = Math.floor(Y / 256);
+    const t = await terrainTile(z, tx, ty);
+    if (!t) return { s: NaN, e: NaN };
+    const o = Math.min(255, Math.floor(Y - ty * 256)) * 256 + Math.min(255, Math.floor(X - tx * 256));
+    return { s: t.slope[o], e: t.elev[o] };
+  }));
+  clearTrack(true);
+  const group = L.layerGroup();
+  L.polyline(ptsD, { color: "#fff", weight: 8, opacity: 0.9, interactive: false }).addTo(group);
+  let run = [ptsD[0]], runCol = null, dist = 0, up = 0, maxS = 0, lastE = samples[0].e;
+  const flush = () => { if (run.length > 1) L.polyline(run, { color: hex(runCol), weight: 4.5, opacity: 1, interactive: false }).addTo(group); };
+  for (let i = 1; i < ptsD.length; i++) {
+    dist += haversine(ptsD[i - 1], ptsD[i]);
+    const s = Math.max(samples[i - 1].s || 0, samples[i].s || 0);
+    maxS = Math.max(maxS, samples[i].s || 0);
+    const e = samples[i].e;
+    if (e === e) { if (lastE === lastE && e - lastE > 3) { up += e - lastE; lastE = e; } else if (!(lastE === lastE) || lastE - e > 3) lastE = e; }
+    const col = cls(C_TRACK, s);
+    if (runCol && col !== runCol) { run.push(ptsD[i]); flush(); run = [ptsD[i]]; }
+    else run.push(ptsD[i]);
+    runCol = col;
+  }
+  flush();
+  L.circleMarker(ptsD[0], { radius: 6, color: "#fff", weight: 2, fillColor: "#2f9e44", fillOpacity: 1 }).addTo(group);
+  L.circleMarker(ptsD[ptsD.length - 1], { radius: 6, color: "#fff", weight: 2, fillColor: "#c92a2a", fillOpacity: 1 }).addTo(group);
+  group.addTo(map);
+  track = { group, bounds: L.latLngBounds(ptsD) };
+  $("#track").classList.add("on");
+  $("#track-stats").innerHTML = `<b>${name.replace(/</g, "&lt;")}</b><br>${(dist / 1000).toLocaleString("de-AT", { maximumFractionDigits: 1 })} km · ↑ ${fmtN(up)} Hm · steilste Stelle ${Math.round(maxS)}°`;
+  $("#track-legend").innerHTML = C_TRACK.map((c, i) => item(c.slice(1), i ? c[0] + "°" : "< 30°")).join("");
+  if (fit) map.fitBounds(track.bounds, { padding: [30, 30] });
+}
+
+function clearTrack(keep) {
+  if (track) map.removeLayer(track.group);
+  track = null;
+  $("#track").classList.remove("on");
+  if (keep !== true) { store.set("gpx", null); store.set("gpxName", null); }
+}
+
+// ----------------------------------------------------------------- boot ----
+function parseHash() {
+  const m = location.hash.match(/^#(\d{1,2})\/(-?\d+(?:\.\d+)?)\/(-?\d+(?:\.\d+)?)/);
+  return m ? { z: +m[1], lat: +m[2], lng: +m[3] } : null;
+}
+window.addEventListener("hashchange", () => { const h = parseHash(); if (h) map.setView([h.lat, h.lng], h.z); });
+map.on("moveend", () => {
+  const c = map.getCenter();
+  history.replaceState(null, "", `#${map.getZoom()}/${c.lat.toFixed(4)}/${c.lng.toFixed(4)}`);
+});
+map.on("zoomend", () => {
+  renderLegends();
+  if (S.terr !== "off" && map.getZoom() < 11 && !zoomWarned) { zoomWarned = true; toast("Gelände ab Zoom 11 – näher heranzoomen"); }
+});
+let zoomWarned = false;
+
+async function loadData() {
+  try {
+    const r = await fetch(DATA + "meta.json?t=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    META = await r.json();
+  } catch (e) {
+    $("#when").textContent = "Wetterdaten noch nicht verfügbar – Gelände funktioniert trotzdem.";
+    $("#status").innerHTML = '<p class="err">meta.json nicht gefunden (' + e.message + ").</p>";
+    renderLegends();
+    return;
+  }
+  META.windows = META.windows || [];
+  [W, H] = META.size;
+  const [[s, w], [n, e]] = META.bounds;
+  BX = { x0: x01(w), x1: x01(e), y0: y01(n), y1: y01(s) };
+  wxLayer.options.bounds = arrowLayer.options.bounds = L.latLngBounds(META.bounds);
+  renderChips();
+  await ensureWin(S.win);
+  redrawWx();
+  if (S.terr === "lee") terrLayer.redraw();
+  renderLegends();
+  const age = (Date.now() - new Date(META.generated)) / 3.6e6;
+  const errs = Object.entries(META.errors || {});
+  $("#status").innerHTML =
+    `<p>Stand: ${fmtTime(META.generated)}${age > 8 ? ' <span class="err">(älter als 8 h)</span>' : ""} · Analyse bis ${META.inca_end ? fmtTime(META.inca_end) : "–"}` +
+    ` · Modelllauf ${META.nwp_ref ? fmtTime(META.nwp_ref) : "–"}` + (META.snowdepth ? ` · Schneehöhe ${fmtDay(META.snowdepth.day + "T12:00Z")}` : "") + "</p>" +
+    (errs.length ? `<p class="err">Teilweise fehlgeschlagen: ${errs.map(([k]) => k).join(", ")} – ältere Daten werden gezeigt.</p>` : "");
+  // the rest in the background, so tapping the map is quick
+  setTimeout(() => { META.windows.forEach(w => ensureWin(w.id)); loadDepth(); }, 800);
+}
+
+(function boot() {
+  setBase(S.base);
+  const h = parseHash();
+  if (h) map.setView([h.lat, h.lng], h.z);
+  else map.fitBounds([[46.3, 9.5], [47.9, 16.0]]);
+  if (S.wx !== "off") wxLayer.addTo(map);
+  if (S.terr !== "off") terrLayer.addTo(map);
+  if (S.arrows) arrowLayer.addTo(map);
+  initUI();
+  renderLegends();
+  loadData();
+  const g = store.get("gpx", null);
+  if (g) loadGpx(g, store.get("gpxName", "Spur"), false).catch(() => {});
+})();
+</script>
+</body>
+</html>

@@ -7,14 +7,26 @@ permissions:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - run: pip install requests numpy xarray netCDF4 pyproj pillow scipy
-      - name: Probe
-        run: python probe/probe.py "$RUNNER_TEMP/out" || true
+      - run: pip install requests numpy scipy xarray netCDF4 pyproj pillow playwright
+      - name: Precompute, cold cache, then warm cache
+        run: |
+          mkdir -p "$RUNNER_TEMP/out"
+          s=$(date +%s); python skitour/precompute.py "$RUNNER_TEMP/out" "$RUNNER_TEMP/none" "$RUNNER_TEMP/cache" > "$RUNNER_TEMP/out/log_cold.txt" 2>&1 || true
+          echo "cold run $(( $(date +%s) - s )) s" >> "$RUNNER_TEMP/out/log_cold.txt"
+          s=$(date +%s); python skitour/precompute.py "$RUNNER_TEMP/out" "$RUNNER_TEMP/out" "$RUNNER_TEMP/cache" > "$RUNNER_TEMP/out/log_warm.txt" 2>&1 || true
+          echo "warm run $(( $(date +%s) - s )) s" >> "$RUNNER_TEMP/out/log_warm.txt"
+          du -sh "$RUNNER_TEMP/cache" "$RUNNER_TEMP/cache"/* >> "$RUNNER_TEMP/out/log_warm.txt"
+          ls -la "$RUNNER_TEMP/out" >> "$RUNNER_TEMP/out/log_warm.txt"
+      - name: Screenshots with real tiles
+        run: |
+          python -m playwright install --with-deps chromium > /dev/null 2>&1
+          mkdir -p site && cp -r skitour site/ && rm -rf site/skitour/data && cp -r "$RUNNER_TEMP/out" site/skitour/data
+          python probe/shots.py site "$RUNNER_TEMP/out/shots" > "$RUNNER_TEMP/out/shots_log.txt" 2>&1 || true
       - name: Publish probe output
         run: |
           cd "$RUNNER_TEMP/out" && git init -q -b skitour-probe-out && git config user.name probe && git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
