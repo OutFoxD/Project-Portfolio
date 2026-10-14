@@ -879,10 +879,10 @@ def area_means(values, LAT, masks, total_name="Österreich"):
     return out
 
 
-def overlay_periods(days, last, xs, ys, X, Y, LAT, masks, clip, out_dir, prefix, total_name):
+def overlay_periods(days, last, xs, ys, X, Y, LAT, masks, clip, out_dir, prefix, total_name, which=PERIODS):
     """Sum the daily grids for each preset, resample, clip and write PNGs."""
     periods = {}
-    for p in PERIODS:
+    for p in which:
         want = [(last - dt.timedelta(days=k)).isoformat() for k in range(p)]
         if not all(w in days for w in want):
             continue
@@ -909,14 +909,18 @@ def render_grid(g, last, out_dir):
     masks = state_masks(LON, LAT, load_regions(*g["borders"]))
     clip = clip_mask(masks)
     s, w, n, e = g["bounds"]
+    args = (g["xs"], g["ys"], X, Y, LAT, masks, clip, out_dir, g["prefix"], g["total"])
+    periods = overlay_periods(g["days"], last, *args)
+    # "1": the country's own newest grid day, shown with the "last 24 h" view (the grids are daily,
+    # so this is the closest they get; it is not aligned across countries, the page says which day)
+    periods.update(overlay_periods(g["days"], g["last"], *args, which=(1,)))
     doc = {
         "generated": now_iso(),
         "source": g["source"],
         "bounds": [[s, w], [n, e]],
         "last_day": last.isoformat(),
         "own_last_day": g["last"].isoformat(),
-        "periods": overlay_periods(g["days"], last, g["xs"], g["ys"], X, Y, LAT, masks, clip,
-                                   out_dir, g["prefix"], g["total"]),
+        "periods": periods,
     }
     write_json(out_dir, g["json"], doc, compact=False)
     return {"periods": list(doc["periods"]), "last_day": doc["last_day"], "own_last_day": doc["own_last_day"],

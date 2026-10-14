@@ -105,6 +105,10 @@
   .fs-legend .swatch{width:11px;height:11px;border-radius:3px;border:1px solid #0005}
   .fs-legend .lg-title{color:#555}
   .area-tip{font:600 13px system-ui,sans-serif}
+  body.map-full .fs-legend:empty{display:none}
+  .map-msg{position:absolute;z-index:900;left:50%;top:50%;transform:translate(-50%,-50%);width:max-content;max-width:min(80%,320px);
+    background:rgba(27,36,28,.93);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:10px 14px;
+    font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;text-align:center;pointer-events:none;box-shadow:0 4px 16px #0006}
 
   .note{color:var(--muted);font-size:.9rem;margin:8px 0}
   .status{margin:8px 0;padding:10px 12px;border-radius:10px;font-size:.92rem;display:none}
@@ -224,6 +228,7 @@
       </div>
     </div>
     <div class="fs-legend" id="fs-legend"></div>
+    <div class="map-msg" id="map-msg" hidden></div>
   </div>
 
   <div class="key" id="key">
@@ -900,11 +905,24 @@ async function loadRangeLive(range) {
 
 /* ================= grids (precomputed 1 km analyses: SPARTACUS, HYRAS, RprelimD) ================= */
 const gridDoc = (c = country()) => state.gr[c] || null;
+/* The grids are daily (06–06 UTC) and published once a day. Presets of 7–45 days use one common
+   end day for all countries; "last 24 h" uses each country's newest grid day ("1"), which ends
+   in the morning, so it is labelled with its own dates. */
 function gridPeriod(range, c = country()) {
   const g = gridDoc(c);
-  if (!g || !g.periods || range.type !== "preset" || range.src !== "klima") return null;
+  if (!g || !g.periods || range.type !== "preset") return null;
   if (Date.now() - Date.parse(g.generated) > 4 * 24 * 3600e3) return null;
-  return g.periods[String(range.days)] || null;
+  if (range.days === 1) {
+    const p = g.periods["1"];
+    return p && p.end >= isoDate(new Date(Date.now() - 3 * 864e5)) ? p : null;   // only a recent day
+  }
+  return range.src === "klima" ? g.periods[String(range.days)] || null : null;
+}
+/* "13.10. 08:00 → 14.10. 08:00": a grid day in local time */
+function gridDayText(iso) {
+  const s = new Date(Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10), 6)), e = new Date(s.getTime() + 864e5);
+  const f = d => `${pad(d.getDate())}.${pad(d.getMonth() + 1)}. ${pad(d.getHours())}:00`;
+  return `${f(s)} → ${f(e)}`;
 }
 
 /* every country's grid is drawn when available; each is clipped to its own border */
@@ -916,8 +934,12 @@ function updateGridLayer(range) {
     note.textContent = `Rain grid: ${cfg.name} publishes no daily rain grid, so the map shows its stations only.`;
   } else if (!per) {
     note.textContent = gridDoc()
-      ? "Rain grid: shown for the 7, 14, 30 and 45-day presets."
+      ? "Rain grid: shown for the presets, not for custom periods."
       : "Rain grid: not available right now.";
+  } else if (range.days === 1) {
+    const days = COUNTRY_ORDER.map(c => [c, gridPeriod(range, c)]).filter(([, p]) => p)
+      .map(([c, p]) => `${COUNTRIES[c].name} ${gridDayText(p.end)}`);
+    note.textContent = `Rain grid: the grids are daily, so this shows each country's newest full day, not the last 24 h: ${days.join("; ")}. The stations show the last 24 h until now.`;
   } else {
     note.textContent = `Rain grid: ${dm(per.start)}–${dm(per.end)} (${cfg.gridLabel}; all grids end on the same day, which can be a day before the stations).`;
   }
@@ -1023,7 +1045,7 @@ function renderVerdict(res) {
   metaEl.textContent = `${blName()} · ${when} · ${withData.length} of ${res.stations.length} stations`;
 
   let hint = `Wettest: ${maxSt.name} (${fmt1(maxSt.sum)} mm).`;
-  const per = gridPeriod(r);
+  const per = r.days === 1 ? null : gridPeriod(r);      // the 24 h grid is a different period
   const gm = per && per.mean && per.mean[meanKey()];
   if (gm != null) hint += ` Area mean (1 km grid): ${fmt1(gm)} mm.`;
   if (!r.cached && r.days > 1 && res.lastDataTs) {
@@ -1431,11 +1453,35 @@ function classesInView() {
   return [lo, hi];
 }
 function renderLegend() {
-  const span = classesInView(), [lo, hi] = span || [0, BINS.length - 1];
-  const items = BINS.slice(lo, hi + 1).map((b, i) =>
-    `<span class="item"><span class="swatch" style="background:${b[1]}"></span>${b[2]}${lo + i === hi ? " mm" : ""}</span>`).join("");
-  const html = (span ? `<span class="item lg-title">In view:</span>` : "") + items;
+  const msg = mapMessage();
+  const el = $("map-msg");
+  if (el && el.textContent !== msg) el.textContent = msg;
+  if (el) el.hidden = !msg;
+  let html = "";
+  if (!msg) {                                // an empty map gets the message, not a legend
+    const span = classesInView(), [lo, hi] = span || [0, BINS.length - 1];
+    const items = BINS.slice(lo, hi + 1).map((b, i) =>
+      `<span class="item"><span class="swatch" style="background:${b[1]}"></span>${b[2]}${lo + i === hi ? " mm" : ""}</span>`).join("");
+    html = (span ? `<span class="item lg-title">In view:</span>` : "") + items;
+    const range = currentRange();
+    if (range.days === 1 && state.gridOn && state.gridLayers.length) {
+      const p = gridPeriod(range) || COUNTRY_ORDER.map(c => gridPeriod(range, c)).find(Boolean);
+      if (p) html += `<span class="item lg-title">Grid: full day to ${gridDayText(p.end).split(" → ")[1]}</span>`;
+    }
+  }
   if (html !== renderLegend.last) { $("legend").innerHTML = $("fs-legend").innerHTML = html; renderLegend.last = html; }
+}
+
+/* what to say when the map shows nothing at all ("" when something is drawn, or while loading) */
+function mapMessage() {
+  if (!state.map || !state.lastRes) return "";
+  if (!state.gridOn && !state.stationsOn) return "Rain grid and stations are both switched off.";
+  if (state.stationsOn) return "";
+  const cfg = COUNTRIES[country()], range = currentRange();
+  if (!cfg.grid) return `${cfg.name} publishes no rain grid. Switch on Stations to see its measurements.`;
+  if (!gridPeriod(range)) return (range.type === "custom" ? "There's no rain grid for custom periods." : "No rain grid for this period right now.") +
+    " Switch on Stations to see the measurements.";
+  return "";
 }
 
 /* One menu: the four countries first, then the regions of Austria, Germany and Czechia
