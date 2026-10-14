@@ -232,14 +232,17 @@ def near(stations, ref, max_km):
     return [s for s in stations if any(abs(s["lat"] - r["lat"]) < 0.4 and abs(s["lon"] - r["lon"]) < 0.6 and km(s, r) <= max_km for r in ref)]
 
 
-def grid_alignment(data, cache_dir):
+def grid_alignment(data, cache_dir, data_dir):
     res = {}
     # a) SPARTACUS (Austria) at nearby stations of the other countries, via GeoSphere's point API
     if "AT" in data:
         through = min(d["through"] for d in data.values() if d.get("through"))
         dates = [d for d in data["AT"]["dates"] if d <= through]     # SPARTACUS ends ~1-2 days back
         others = [s for c, d in data.items() if c != "AT" for s in d["stations"]]
-        cand = near(others, data["AT"]["stations"], 25)[:240]
+        # a point outside the grid's box makes the API reject the whole request
+        (s0, w0), (n0, e0) = json.load(open(os.path.join(data_dir, "grid.json"), encoding="utf-8"))["bounds"]
+        inside = [s for s in others if s0 + 0.03 < s["lat"] < n0 - 0.03 and w0 + 0.03 < s["lon"] < e0 - 0.03]
+        cand = near(inside, data["AT"]["stations"], 25)[:240]
         try:
             series = {}
             for i in range(0, len(cand), 120):
@@ -257,7 +260,8 @@ def grid_alignment(data, cache_dir):
                 by_c.setdefault(s["country"], []).append(lag_corr(s["by_date"], g, dates))
             res["SPARTACUS_vs_" + "_".join(sorted(by_c))] = {c: summarise(v) for c, v in sorted(by_c.items())}
         except Exception as e:
-            res["SPARTACUS"] = {"error": f"{type(e).__name__}: {e}"}
+            body = getattr(getattr(e, "response", None), "text", "")[:300]
+            res["SPARTACUS"] = {"error": f"{type(e).__name__}: {str(e)[:200]} {body}"}
     # b) HYRAS (Germany) at nearby stations of the other countries, from the file precompute downloaded
     if "DE" in data and cache_dir:
         try:
@@ -339,7 +343,7 @@ def main():
               "through": {c: d["through"] for c, d in data.items()},
               "stations": {c: len(d["stations"]) for c, d in data.items()}}
     for name, fn in (("raw_spotcheck", lambda: raw_spotcheck(data)), ("cross_border", lambda: cross_border(data)),
-                     ("grid_alignment", lambda: grid_alignment(data, cache_dir)),
+                     ("grid_alignment", lambda: grid_alignment(data, cache_dir, data_dir)),
                      ("grid_vs_station", lambda: grid_vs_station(data, data_dir))):
         try:
             report[name] = fn()

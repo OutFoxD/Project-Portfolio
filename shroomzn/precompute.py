@@ -198,13 +198,26 @@ def now_iso():
     return dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
 
 
+REPORTING_DAYS = 10         # a station must have a value in the last 10 days up to "through"
+
+
 def station_doc(source, dates, stations):
     stations = drop_twins([s for s in stations if any(v is not None for v in s["rr"])])
+    through = through_date(dates, {s["id"]: s["rr"] for s in stations})
+    dropped = 0
+    if through:
+        # stations that aren't reporting currently (e.g. manual gauges sent in monthly) would
+        # only add incomplete sums: leave them out
+        ti = dates.index(through)
+        keep = [s for s in stations if any(v is not None for v in s["rr"][max(0, ti - REPORTING_DAYS + 1): ti + 1])]
+        dropped = len(stations) - len(keep)
+        stations = keep
     return {
         "generated": now_iso(),
         "source": source,
         "dates": dates,
-        "through": through_date(dates, {s["id"]: s["rr"] for s in stations}),
+        "through": through,
+        "not_reporting_dropped": dropped,
         "stations": stations,
     }
 
@@ -304,7 +317,7 @@ def build_stations(out_dir, prev_dir=None):
         st["rr"] = series.get(st["id"]) or series.get(str(st["id"])) or [None] * len(dates or [])
     doc = station_doc(STATION_DATASET, dates or [], stations)
     write_json(out_dir, STATION_FILES["AT"], doc)
-    return {"stations": len(doc["stations"]), "through": doc["through"]}
+    return {"stations": len(doc["stations"]), "through": doc["through"], "not_reporting": doc["not_reporting_dropped"]}
 
 
 # ------------------------------------------------- Switzerland: stations ----
@@ -406,7 +419,7 @@ def build_ch_stations(out_dir, prev_dir=None):
                     "lat": s["lat"], "lon": s["lon"], "alt": s["alt"], "src": s["src"], "rr": rr})
     doc = station_doc("MeteoSwiss SwissMetNet, rre150d0", dates, out)
     write_json(out_dir, STATION_FILES["CH"], doc)
-    report.update({"stations": len(doc["stations"]), "through": doc["through"], "without_file": no_file})
+    report.update({"stations": len(doc["stations"]), "through": doc["through"], "not_reporting": doc["not_reporting_dropped"], "without_file": no_file})
     return report
 
 
@@ -502,7 +515,7 @@ def build_de_stations(out_dir, prev_dir=None):
                     "lon": s["lon"], "alt": s["alt"], "rr": [series.get(d) for d in dates]})
     doc = station_doc("DWD daily precipitation (more_precip, RS)", dates, out)
     write_json(out_dir, STATION_FILES["DE"], doc)
-    return {"stations": len(doc["stations"]), "through": doc["through"], "listed": len(todo), "failed": failed}
+    return {"stations": len(doc["stations"]), "through": doc["through"], "not_reporting": doc["not_reporting_dropped"], "listed": len(todo), "failed": failed}
 
 
 # ----------------------------------------------------- Czechia: stations ----
@@ -599,7 +612,7 @@ def build_cz_stations(out_dir, prev_dir=None):
             "rr": [series.get(w, {}).get(d) for d in dates]} for w, s in stations.items()]
     doc = station_doc("CHMI daily precipitation (SRA)", dates, out)
     write_json(out_dir, STATION_FILES["CZ"], doc)
-    return {"stations": len(doc["stations"]), "through": doc["through"], "months": {k: v[0] or "root" for k, v in where.items()}}
+    return {"stations": len(doc["stations"]), "through": doc["through"], "not_reporting": doc["not_reporting_dropped"], "months": {k: v[0] or "root" for k, v in where.items()}}
 
 
 # --------------------------------------------- Germany + Czechia: 24 hours ----
@@ -665,7 +678,7 @@ def build_de_now(out_dir, prev_dir=None):
     out = []
     for sid, d in data.items():
         h = to_hourly(d, end)
-        if sum(x is not None for x in h) < 20:
+        if sum(x is not None for x in h) < 22:
             continue
         s = meta[sid]
         out.append({"id": s["id"], "name": s["name"], "state": s["state"], "lat": s["lat"], "lon": s["lon"],
@@ -716,7 +729,7 @@ def build_cz_now(out_dir, prev_dir=None):
     out = []
     for w, d in data.items():
         h = to_hourly(d, end)
-        if sum(x is not None for x in h) < 20:
+        if sum(x is not None for x in h) < 22:
             continue
         m = meta[w]
         out.append({"id": w, "name": m["name"], "state": regions[w], "lat": m["lat"], "lon": m["lon"],
