@@ -35,6 +35,13 @@ jobs:
         with:
           ref: shroomzn-data
           path: shroomzn/data
+      - name: Add precomputed skitour data
+        # written by skitour-data.yml; skipped quietly if the branch doesn't exist yet
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          ref: skitour-data
+          path: skitour/data
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Build with Jekyll

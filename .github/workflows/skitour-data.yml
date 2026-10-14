@@ -1,0 +1,99 @@
+# Precomputes the weather layers behind protofox.at/skitour (new snow, snow
+# line, wind; past 24/48/72 h and next 24/48 h, plus snow depth) and stores
+# them on the `skitour-data` branch (one commit, replaced every run, so main's
+# history stays clean). Then it re-runs the Pages deploy, which copies that
+# branch into skitour/data/.
+#
+# Hourly fields are kept in the Actions cache, so a run only downloads the
+# analysis hours and model runs it doesn't have yet.
+name: Update skitour data
+
+on:
+  schedule:
+    - cron: "47 */2 * * *"     # every 2 hours: new INCA hours, and a new model run every 3 h
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - "skitour/precompute.py"
+      - ".github/workflows/skitour-data.yml"
+
+permissions:
+  contents: write    # push the data branch
+  actions: write     # start the Pages deploy, tidy old caches
+
+concurrency:
+  group: skitour-data
+  cancel-in-progress: false
+
+jobs:
+  precompute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests numpy scipy xarray netCDF4 pyproj pillow
+
+      - name: Restore the hourly cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/skitour-cache
+          key: skitour-cache-${{ github.run_id }}
+          restore-keys: skitour-cache-
+
+      - name: Get the previous data
+        # kept for any part that fails this run
+        run: |
+          DATA="$RUNNER_TEMP/data"
+          if git ls-remote --exit-code --heads origin skitour-data >/dev/null; then
+            git clone --depth 1 --branch skitour-data \
+              "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" "$DATA"
+          else
+            mkdir -p "$DATA"
+          fi
+
+      - name: Compute
+        run: python skitour/precompute.py "$RUNNER_TEMP/out" "$RUNNER_TEMP/data" "$RUNNER_TEMP/skitour-cache"
+
+      - name: Save the hourly cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/skitour-cache
+          key: skitour-cache-${{ github.run_id }}
+
+      - name: Merge with the previous data
+        run: cp "$RUNNER_TEMP"/out/* "$RUNNER_TEMP/data"/
+
+      - name: Publish to the skitour-data branch
+        run: |
+          set -e
+          cd "$RUNNER_TEMP/data"
+          rm -rf .git
+          git init -q -b skitour-data
+          git config user.name  "skitour-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "skitour data $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" skitour-data
+          ls -la
+
+      - name: Redeploy the site
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run jekyll-gh-pages.yml --repo "${{ github.repository }}" --ref main
+
+      - name: Drop older caches
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh cache list --repo "${{ github.repository }}" --key skitour-cache- --sort created_at --order desc --limit 100 --json id --jq '.[2:][].id' \
+            | xargs -r -n1 gh cache delete --repo "${{ github.repository }}"
