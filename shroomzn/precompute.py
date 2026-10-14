@@ -675,17 +675,56 @@ def build_de_now(out_dir, prev_dir=None):
     if not latest:
         raise RuntimeError("no 10-minute precipitation values")
     end = sorted(latest)[len(latest) // 2].replace(minute=0, second=0)   # median station's last full hour
-    out = []
+    # DWD's "now" files hold yesterday and today only until yesterday moves to the daily archive
+    # (early morning); after that they start at 00:00 UTC. Hours they no longer cover are taken
+    # from the previous run's file, which each run passes on (runs are 3 hours apart).
+    prev = load_prev_hours(prev_dir, "de_now.json")
+    out, carried = [], 0
     for sid, d in data.items():
-        h = to_hourly(d, end)
+        s = meta[sid]
+        sums, counts = hourly_with_counts(d, end)
+        old = prev.get(s["id"], {})
+        h = []
+        for k in range(24):
+            hour_end = end - dt.timedelta(hours=23 - k)
+            if counts[k] < 6 and hour_end in old:          # incomplete here, complete before
+                h.append(old[hour_end]); carried += 1
+            else:
+                h.append(sums[k])
         if sum(x is not None for x in h) < 22:
             continue
-        s = meta[sid]
         out.append({"id": s["id"], "name": s["name"], "state": s["state"], "lat": s["lat"], "lon": s["lon"],
                     "alt": s["alt"], "h": h})
     doc = hourly_doc("DWD 10-minute precipitation (now)", end, out)
     write_json(out_dir, "de_now.json", doc)
-    return {"stations": len(out), "end": doc["end"]}
+    return {"stations": len(out), "end": doc["end"], "carried_hours": carried, "prev_stations": len(prev)}
+
+
+def hourly_with_counts(values, end):
+    """Like to_hourly, plus the number of values in each hour (6 = a complete hour of 10-min data)."""
+    sums, counts = [None] * 24, [0] * 24
+    for t, v in values.items():
+        if v is None or not (end - dt.timedelta(hours=24) < t <= end):
+            continue
+        hour_end = t if (t.minute == 0 and t.second == 0) else (t.replace(minute=0, second=0) + dt.timedelta(hours=1))
+        k = 23 - int((end - hour_end).total_seconds() // 3600)
+        if 0 <= k < 24:
+            sums[k] = (sums[k] or 0) + v
+            counts[k] += 1
+    return [None if x is None else round(x, 1) for x in sums], counts
+
+
+def load_prev_hours(prev_dir, name):
+    """The previous run's hourly file -> {station id: {hour end (UTC): mm}}; {} if there is none."""
+    if not prev_dir:
+        return {}
+    try:
+        with open(os.path.join(prev_dir, name), encoding="utf-8") as f:
+            doc = json.load(f)
+        hours = [dt.datetime.strptime(h, "%Y-%m-%dT%H:%MZ").replace(tzinfo=dt.timezone.utc) for h in doc["hours"]]
+        return {s["id"]: {t: v for t, v in zip(hours, s["h"]) if v is not None} for s in doc.get("stations", [])}
+    except Exception:
+        return {}
 
 
 def build_cz_now(out_dir, prev_dir=None):

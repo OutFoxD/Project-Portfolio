@@ -28,6 +28,8 @@
   .verdict .headline{display:flex;flex-wrap:wrap;align-items:baseline;gap:12px}
   .verdict .word{font-size:2rem;font-weight:700}
   .verdict .word.bad{color:var(--bad)} .verdict .word.mid{color:var(--mid)} .verdict .word.good{color:var(--good)}
+  .verdict{transition:opacity .2s} .verdict.busy{opacity:.4}
+  .verdict .word.none{color:var(--muted)}
   .verdict .nums{font-size:1.15rem}
   .verdict .nums b{font-size:1.35rem}
   .verdict .meta{color:var(--muted);margin-top:6px;font-size:.92rem}
@@ -55,7 +57,8 @@
     color:var(--muted);font-size:.92rem;margin:0 0 10px}
   select{background:var(--card2);color:var(--text);border:1px solid var(--line);
     border-radius:10px;padding:8px 10px;font-size:.95rem;min-height:44px}
-  #bl{font-size:1rem;font-weight:600;color:var(--amber-soft);border-color:var(--amber);min-width:12.5em}
+  #bl{font-size:1rem;font-weight:600;color:var(--amber-soft);border-color:var(--amber);flex:1 1 15em;min-width:0;max-width:100%}
+  .toolbar .toggles{display:flex;align-items:center;gap:16px;flex:1 1 15em;min-width:0}
   .toggle{display:inline-flex;align-items:center;gap:8px;min-height:44px;cursor:pointer;color:var(--text)}
   .toggle input{width:20px;height:20px;accent-color:var(--amber);margin:0}
   .btn{min-height:44px;padding:10px 16px;border-radius:10px;border:1px solid var(--amber);
@@ -70,6 +73,38 @@
   .legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin:12px 0 4px;font-size:.9rem}
   .legend .item{display:flex;align-items:center;gap:6px}
   .legend .swatch{width:16px;height:16px;border-radius:4px;border:1px solid #0006}
+  .legend .lg-title{color:var(--muted)}
+
+  /* full-screen map: the map covers the window; a small bar on top keeps region, period and verdict */
+  body.map-full{overflow:hidden}
+  body.map-full #map{position:fixed!important;inset:0;width:auto;height:auto!important;z-index:1000;border:none;border-radius:0}
+  .fs-btn{width:34px;height:34px;display:grid;place-items:center;padding:0;background:#fff;color:#333;
+    border:2px solid rgba(0,0,0,.2);border-radius:4px;background-clip:padding-box;cursor:pointer}
+  .fs-btn:hover{background:#f4f4f4}
+  .fs-btn svg{width:18px;height:18px;display:block}
+  .fs-bar,.fs-legend{display:none}
+  body.map-full .fs-bar{display:block;position:absolute;z-index:1000;top:10px;left:54px;right:54px;max-width:440px;margin:0 auto;
+    background:rgba(27,36,28,.93);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:6px;
+    font:14px/1.3 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;box-shadow:0 4px 16px #0006;cursor:default}
+  .fs-row{display:flex;gap:6px;align-items:center}
+  .fs-row+.fs-row{margin-top:5px;padding:0 2px}
+  .fs-row select{flex:1 1 0;min-width:0;min-height:34px;padding:3px 6px;font-size:16px;border-radius:8px}
+  #fs-region{color:var(--amber-soft);font-weight:600;border-color:var(--amber);flex-grow:1.3}
+  #fs-verdict{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.88rem;transition:opacity .2s}
+  #fs-verdict.busy{opacity:.4}
+  @media (max-width:520px){ #fs-verdict .mx{display:none} }
+  #fs-verdict b.good{color:var(--good)} #fs-verdict b.mid{color:var(--mid)} #fs-verdict b.bad{color:var(--bad)} #fs-verdict b.none{color:var(--muted)}
+  .fs-tg{display:flex;gap:4px;flex:0 0 auto}
+  .fs-tg button{background:transparent;border:1px solid var(--amber);color:var(--amber-soft);border-radius:999px;
+    padding:3px 9px;min-height:28px;font:600 .78rem system-ui,sans-serif;cursor:pointer}
+  .fs-tg button[aria-pressed="true"]{background:var(--amber);color:#20180a}
+  body.map-full .fs-legend{display:flex;flex-wrap:wrap;gap:3px 9px;position:absolute;z-index:1000;left:10px;bottom:24px;
+    max-width:calc(100% - 20px);background:rgba(255,255,255,.9);color:#222;border-radius:8px;padding:5px 8px;
+    font:12px/1.2 system-ui,sans-serif;box-shadow:0 1px 5px #0004;cursor:default}
+  .fs-legend .item{display:flex;align-items:center;gap:4px}
+  .fs-legend .swatch{width:11px;height:11px;border-radius:3px;border:1px solid #0005}
+  .fs-legend .lg-title{color:#555}
+  .area-tip{font:600 13px system-ui,sans-serif}
 
   .note{color:var(--muted);font-size:.9rem;margin:8px 0}
   .status{margin:8px 0;padding:10px 12px;border-radius:10px;font-size:.92rem;display:none}
@@ -144,7 +179,7 @@
 <body>
 <div class="wrap">
   <h1 class="serif"><span>Pilz</span><span class="accent">wetter</span> 🍄</h1>
-  <p class="sub">Has it rained enough? Real station measurements across Austria · data © GeoSphere Austria</p>
+  <p class="sub">Has it rained enough? Real station measurements across Austria, Germany, Switzerland and Czechia · data: GeoSphere Austria, DWD, MeteoSwiss, ČHMÚ</p>
 
   <div class="verdict" id="verdict">
     <div class="headline">
@@ -167,22 +202,37 @@
   </div>
 
   <div class="toolbar">
-    <select id="bl" aria-label="Bundesland"></select>
-    <label class="toggle"><input type="checkbox" id="grid-toggle" checked> Rain grid</label>
-    <span class="count" id="stcount"></span>
+    <select id="bl" aria-label="Country or region"></select>
+    <div class="toggles">
+      <label class="toggle"><input type="checkbox" id="grid-toggle" checked> Rain grid</label>
+      <label class="toggle"><input type="checkbox" id="st-toggle" checked> Stations</label>
+      <span class="count" id="stcount"></span>
+    </div>
   </div>
 
   <div class="status" id="status"></div>
 
-  <div id="map"></div>
+  <div id="map">
+    <div class="fs-bar" id="fs-bar">
+      <div class="fs-row">
+        <select id="fs-region" aria-label="Country or region"></select>
+        <select id="fs-period" aria-label="Time range"></select>
+      </div>
+      <div class="fs-row">
+        <span id="fs-verdict">Loading…</span>
+        <span class="fs-tg"><button type="button" id="fs-grid" aria-pressed="true">Grid</button><button type="button" id="fs-st" aria-pressed="true">Stations</button></span>
+      </div>
+    </div>
+    <div class="fs-legend" id="fs-legend"></div>
+  </div>
 
-  <div class="key">
+  <div class="key" id="key">
     <span class="kitem"><span class="kdot"></span>One station</span>
     <span class="kitem"><span class="summary" style="width:32px;height:32px;background:#e2ef9f;color:#1a1a1a"><b>12</b><small>mm</small><i class="cnt">5</i></span>Average of 5 stations close together · tap for the list</span>
   </div>
   <div class="legend" id="legend"></div>
   <p class="note" id="grid-note"></p>
-  <p class="note">Tap a circle for daily values. Circles show the rain measured at weather stations (klima-v2-1d daily, TAWES 10-min for the 24 h view); the coloured background is GeoSphere's interpolated 1&nbsp;km grid (SPARTACUS). Gray dashed circles: no data for this period.</p>
+  <p class="note">Tap a circle for daily values, or tap an area on the map to switch to it. Circles show the rain measured at each country's weather stations; the coloured background is each country's interpolated 1&nbsp;km grid. Gray dashed circles: no data, or too many days missing to count (a station may miss 1 day in 14, 2 in 30, 3 in 45).</p>
 
   <details class="spartacus" id="spartacus">
     <summary>Rain map image (1 km grid, downloadable)</summary>
@@ -212,10 +262,22 @@
     Data: <a href="https://data.hub.geosphere.at/dataset/klima-v2-1d" target="_blank" rel="noopener">klima-v2-1d</a>,
     <a href="https://data.hub.geosphere.at/dataset/tawes-v1-10min" target="_blank" rel="noopener">tawes-v1-10min</a> and
     <a href="https://data.hub.geosphere.at/dataset/spartacus-v3-1d-1km" target="_blank" rel="noopener">spartacus-v3-1d-1km</a>
-    © GeoSphere Austria (CC&nbsp;BY&nbsp;4.0) · Bundesland borders © Statistik Austria (CC&nbsp;BY&nbsp;4.0) ·
+    © GeoSphere Austria (CC&nbsp;BY&nbsp;4.0) · Bundesland borders © Statistik Austria (CC&nbsp;BY&nbsp;4.0).
+    Switzerland: <a href="https://opendatadocs.meteoswiss.ch/a-data-groundbased/a1-automatic-weather-stations" target="_blank" rel="noopener">SwissMetNet stations</a> and
+    <a href="https://opendatadocs.meteoswiss.ch/c-climate-data/c3-ground-based-climate-data" target="_blank" rel="noopener">RprelimD precipitation grid</a>,
+    Source: MeteoSwiss.
+    Germany: <a href="https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/more_precip/" target="_blank" rel="noopener">daily precipitation stations</a>,
+    <a href="https://opendata.dwd.de/climate_environment/CDC/grids_germany/daily/hyras_de/precipitation/" target="_blank" rel="noopener">HYRAS-DE-PR grid</a> and 10-minute data,
+    Source: Deutscher Wetterdienst.
+    Czechia: <a href="https://opendata.chmi.cz/meteorology/climate/" target="_blank" rel="noopener">daily and hourly station data</a>, Source: ČHMÚ (CHMI).
+    Country outlines, German Länder and Czech regions: Natural Earth.
     Basemap © OpenStreetMap contributors.
-    <span id="cache-info">Station sums and the rain grid are precomputed a few times a day;</span>
-    the 24 h view and custom ranges outside the cache query the API live (limit 240 requests/hour).
+    All four services count a day's rain from 06:00 UTC to 06:00 UTC the next day, and every country's
+    presets end on the same day.
+    <span id="cache-info">Station sums and the rain grids are precomputed a few times a day;</span>
+    the 24 h view for Austria and Switzerland and Austrian custom ranges outside the cache query the services live
+    (GeoSphere limit: 240 requests/hour); the 24 h view for Germany and Czechia is refreshed every 3 hours.
+    Custom ranges outside Austria cover the last 45 days.
   </footer>
 </div>
 
@@ -294,21 +356,147 @@ const CITIES = [
   ["Reutte",47.484,10.719,2],["Schwaz",47.352,11.708,2],["Feldkirch",47.238,9.598,2],
   ["Dornbirn",47.414,9.742,2],["Bludenz",47.155,9.822,2],["Neusiedl",47.948,16.842,2],
   ["Oberwart",47.288,16.207,2],["Mattersburg",47.737,16.399,2],
+  ["Zürich",47.377,8.540,1],["Bern",46.948,7.447,1],["Basel",47.560,7.588,1],["Genève",46.204,6.143,1],
+  ["Lausanne",46.520,6.633,1],["Luzern",47.050,8.309,1],["St. Gallen",47.424,9.377,1],["Lugano",46.004,8.951,1],
+  ["Chur",46.850,9.532,1],["Sion",46.233,7.360,1],["Winterthur",47.500,8.724,2],["Biel",47.137,7.247,2],
+  ["Thun",46.758,7.628,2],["Fribourg",46.806,7.162,2],["Neuchâtel",46.990,6.931,2],["Schaffhausen",47.697,8.634,2],
+  ["Aarau",47.392,8.044,2],["Solothurn",47.208,7.537,2],["Zug",47.166,8.516,2],["Schwyz",47.021,8.654,2],
+  ["Altdorf",46.881,8.644,2],["Sarnen",46.896,8.245,2],["Stans",46.958,8.366,2],["Glarus",47.040,9.068,2],
+  ["Frauenfeld",47.556,8.897,2],["Herisau",47.386,9.279,2],["Appenzell",47.331,9.409,2],["Liestal",47.484,7.734,2],
+  ["Delémont",47.366,7.343,2],["Bellinzona",46.192,9.017,2],["Locarno",46.170,8.795,2],["Davos",46.802,9.836,2],
+  ["St. Moritz",46.498,9.839,2],["Brig",46.316,7.988,2],["Martigny",46.102,7.073,2],["Interlaken",46.686,7.863,2],
+  ["Montreux",46.431,6.911,2],["Yverdon",46.778,6.641,2],["Vaduz",47.141,9.521,2],
+  ["Berlin",52.520,13.405,1],["Hamburg",53.551,9.994,1],["München",48.137,11.575,1],["Köln",50.938,6.960,1],
+  ["Frankfurt",50.110,8.682,1],["Stuttgart",48.776,9.183,1],["Dresden",51.051,13.738,1],["Leipzig",51.340,12.375,1],
+  ["Hannover",52.376,9.732,1],["Nürnberg",49.452,11.077,1],["Bremen",53.079,8.802,1],["Kiel",54.323,10.123,1],
+  ["Rostock",54.092,12.099,1],["Erfurt",50.978,11.029,1],["Magdeburg",52.121,11.628,1],["Saarbrücken",49.234,6.997,1],
+  ["Mainz",49.993,8.247,1],["Düsseldorf",51.228,6.774,1],["Potsdam",52.391,13.064,1],["Schwerin",53.636,11.401,1],
+  ["Passau",48.567,13.431,2],["Regensburg",49.013,12.102,2],["Augsburg",48.371,10.898,2],["Rosenheim",47.856,12.128,2],
+  ["Traunstein",47.869,12.643,2],["Berchtesgaden",47.630,13.003,2],["Freyung",48.807,13.547,2],["Zwiesel",49.016,13.233,2],
+  ["Deggendorf",48.834,12.963,2],["Landshut",48.537,12.152,2],["Ingolstadt",48.766,11.425,2],["Kempten",47.727,10.316,2],
+  ["Garmisch",47.492,11.096,2],["Lindau",47.546,9.684,2],["Konstanz",47.660,9.175,2],["Freiburg",47.999,7.842,2],
+  ["Würzburg",49.792,9.954,2],["Bayreuth",49.946,11.578,2],["Hof",50.313,11.912,2],["Chemnitz",50.833,12.920,2],
+  ["Görlitz",51.153,14.987,2],["Kassel",51.312,9.481,2],["Göttingen",51.541,9.916,2],["Ulm",48.401,9.988,2],
+  ["Karlsruhe",49.007,8.404,2],["Trier",49.750,6.637,2],["Koblenz",50.356,7.594,2],["Münster",51.961,7.626,2],
+  ["Osnabrück",52.279,8.047,2],["Bielefeld",52.022,8.532,2],["Braunschweig",52.269,10.527,2],["Lüneburg",53.250,10.414,2],
+  ["Oldenburg",53.144,8.214,2],["Flensburg",54.788,9.437,2],["Greifswald",54.093,13.388,2],["Cottbus",51.756,14.333,2],
+  ["Praha",50.075,14.437,1],["Brno",49.195,16.608,1],["Ostrava",49.835,18.292,1],["Plzeň",49.738,13.373,1],
+  ["České Budějovice",48.975,14.474,1],["Liberec",50.767,15.056,1],["Hradec Králové",50.209,15.833,1],["Olomouc",49.594,17.251,1],
+  ["Český Krumlov",48.811,14.315,2],["Jindřichův Hradec",49.144,15.003,2],["Třeboň",49.004,14.771,2],["Prachatice",49.013,13.998,2],
+  ["Tábor",49.414,14.658,2],["Písek",49.309,14.148,2],["Jihlava",49.396,15.591,2],["Znojmo",48.856,16.049,2],
+  ["Klatovy",49.395,13.295,2],["Karlovy Vary",50.231,12.872,2],["Ústí n. L.",50.661,14.032,2],["Pardubice",50.034,15.781,2],
+  ["Zlín",49.226,17.667,2],["Kladno",50.147,14.103,2],["Cheb",50.080,12.374,2],["Mikulov",48.806,16.638,2],
+  ["Břeclav",48.759,16.882,2],["Opava",49.938,17.902,2],["Trutnov",50.561,15.913,2],["Vimperk",49.053,13.783,2],
 ];
 
+/* Switzerland: "CH" = whole country, "CH-XX" = canton (MeteoSwiss station_canton codes) */
+const CH = { s: 45.82, w: 5.95, n: 47.81, e: 10.49 };
+const CANTONS = {
+  "AG": { name: "Aargau", s: 47.14, w: 7.73, n: 47.62, e: 8.45 },
+  "AR": { name: "Appenzell Ausserrhoden", s: 47.25, w: 9.19, n: 47.47, e: 9.61 },
+  "AI": { name: "Appenzell Innerrhoden", s: 47.24, w: 9.30, n: 47.45, e: 9.61 },
+  "BL": { name: "Basel-Landschaft", s: 47.34, w: 7.34, n: 47.56, e: 7.95 },
+  "BS": { name: "Basel-Stadt", s: 47.53, w: 7.52, n: 47.60, e: 7.66 },
+  "BE": { name: "Bern", s: 46.33, w: 6.85, n: 47.34, e: 8.45 },
+  "FR": { name: "Freiburg", s: 46.44, w: 6.76, n: 47.00, e: 7.38 },
+  "GE": { name: "Genf", s: 46.13, w: 5.95, n: 46.33, e: 6.28 },
+  "GL": { name: "Glarus", s: 46.80, w: 8.87, n: 47.17, e: 9.24 },
+  "GR": { name: "Graubünden", s: 46.17, w: 8.65, n: 47.06, e: 10.47 },
+  "JU": { name: "Jura", s: 47.15, w: 6.84, n: 47.50, e: 7.56 },
+  "LU": { name: "Luzern", s: 46.78, w: 7.84, n: 47.28, e: 8.51 },
+  "NE": { name: "Neuenburg", s: 46.85, w: 6.43, n: 47.17, e: 7.09 },
+  "NW": { name: "Nidwalden", s: 46.78, w: 8.22, n: 47.01, e: 8.56 },
+  "OW": { name: "Obwalden", s: 46.76, w: 8.04, n: 46.98, e: 8.50 },
+  "SH": { name: "Schaffhausen", s: 47.56, w: 8.39, n: 47.80, e: 8.86 },
+  "SZ": { name: "Schwyz", s: 46.89, w: 8.39, n: 47.22, e: 8.99 },
+  "SO": { name: "Solothurn", s: 47.08, w: 7.35, n: 47.50, e: 8.03 },
+  "SG": { name: "St. Gallen", s: 46.88, w: 8.78, n: 47.54, e: 9.65 },
+  "TI": { name: "Tessin", s: 45.82, w: 8.38, n: 46.63, e: 9.16 },
+  "TG": { name: "Thurgau", s: 47.38, w: 8.74, n: 47.68, e: 9.55 },
+  "UR": { name: "Uri", s: 46.53, w: 8.40, n: 46.99, e: 8.95 },
+  "VD": { name: "Waadt", s: 46.19, w: 6.05, n: 46.99, e: 7.25 },
+  "VS": { name: "Wallis", s: 45.88, w: 6.75, n: 46.65, e: 8.48 },
+  "ZG": { name: "Zug", s: 47.09, w: 8.39, n: 47.25, e: 8.70 },
+  "ZH": { name: "Zürich", s: 47.16, w: 8.35, n: 47.70, e: 8.97 },
+};
+const cantonName = code => (CANTONS[code] || {}).name || (code === "FL" ? "Liechtenstein" : code);
+
+/* Germany: "DE" = whole country, "DE-XX" = Land (ISO code, from DWD's station list) */
+const DE = { s: 47.27, w: 5.87, n: 55.06, e: 15.04 };
+const LAENDER = {
+  "BW": { name: "Baden-Württemberg", s: 47.53, w: 7.51, n: 49.80, e: 10.50 },
+  "BY": { name: "Bayern", s: 47.27, w: 8.98, n: 50.56, e: 13.82 },
+  "BE": { name: "Berlin", s: 52.34, w: 13.09, n: 52.66, e: 13.75 },
+  "BB": { name: "Brandenburg", s: 51.35, w: 11.27, n: 53.54, e: 14.76 },
+  "HB": { name: "Bremen", s: 53.02, w: 8.50, n: 53.62, e: 8.99 },
+  "HH": { name: "Hamburg", s: 53.40, w: 9.74, n: 53.73, e: 10.33 },
+  "HE": { name: "Hessen", s: 49.40, w: 7.77, n: 51.66, e: 10.23 },
+  "MV": { name: "Mecklenburg-Vorpommern", s: 53.11, w: 10.60, n: 54.69, e: 14.39 },
+  "NI": { name: "Niedersachsen", s: 51.29, w: 6.66, n: 53.89, e: 11.58 },
+  "NW": { name: "Nordrhein-Westfalen", s: 50.32, w: 5.85, n: 52.52, e: 9.46 },
+  "RP": { name: "Rheinland-Pfalz", s: 48.96, w: 6.10, n: 50.93, e: 8.50 },
+  "SL": { name: "Saarland", s: 49.10, w: 6.35, n: 49.63, e: 7.39 },
+  "SN": { name: "Sachsen", s: 50.16, w: 11.90, n: 51.67, e: 15.02 },
+  "ST": { name: "Sachsen-Anhalt", s: 50.93, w: 10.57, n: 53.05, e: 13.24 },
+  "SH": { name: "Schleswig-Holstein", s: 53.36, w: 7.88, n: 55.07, e: 11.31 },
+  "TH": { name: "Thüringen", s: 50.21, w: 9.88, n: 51.64, e: 12.65 },
+};
+/* Czechia: "CZ" = whole country, "CZ-XX" = kraj (ISO code) */
+const CZ = { s: 48.55, w: 12.09, n: 51.06, e: 18.86 };
+const KRAJE = {
+  "PR": { name: "Praha", s: 49.95, w: 14.21, n: 50.17, e: 14.68 },
+  "ST": { name: "Středočeský kraj", s: 49.49, w: 13.41, n: 50.60, e: 15.50 },
+  "JC": { name: "Jihočeský kraj", s: 48.56, w: 13.52, n: 49.61, e: 15.60 },
+  "PL": { name: "Plzeňský kraj", s: 48.94, w: 12.38, n: 50.11, e: 13.84 },
+  "KA": { name: "Karlovarský kraj", s: 49.90, w: 12.08, n: 50.44, e: 13.29 },
+  "US": { name: "Ústecký kraj", s: 50.08, w: 12.96, n: 51.04, e: 14.63 },
+  "LI": { name: "Liberecký kraj", s: 50.46, w: 14.34, n: 51.02, e: 15.62 },
+  "KR": { name: "Královéhradecký kraj", s: 50.02, w: 15.12, n: 50.78, e: 16.58 },
+  "PA": { name: "Pardubický kraj", s: 49.60, w: 15.34, n: 50.19, e: 16.87 },
+  "VY": { name: "Kraj Vysočina", s: 48.95, w: 14.88, n: 49.88, e: 16.41 },
+  "JM": { name: "Jihomoravský kraj", s: 48.60, w: 15.54, n: 49.63, e: 17.65 },
+  "OL": { name: "Olomoucký kraj", s: 49.26, w: 16.72, n: 50.43, e: 17.91 },
+  "ZL": { name: "Zlínský kraj", s: 48.84, w: 17.11, n: 49.53, e: 18.39 },
+  "MO": { name: "Moravskoslezský kraj", s: 49.38, w: 17.13, n: 50.32, e: 18.83 },
+};
+
+/* everything that differs per country, in one place */
+const COUNTRIES = {
+  AT: { name: "Austria", stations: "stations.json", grid: "grid.json", borders: "bundeslaender.geojson",
+        bounds: AT, total: "Österreich", gridLabel: "SPARTACUS", live24: "TAWES 10-min data" },
+  DE: { name: "Germany", stations: "de_stations.json", grid: "de_grid.json", now: "de_now.json",
+        borders: "laender_de.geojson", bounds: DE, regions: LAENDER, total: "Deutschland", gridLabel: "DWD HYRAS",
+        live24: "DWD 10-min data" },
+  CH: { name: "Switzerland", stations: "ch_stations.json", grid: "ch_grid.json", borders: null,   /* no canton lines */
+        bounds: CH, regions: CANTONS, total: "Schweiz", gridLabel: "MeteoSwiss RprelimD", live24: "MeteoSwiss hourly data" },
+  CZ: { name: "Czechia", stations: "cz_stations.json", now: "cz_now.json", borders: "kraje_cz.geojson",
+        bounds: CZ, regions: KRAJE, total: null, gridLabel: null, live24: "CHMI hourly data" },
+};
+const COUNTRY_ORDER = ["AT", "DE", "CH", "CZ"];
+/* MeteoSwiss station files, by the `src` tag precompute.py stores per station */
+const CH_FILES = {
+  "smn":        ["https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn", "ogd-smn"],
+  "smn-precip": ["https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn-precip", "ogd-smn-precip"],
+};
+
 /* ================= state ================= */
-const prefs = (() => { try { return JSON.parse(localStorage.getItem("pw_prefs") || "{}"); } catch (_) { return {}; } })();
+/* region ids: "AT" or an Austrian Bundesland name; "DE"/"CH"/"CZ"; "DE-XX"/"CZ-XX" for Länder and kraje.
+   Switzerland is small, so only the whole country can be picked. */
+const PICK_REGIONS = { AT: true, DE: true, CH: false, CZ: true };
+const regionCountry = r => {
+  const c = String(r || "").slice(0, 2);
+  return (COUNTRIES[c] && c !== "AT" && (r.length === 2 || r[2] === "-")) ? c : "AT";
+};
 let state = {
   range: { type: "preset", idx: 2 },        // or { type:"custom", start:"YYYY-MM-DD", end:"YYYY-MM-DD" }
-  bl: BL_BOUNDS[prefs.bl] || prefs.bl === "AT" ? prefs.bl : "Oberösterreich",
-  gridOn: prefs.gridOn !== false,
-  cache: null, grid: null, borders: null,   // precomputed files
-  klimaStations: null, tawesStations: null, // live-API fallback lists
-  map: null, markerLayer: null, borderLayer: null, gridLayer: null,
+  bl: "Oberösterreich",                     // every visit starts in Upper Austria
+  gridOn: true, stationsOn: true,
+  st: {}, gr: {}, bd: {}, now: {},         // precomputed files per country: stations, grid, borders, last 24 h
+  outlines: null,                           // national borders (countries.geojson)
+  regionCounts: null,                       // stations per region (regions.json)
+  klimaStations: null, tawesStations: null, // live-API fallback lists (Austria)
+  map: null, markerLayer: null, borderLayer: null, gridLayers: [],
 };
-function savePrefs() {
-  try { localStorage.setItem("pw_prefs", JSON.stringify({ bl: state.bl, gridOn: state.gridOn })); } catch (_) {}
-}
 
 /* ================= helpers ================= */
 const $ = id => document.getElementById(id);
@@ -319,9 +507,23 @@ const isoMin  = d => `${isoDate(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const parseDay = s => { const d = new Date(s + "T00:00:00"); return isNaN(d) ? null : d; };
 const dm = iso => `${iso.slice(8, 10)}.${iso.slice(5, 7)}.`;
-const blName = () => state.bl === "AT" ? "Austria" : state.bl;
-const inBl = s => state.bl === "AT" || s.state === state.bl;
-const regionBounds = () => state.bl === "AT" ? AT : BL_BOUNDS[state.bl];
+const country = () => regionCountry(state.bl);
+const isWholeCountry = () => state.bl === country();
+const regionName = (c, code) => c === "AT" ? code : c === "CH" ? cantonName(code) : ((COUNTRIES[c].regions || {})[code] || {}).name || code;
+const blName = () => isWholeCountry() ? COUNTRIES[country()].name
+  : country() === "AT" ? state.bl : regionName(country(), state.bl.slice(3));
+/* the region id a station belongs to (s.country is set when its file loads) */
+const stationRegion = s => s.country === "AT" ? s.state : `${s.country}-${s.state}`;
+const inBl = s => s.country === country() && (isWholeCountry() || stationRegion(s) === state.bl);
+const boundsFor = id => {
+  const c = regionCountry(id);
+  return id === c ? COUNTRIES[c].bounds : c === "AT" ? BL_BOUNDS[id] : COUNTRIES[c].regions[id.slice(3)];
+};
+const regionBounds = () => boundsFor(state.bl);
+/* key of the selected region in a grid's "mean" table */
+const meanKey = () => isWholeCountry() ? COUNTRIES[country()].total
+  : country() === "AT" ? state.bl : state.bl.slice(3);
+const regionLabel = s => regionName(s.country, s.state);
 
 /* Resolve the active range into concrete dates + thresholds. */
 function currentRange() {
@@ -414,28 +616,51 @@ function cacheSet(key, v) {
 }
 
 /* ================= precomputed cache ================= */
+/* at start: all grids, borders and the station counts (small); station files load per country when needed */
 async function loadSiteData() {
-  const [cache, grid, borders] = await Promise.all([
-    siteJson("stations.json"), siteJson("grid.json"),
-    (async () => { try { const r = await fetch("bundeslaender.geojson"); return r.ok ? r.json() : null; } catch (_) { return null; } })(),
-  ]);
-  state.cache = cache; state.grid = grid; state.borders = borders;
-  if (cache && cache.generated) {
-    const t = new Date(cache.generated);
-    $("cache-info").textContent = `Station sums and the rain grid are precomputed a few times a day (last update ${t.toLocaleString("de-AT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })});`;
+  const local = async name => { try { const r = await fetch(name); return r.ok ? await r.json() : null; } catch (_) { return null; } };
+  const jobs = [siteJson("regions.json").then(v => { state.regionCounts = v; }),
+                local("countries.geojson").then(v => { state.outlines = v; })];
+  for (const c of COUNTRY_ORDER) {
+    const cfg = COUNTRIES[c];
+    if (cfg.grid) jobs.push(siteJson(cfg.grid).then(v => { state.gr[c] = v; }));
+    if (cfg.borders) jobs.push(local(cfg.borders).then(v => {
+      if (v) v.features.forEach(f => { f.properties.country = c; });
+      state.bd[c] = v;
+    }));
   }
+  await Promise.all(jobs);
 }
 
-function cacheUsable() {
-  const c = state.cache;
+const stationPromises = {};
+function ensureCountry(c) {
+  if (!stationPromises[c]) {
+    stationPromises[c] = siteJson(COUNTRIES[c].stations).then(doc => {
+      if (doc && doc.stations) doc.stations.forEach(s => { s.country = c; });
+      state.st[c] = doc;
+      if (doc && doc.generated) {
+        const t = new Date(doc.generated);
+        $("cache-info").textContent = `Station sums and the rain grids are precomputed a few times a day (last update ${t.toLocaleString("de-AT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })});`;
+      }
+      return doc;
+    });
+  }
+  return stationPromises[c];
+}
+
+function cacheUsable(c) {
   return !!(c && c.through && c.dates && c.dates.length && c.stations &&
             Date.now() - Date.parse(c.generated) < CACHE_MAX_AGE_H * 3600e3);
 }
 
-/* Serve a daily range straight from stations.json when it covers it. */
+/* missing days a station may have and still count for a period: 0 of 7, 1 of 14, 2 of 30, 3 of 45 */
+const allowedGaps = days => days >= 14 ? Math.round(days / 15) : 0;
+
+/* Serve a daily range straight from the country's precomputed station file when it covers it. */
 function rangeFromCache(range) {
-  if (!cacheUsable()) return null;
-  const c = state.cache, dates = c.dates;
+  const c = state.st[country()];
+  if (!cacheUsable(c)) return null;
+  const dates = c.dates;
   let i0, i1;
   if (range.type === "preset") {
     i1 = dates.indexOf(c.through);
@@ -446,18 +671,20 @@ function rangeFromCache(range) {
   }
   if (i1 < 0 || i0 < 0 || i0 > i1) return null;
 
-  const stations = [];
+  const stations = [], days = i1 - i0 + 1, allowed = allowedGaps(days);
   for (const st of c.stations) {
     if (!inBl(st)) continue;
-    let sum = 0, any = false;
+    let sum = 0, have = 0;
     const daily = [];
     for (let k = i0; k <= i1; k++) {
       const v = st.rr[k];
       daily.push({ label: dm(dates[k]), mm: v == null ? null : v });
-      if (v != null) { sum += v; any = true; }
+      if (v != null) { sum += v; have++; }
     }
-    stations.push({ id: st.id, name: st.name, state: st.state, lat: st.lat, lon: st.lon,
-                    altitude: st.alt, sum: any ? sum : null, daily, hasData: any });
+    const counted = have > 0 && days - have <= allowed;     // a sum with too many gaps would understate the rain
+    stations.push({ id: st.id, name: st.name, state: st.state, country: st.country, src: st.src,
+                    lat: st.lat, lon: st.lon, altitude: st.alt, sum: counted ? sum : null, daily, hasData: counted,
+                    missing: days - have, incomplete: have > 0 && !counted });
   }
   const r = { ...range, startIso: dates[i0], endIso: dates[i1], days: i1 - i0 + 1, cached: true };
   return { range: r, stations, lastDataTs: c.through };
@@ -465,11 +692,11 @@ function rangeFromCache(range) {
 
 /* ================= station metadata for live queries (7-day cache) ================= */
 async function loadStationList(kind) {
-  if (kind === "klima" && state.cache && state.cache.stations) {
-    return state.cache.stations.map(s => ({ id: s.id, name: s.name, state: s.state,
+  if (kind === "klima" && state.st.AT && state.st.AT.stations) {
+    return state.st.AT.stations.map(s => ({ id: s.id, name: s.name, state: s.state, country: "AT",
       lat: s.lat, lon: s.lon, altitude: s.alt }));
   }
-  const key = `pw_st_${kind}_v3`;
+  const key = `pw_st_${kind}_v4`;
   const cached = cacheGet(key, 7*24*3600e3);
   if (cached) return cached;
 
@@ -491,7 +718,7 @@ async function loadStationList(kind) {
   const combined = new Set(active.filter(s => s.type === "COMBINED").map(s => s.id));
   const slim = active
     .filter(s => !(s.type === "INDIVIDUAL" && combined.has(s.group_id)))
-    .map(s => ({ id: s.id, name: s.name, state: s.state || "", lat: s.lat, lon: s.lon, altitude: s.altitude }));
+    .map(s => ({ id: s.id, name: s.name, state: s.state || "", country: "AT", lat: s.lat, lon: s.lon, altitude: s.altitude }));
 
   cacheSet(key, slim);
   return slim;
@@ -504,7 +731,20 @@ async function ensureStations(kind) {
 
 /* ================= range data ================= */
 async function loadRangeData() {
-  const range = currentRange();
+  const range = currentRange(), c = country();
+  if (!state.st[c]) {
+    setStatus($("status"), "info", `Loading ${COUNTRIES[c].name}…`);
+    await ensureCountry(c);
+    setStatus($("status"), "", "");
+  }
+  if (c !== "AT") {
+    if (!state.st[c]) throw new Error(`Data for ${COUNTRIES[c].name} isn't available right now. Try again later.`);
+    if (range.src === "tawes") return c === "CH" ? loadCH24h(range) : loadNow(c, range);
+    const fromCache = rangeFromCache(range);
+    if (fromCache) return fromCache;
+    const cc = state.st[c];
+    throw Object.assign(new Error(`For ${COUNTRIES[c].name}, daily data covers ${dm(cc.dates[0])} – ${dm(cc.through)}${cc.through.slice(0, 4)}. Pick a range inside that window, or use a preset.`), { soft: true });
+  }
   if (range.src === "klima") {
     const fromCache = rangeFromCache(range);
     if (fromCache) return fromCache;
@@ -512,11 +752,73 @@ async function loadRangeData() {
   return loadRangeLive(range);
 }
 
+/* Germany and Czechia, last 24 h: their servers can't be read from a browser, so the
+   hourly values are collected on GitHub every 3 hours (de_now.json / cz_now.json). */
+async function loadNow(c, range) {
+  if (!state.now[c]) state.now[c] = await siteJson(COUNTRIES[c].now);
+  const doc = state.now[c];
+  if (!doc || !doc.stations) throw new Error(`The last 24 h for ${COUNTRIES[c].name} aren't available right now.`);
+  const labels = doc.hours.map(h => `${pad(new Date(h).getHours())}:00`);    // hour ends, local time
+  const stations = doc.stations.map(s => ({ ...s, country: c })).filter(inBl).map(s => {
+    const vals = s.h.filter(v => v != null);
+    return { id: s.id, name: s.name, state: s.state, country: c, lat: s.lat, lon: s.lon, altitude: s.alt,
+             sum: vals.length ? vals.reduce((a, b) => a + b, 0) : null, hasData: vals.length > 0,
+             daily: s.h.map((v, i) => ({ label: labels[i], mm: v })) };
+  });
+  return { range: { ...range, nowEnd: doc.end }, stations, lastDataTs: doc.end };
+}
+
+/* Switzerland, last 24 h: MeteoSwiss hourly "now" files (yesterday 12 UTC → now),
+   one small CSV per station, straight from data.geo.admin.ch (CORS open). */
+async function loadCH24h(range) {
+  const bucket = Math.floor(Date.now() / (10 * 60e3));
+  const key = `pw_ch24_${state.bl}_${bucket}`;
+  const cached = cacheGet(key, 10 * 60e3);
+  if (cached) return { range: { ...range, ...cached.rangeInfo }, stations: cached.stations, lastDataTs: cached.lastDataTs };
+
+  const list = state.st.CH.stations.filter(inBl);
+  if (!list.length) throw new Error(`No stations in ${blName()}.`);
+  setStatus($("status"), "info", `Loading the last 24 h for ${list.length} stations…`);
+  const since = Date.now() - 24 * 3600e3;
+  let first = Infinity, lastTs = null;
+  const tasks = list.map(st => async () => {
+    const [base, prefix] = CH_FILES[st.src] || CH_FILES.smn;
+    const a = String(st.id).toLowerCase();
+    let text = null;
+    try { const r = await fetch(`${base}/${a}/${prefix}_${a}_h_now.csv`); if (r.ok) text = await r.text(); } catch (_) {}
+    const out = { id: st.id, name: st.name, state: st.state, country: "CH", src: st.src,
+                  lat: st.lat, lon: st.lon, altitude: st.alt, sum: null, daily: [], hasData: false };
+    if (!text) return out;
+    const lines = text.trim().split(/\r?\n/), head = lines[0].split(";");
+    const it = head.indexOf("reference_timestamp"), ir = head.indexOf("rre150h0");
+    if (it < 0 || ir < 0) return out;
+    let sum = 0, any = false;
+    for (const ln of lines.slice(1)) {
+      const c = ln.split(";"), ts = c[it] || "";
+      const t = Date.UTC(+ts.slice(6, 10), +ts.slice(3, 5) - 1, +ts.slice(0, 2), +ts.slice(11, 13), +ts.slice(14, 16));
+      if (!(t > since)) continue;             // MeteoSwiss labels hourly values with the END of the hour (UTC)
+      const v = c[ir] === "" ? null : Math.max(0, parseFloat(c[ir]));
+      const lt = new Date(t);                  // shown as the local time the hour ends
+      out.daily.push({ label: `${pad(lt.getHours())}:00`, mm: v });
+      if (v != null && !isNaN(v)) { sum += v; any = true; first = Math.min(first, t); if (!lastTs || t > lastTs) lastTs = t; }
+    }
+    out.sum = any ? sum : null; out.hasData = any;
+    return out;
+  });
+  const stations = await pool(tasks, 8);
+  setStatus($("status"), "", "");
+  const hours = isFinite(first) && lastTs ? Math.round((lastTs - first) / 3600e3) + 1 : 0;
+  const rangeInfo = { chHours: hours };
+  const lastDataTs = lastTs ? new Date(lastTs).toISOString() : null;
+  cacheSet(key, { stations, rangeInfo, lastDataTs });
+  return { range: { ...range, ...rangeInfo }, stations, lastDataTs };
+}
+
 /* live API (15-min localStorage cache) */
 async function loadRangeLive(range) {
   const status = $("status");
   const bucket = Math.floor(Date.now() / (15*60e3));
-  const key = `pw_data3_${range.src}_${range.startIso}_${range.endIso}_${state.bl}_${bucket}`;
+  const key = `pw_data5_${range.src}_${range.startIso}_${range.endIso}_${state.bl}_${bucket}`;
   const cached = cacheGet(key, 15*60e3);
   if (cached) return { range, ...cached };
 
@@ -557,32 +859,38 @@ async function loadRangeLive(range) {
   for (const st of stations) {
     const series = byId[String(st.id)];
     if (!series) continue;
-    let sum = 0, any = false;
+    let sum = 0, any = false, have = 0;
     const daily = [];
     if (range.src === "tawes") {
+      /* 10-min values -> hourly sums, keyed by the hour they end in (yesterday's 09:00 and today's
+         09:00 are different hours), oldest first */
       const hours = new Map();
       series.forEach((v, i) => {
         if (v == null) return;
         const val = Math.max(0, v);                 // negative = trace, counts as 0
-        any = true; sum += val;
-        const t = new Date(timestamps[i]);
-        const k = `${pad(t.getHours())}:00`;
-        hours.set(k, (hours.get(k) || 0) + val);
+        any = true; sum += val; have++;
+        const end = Math.ceil(Date.parse(timestamps[i]) / 3600e3) * 3600e3;
+        hours.set(end, (hours.get(end) || 0) + val);
         lastDataTs = timestamps[i];
       });
-      for (const [k, v] of hours) daily.push({ label: k, mm: v });
+      for (const [end, v] of [...hours].sort((a, b) => a[0] - b[0]))
+        daily.push({ label: `${pad(new Date(end).getHours())}:00`, mm: Math.round(v * 10) / 10 });
     } else {
       series.forEach((v, i) => {
         const t = new Date(timestamps[i]);
         const label = `${pad(t.getDate())}.${pad(t.getMonth()+1)}.`;
         if (v == null) { daily.push({ label, mm: null }); return; }
         const val = Math.max(0, v);
-        any = true; sum += val;
+        any = true; sum += val; have++;
         daily.push({ label, mm: val });
         if (!lastDataTs || timestamps[i] > lastDataTs) lastDataTs = timestamps[i];
       });
     }
-    out.push({ ...st, sum: any ? sum : null, daily, hasData: any });
+    /* same rule as the cached data: too many gaps would understate the rain */
+    const counted = any && (range.src === "tawes" ? have >= 132                       // 22 of 24 h of 10-min values
+                                                  : series.length - have <= allowedGaps(series.length));
+    out.push({ ...st, sum: counted ? sum : null, daily, hasData: counted, incomplete: any && !counted,
+               missing: range.src === "tawes" ? null : series.length - have });
   }
 
   setStatus(status, "", "");
@@ -590,28 +898,90 @@ async function loadRangeLive(range) {
   return { range, stations: out, lastDataTs };
 }
 
-/* ================= grid (precomputed SPARTACUS) ================= */
-function gridPeriod(range) {
-  const g = state.grid;
+/* ================= grids (precomputed 1 km analyses: SPARTACUS, HYRAS, RprelimD) ================= */
+const gridDoc = (c = country()) => state.gr[c] || null;
+function gridPeriod(range, c = country()) {
+  const g = gridDoc(c);
   if (!g || !g.periods || range.type !== "preset" || range.src !== "klima") return null;
   if (Date.now() - Date.parse(g.generated) > 4 * 24 * 3600e3) return null;
   return g.periods[String(range.days)] || null;
 }
 
+/* every country's grid is drawn when available; each is clipped to its own border */
 function updateGridLayer(range) {
-  if (state.gridLayer) { state.map.removeLayer(state.gridLayer); state.gridLayer = null; }
-  const per = gridPeriod(range), note = $("grid-note");
-  if (!per) {
-    note.textContent = state.grid
+  (state.gridLayers || []).forEach(l => state.map.removeLayer(l));
+  state.gridLayers = [];
+  const per = gridPeriod(range), note = $("grid-note"), cfg = COUNTRIES[country()];
+  if (!cfg.grid) {
+    note.textContent = `Rain grid: ${cfg.name} publishes no daily rain grid, so the map shows its stations only.`;
+  } else if (!per) {
+    note.textContent = gridDoc()
       ? "Rain grid: shown for the 7, 14, 30 and 45-day presets."
       : "Rain grid: not available right now.";
-    return;
+  } else {
+    note.textContent = `Rain grid: ${dm(per.start)}–${dm(per.end)} (${cfg.gridLabel}; all grids end on the same day, which can be a day before the stations).`;
   }
-  note.textContent = `Rain grid: ${dm(per.start)}–${dm(per.end)} (SPARTACUS lags ~2 days behind the stations).`;
   if (!state.gridOn) return;
-  const v = encodeURIComponent(state.grid.generated);
-  state.gridLayer = L.imageOverlay(`${DATA}${per.file}?v=${v}`, state.grid.bounds,
-    { opacity: 0.85, pane: "gridPane", interactive: false }).addTo(state.map);
+  for (const c of COUNTRY_ORDER) {
+    const p = gridPeriod(range, c), g = gridDoc(c);
+    if (!p) continue;
+    const url = `${DATA}${p.file}?v=${encodeURIComponent(g.generated)}`;
+    const layer = L.imageOverlay(url, g.bounds, { opacity: 0.85, pane: "gridPane", interactive: false }).addTo(state.map);
+    state.gridLayers.push(layer);
+    indexGrid(url, g.bounds).then(ix => { layer._pwIdx = ix; renderLegend(); });
+  }
+  renderLegend();
+}
+
+/* Which colour classes each grid image holds, per 8×8-pixel block, so the legend can list only
+   what's on screen. The PNGs are palette images in Web Mercator, so rows are linear in mercY. */
+const gridIndexes = new Map();     // url -> Promise<index | null>
+function indexGrid(url, bounds) {
+  if (!gridIndexes.has(url)) gridIndexes.set(url, new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const W = img.naturalWidth, H = img.naturalHeight, BS = 8;
+        const cv = document.createElement("canvas");
+        cv.width = W; cv.height = H;
+        const ctx = cv.getContext("2d", { willReadFrequently: true });
+        ctx.drawImage(img, 0, 0);
+        const px = ctx.getImageData(0, 0, W, H).data;
+        const bw = Math.ceil(W / BS), bh = Math.ceil(H / BS), masks = new Uint16Array(bw * bh), memo = new Map();
+        for (let y = 0; y < H; y++) {
+          const row = (y / BS | 0) * bw;
+          for (let x = 0; x < W; x++) {
+            const i = (y * W + x) * 4;
+            if (px[i + 3] < 8) continue;                     // outside the country
+            const key = (px[i] << 16) | (px[i + 1] << 8) | px[i + 2];
+            let k = memo.get(key);
+            if (k === undefined) { k = nearestBin(px[i], px[i + 1], px[i + 2]); memo.set(key, k); }
+            masks[row + (x / BS | 0)] |= 1 << k;
+          }
+        }
+        resolve({ W, H, BS, bw, bh, masks, s: bounds[0][0], w: bounds[0][1], n: bounds[1][0], e: bounds[1][1] });
+      } catch (_) { resolve(null); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  }));
+  return gridIndexes.get(url);
+}
+const BIN_RGB = BINS.map(b => [1, 3, 5].map(k => parseInt(b[1].slice(k, k + 2), 16)));
+function nearestBin(r, g, b) {
+  let best = 0, bd = Infinity;
+  BIN_RGB.forEach(([R, G, B], k) => { const d = (r - R) ** 2 + (g - G) ** 2 + (b - B) ** 2; if (d < bd) { bd = d; best = k; } });
+  return best;
+}
+/* bitmask of the classes a grid shows inside the given map bounds */
+function gridMaskIn(ix, view) {
+  const X = lon => (lon - ix.w) / (ix.e - ix.w) * ix.W / ix.BS;
+  const Y = lat => (mercY(ix.n) - mercY(lat)) / (mercY(ix.n) - mercY(ix.s)) * ix.H / ix.BS;
+  const x0 = Math.max(0, Math.floor(X(view.getWest()))), x1 = Math.min(ix.bw - 1, Math.floor(X(view.getEast())));
+  const y0 = Math.max(0, Math.floor(Y(Math.min(85, view.getNorth())))), y1 = Math.min(ix.bh - 1, Math.floor(Y(Math.max(-85, view.getSouth()))));
+  let m = 0;
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) m |= ix.masks[y * ix.bw + x];
+  return m;
 }
 
 /* ================= verdict ================= */
@@ -623,7 +993,7 @@ function renderVerdict(res) {
   if (!withData.length) {
     wordEl.textContent = "No data"; wordEl.className = "word serif mid";
     numsEl.textContent = ""; metaEl.textContent = `No station in ${blName()} reported precipitation for this period yet.`;
-    hintEl.textContent = ""; return;
+    hintEl.textContent = ""; fsVerdict("No data", "mid", ""); return;
   }
   const avg = withData.reduce((a, s) => a + s.sum, 0) / withData.length;
   const maxSt = withData.reduce((a, s) => (s.sum > a.sum ? s : a), withData[0]);
@@ -634,15 +1004,27 @@ function renderVerdict(res) {
   else                    { word = "Too dry";      cls = "bad";  }
   wordEl.textContent = word; wordEl.className = `word serif ${cls}`;
   numsEl.innerHTML = `<b>${fmt1(avg)}</b> mm avg · <b>${fmt1(maxSt.sum)}</b> mm max`;
+  fsVerdict(word, cls, `Ø ${fmt1(avg)} mm`, ` · max ${fmt1(maxSt.sum)}`);
 
-  metaEl.textContent = `${blName()} · ` + (r.days === 1
-    ? "last 24 h (TAWES 10-min data)"
-    : `${dm(r.startIso)} → ${dm(r.endIso)} (${r.days} days)`) +
-    ` · ${withData.length} of ${res.stations.length} stations`;
+  let when;
+  const c = country();
+  if (r.days !== 1) when = `${dm(r.startIso)} → ${dm(r.endIso)} (${r.days} days)`;
+  else if (r.nowEnd) {
+    const e = new Date(r.nowEnd);
+    when = `last 24 h until ${pad(e.getHours())}:00 ${dm(isoDate(e))} (${COUNTRIES[c].live24}, refreshed every 3 h)`;
+  }
+  else if (c === "AT") when = `last 24 h (${COUNTRIES.AT.live24})`;
+  else if ((r.chHours || 0) >= 23) when = `last 24 h (${COUNTRIES.CH.live24})`;
+  else {
+    /* MeteoSwiss' live hourly files start at 12:00 UTC yesterday */
+    const y = new Date(); y.setUTCDate(y.getUTCDate() - 1); y.setUTCHours(12, 0, 0, 0);
+    when = `since ${pad(y.getHours())}:00 yesterday (${r.chHours || 0} h, MeteoSwiss hourly data)`;
+  }
+  metaEl.textContent = `${blName()} · ${when} · ${withData.length} of ${res.stations.length} stations`;
 
   let hint = `Wettest: ${maxSt.name} (${fmt1(maxSt.sum)} mm).`;
   const per = gridPeriod(r);
-  const gm = per && per.mean && per.mean[state.bl === "AT" ? "Österreich" : state.bl];
+  const gm = per && per.mean && per.mean[meanKey()];
   if (gm != null) hint += ` Area mean (1 km grid): ${fmt1(gm)} mm.`;
   if (!r.cached && r.days > 1 && res.lastDataTs) {
     const last = res.lastDataTs.slice(0, 10);
@@ -674,25 +1056,231 @@ function initMap() {
   state.map.createPane("bordersPane").style.zIndex = 380;
   state.map.getPane("bordersPane").style.pointerEvents = "none";
   state.markerLayer = L.layerGroup().addTo(state.map);
-  state.map.on("zoomend", () => renderMarkers());
+  state.map.on("moveend", () => renderMarkers());     // after zoom and pan: only stations in view are drawn
+  new FullscreenControl().addTo(state.map);
+  for (const id of ["fs-bar", "fs-legend"]) {
+    L.DomEvent.disableClickPropagation($(id));
+    L.DomEvent.disableScrollPropagation($(id));
+  }
+  initAreaPicking();
 }
 
+/* fit the selected region; in full screen leave room for the bar on top and the legend below */
+const fitPadding = () => mapFull ? { paddingTopLeft: [12, 96], paddingBottomRight: [12, 44] } : { padding: [8, 8] };
 function fitRegion() {
   const b = regionBounds();
   sizeMap();
-  state.map.fitBounds([[b.s, b.w], [b.n, b.e]], { padding: [8, 8] });
+  state.map.fitBounds([[b.s, b.w], [b.n, b.e]], fitPadding());
 }
+
+/* the one place a region gets picked: menu, full-screen menu or a tap on the map */
+function selectRegion(id, { fit = true } = {}) {
+  if (!id || id === state.bl) return;
+  state.bl = id;
+  $("bl").value = id; $("fs-region").value = id;
+  state.lastRes = null;                     // don't redraw the old region's dots while zooming
+  closeSheet();
+  renderBorders();
+  if (fit) fitRegion(); else renderMarkers();
+  refresh();
+}
+
+/* ================= tap an area to pick it ================= */
+function bboxOf(f) {
+  if (!f._bb) {
+    let s = 90, w = 180, n = -90, e = -180;
+    const g = f.geometry, polys = g.type === "Polygon" ? [g.coordinates] : g.coordinates;
+    for (const p of polys) for (const [x, y] of p[0]) { if (y < s) s = y; if (y > n) n = y; if (x < w) w = x; if (x > e) e = x; }
+    f._bb = { s, w, n, e };
+  }
+  return f._bb;
+}
+function ringHas(ring, x, y) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i], [xj, yj] = ring[j];
+    if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+function featureHas(f, lon, lat) {
+  const b = bboxOf(f);
+  if (lat < b.s || lat > b.n || lon < b.w || lon > b.e) return false;
+  const g = f.geometry, polys = g.type === "Polygon" ? [g.coordinates] : g.coordinates;
+  return polys.some(p => ringHas(p[0], lon, lat) && !p.slice(1).some(h => ringHas(h, lon, lat)));
+}
+const outlineOf = c => ((state.outlines || {}).features || []).find(f => f.properties.country === c);
+const regionFeatureId = (c, f) => c === "AT" ? f.properties.name : `${c}-${f.properties.code}`;
+
+/* the menu entry under a point: a Bundesland, Land or kraj; Switzerland as a whole; null outside */
+function areaAt(ll) {
+  for (const c of COUNTRY_ORDER) {
+    if (!PICK_REGIONS[c] || !state.bd[c]) continue;
+    const f = state.bd[c].features.find(f => featureHas(f, ll.lng, ll.lat));
+    if (f) { const id = regionFeatureId(c, f); return state.pickable.has(id) ? id : c; }
+  }
+  for (const c of COUNTRY_ORDER) {
+    if (PICK_REGIONS[c] && state.bd[c]) continue;          // those are covered by their regions
+    const o = outlineOf(c);
+    if (o && featureHas(o, ll.lng, ll.lat)) return c;
+  }
+  return null;
+}
+function areaFeature(id) {
+  const c = regionCountry(id);
+  if (id === c || !state.bd[c]) return outlineOf(c);
+  return state.bd[c].features.find(f => regionFeatureId(c, f) === id);
+}
+const areaName = id => { const c = regionCountry(id); return id === c ? COUNTRIES[c].name : c === "AT" ? id : regionName(c, id.slice(3)); };
+
+function initAreaPicking() {
+  const map = state.map;
+  let timer = null;
+  /* A single tap picks the area under it. Leaflet sends no click after a drag; the short wait lets a
+     double-tap zoom cancel it, and a tap that only closes the open sheet picks nothing. */
+  map.on("click", e => {
+    clearTimeout(timer);
+    if (sheetOpen) return;
+    const id = areaAt(e.latlng);
+    if (!id || id === state.bl) return;
+    timer = setTimeout(() => {
+      /* zoomed out (overview): go to the area like the menu does; zoomed in closer: keep the view */
+      const b = boundsFor(id);
+      const fitZoom = map.getBoundsZoom([[b.s, b.w], [b.n, b.e]], false, L.point(16, 16));
+      setHover(null);
+      selectRegion(id, { fit: map.getZoom() <= fitZoom });
+    }, 280);
+  });
+  map.on("dblclick zoomstart", () => clearTimeout(timer));
+
+  /* mouse only: outline the area under the pointer and name it */
+  if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+  let raf = 0, last = null;
+  map.on("mousemove", e => {
+    last = e;
+    if (!raf) raf = requestAnimationFrame(() => {
+      raf = 0;
+      const t = last.originalEvent.target;
+      const onTop = t && t.closest && t.closest(".leaflet-interactive, .leaflet-marker-icon, .leaflet-control, .fs-bar, .fs-legend");
+      const id = onTop ? null : areaAt(last.latlng);
+      setHover(id && id !== state.bl ? id : null, last.latlng);
+    });
+  });
+  map.on("mouseout", () => setHover(null));
+}
+const hover = { id: null, layer: null, tip: null };
+function setHover(id, ll) {
+  const map = state.map;
+  if (id !== hover.id) {
+    if (hover.layer) { map.removeLayer(hover.layer); hover.layer = null; }
+    if (hover.tip) { map.removeLayer(hover.tip); hover.tip = null; }
+    hover.id = id;
+    map.getContainer().style.cursor = id ? "pointer" : "";
+    const f = id && areaFeature(id);
+    if (f) hover.layer = L.geoJSON(f, { pane: "bordersPane", interactive: false,
+      style: { color: "#b8680c", weight: 1.6, opacity: 0.9, dashArray: "5 4", fill: false } }).addTo(map);
+    if (id) hover.tip = L.tooltip({ direction: "top", offset: [0, -12], className: "area-tip" })
+      .setLatLng(ll).setContent(areaName(id)).addTo(map);
+  } else if (hover.tip && ll) hover.tip.setLatLng(ll);
+}
+
+/* ================= full screen ================= */
+let mapFull = false;
+const FS_ICON = {
+  open: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>`,
+  close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>`,
+};
+const FullscreenControl = L.Control.extend({
+  options: { position: "topright" },
+  onAdd() {
+    const b = L.DomUtil.create("button", "fs-btn");
+    b.type = "button"; b.id = "fs-btn";
+    L.DomEvent.disableClickPropagation(b);
+    L.DomEvent.on(b, "click", e => { L.DomEvent.stop(e); setMapFull(!mapFull); });
+    updateFsButton(b);
+    return b;
+  },
+});
+function updateFsButton(b = $("fs-btn")) {
+  if (!b) return;
+  b.innerHTML = mapFull ? FS_ICON.close : FS_ICON.open;
+  b.title = mapFull ? "Exit full screen" : "Full screen map";
+  b.setAttribute("aria-label", b.title);
+}
+/* The whole page goes full screen (where the browser allows it, so the address bar hides) and
+   CSS stretches the map over it; the station sheet stays on top. On iPhones, which only allow
+   videos to go full screen, the map still fills the window. Back or Esc leave full screen. */
+function setMapFull(on, fromHistory = false) {
+  if (on === mapFull) return;
+  const map = state.map, c = map.getCenter(), z = map.getZoom();
+  closeSheet();
+  setHover(null);
+  mapFull = on;
+  document.body.classList.toggle("map-full", on);
+  updateFsButton();
+  const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+  if (on) {
+    pushLayer("full");
+    const de = document.documentElement, req = de.requestFullscreen || de.webkitRequestFullscreen;
+    if (req) { try { const p = req.call(de, { navigationUI: "hide" }); if (p && p.catch) p.catch(() => {}); } catch (_) {} }
+  } else {
+    if (fsEl) { try { const p = (document.exitFullscreen || document.webkitExitFullscreen).call(document); if (p && p.catch) p.catch(() => {}); } catch (_) {} }
+    if (!fromHistory) dropLayer("full");
+    sizeMap();
+  }
+  map.invalidateSize({ pan: false });
+  map.setView(c, z, { animate: false });
+  renderLegend();
+}
+for (const ev of ["fullscreenchange", "webkitfullscreenchange"])
+  document.addEventListener(ev, () => {
+    if (mapFull && !(document.fullscreenElement || document.webkitFullscreenElement)) setMapFull(false);
+  });
+
+/* the verdict line in the full-screen bar */
+function fsVerdict(word, cls, nums, extra = "") {
+  const el = $("fs-verdict");
+  el.innerHTML = `<b class="${cls}"></b>${nums ? " · " : ""}<span></span><span class="mx"></span>`;
+  el.querySelector("b").textContent = word;
+  el.querySelector("span").textContent = nums;
+  el.querySelector(".mx").textContent = extra;      // hidden on narrow screens
+}
+
+/* is this border feature the selected region? (Austrian Bundesland by name, others by code) */
+const isSelected = f => f.properties.country === "AT" ? f.properties.name === state.bl
+  : `${f.properties.country}-${f.properties.code}` === state.bl;
+
+/* Which lines to draw: the selected country's regions as thin lines (the picked region
+   highlighted), every other country only as its national border; Switzerland never shows
+   canton lines. Returns [[features, kind]] with kind "selected" | "region" | "country". */
+function borderSets() {
+  const c = country(), sets = [];
+  const outline = cc => ((state.outlines || {}).features || []).filter(f => f.properties.country === cc);
+  for (const cc of COUNTRY_ORDER) {
+    if (cc === c && state.bd[cc]) {
+      const feats = state.bd[cc].features;
+      sets.push([feats.filter(f => !isSelected(f)), "region"]);
+      if (isWholeCountry()) sets.push([outline(cc), "selected"]);
+      else sets.push([feats.filter(isSelected), "selected"]);
+    } else {
+      sets.push([outline(cc), cc === c ? "selected" : "country"]);
+    }
+  }
+  return sets.filter(([f]) => f.length);
+}
+const BORDER_STYLE = {
+  selected: { color: "#b8680c", weight: 2.6, opacity: 0.95 },
+  region:   { color: "#555",    weight: 0.8, opacity: 0.45 },
+  country:  { color: "#444",    weight: 1.2, opacity: 0.6 },
+};
 
 function renderBorders() {
   if (state.borderLayer) { state.map.removeLayer(state.borderLayer); state.borderLayer = null; }
-  if (!state.borders) return;
-  const sel = state.bl;
-  state.borderLayer = L.geoJSON(state.borders, {
-    pane: "bordersPane", interactive: false,
-    style: f => (sel !== "AT" && f.properties.name === sel)
-      ? { color: "#b8680c", weight: 3, opacity: 0.95, fill: false }
-      : { color: "#444", weight: 1.3, opacity: 0.6, fill: false },
-  }).addTo(state.map);
+  const layers = borderSets()
+    .sort((a, b) => (a[1] === "selected") - (b[1] === "selected"))      // highlight on top
+    .map(([feats, kind]) => L.geoJSON({ type: "FeatureCollection", features: feats },
+      { pane: "bordersPane", interactive: false, style: { ...BORDER_STYLE[kind], fill: false } }));
+  state.borderLayer = L.featureGroup(layers).addTo(state.map);
 }
 
 /* Dots shrink when zoomed out; dots that would overlap merge into one
@@ -704,38 +1292,57 @@ function renderMarkers(res) {
   if (res) state.lastRes = res;
   res = state.lastRes;
   state.markerLayer.clearLayers();
-  if (!res) return;
+  renderLegend();
+  if (!res || !state.stationsOn) return;    // "Stations" off: rain grid only
   const z = state.map.getZoom(), r = dotRadius(z);
-  let groups = res.stations.map(st => {
+  const view = state.map.getBounds().pad(0.3);          // only what's (nearly) on screen
+  let groups = res.stations.filter(st => view.contains([st.lat, st.lon])).map(st => {
     const p = state.map.latLngToLayerPoint([st.lat, st.lon]);
     return { list: [st], x: p.x, y: p.y };
   });
-  if (z < UNCLUSTER_ZOOM) {
-    /* keep merging any two circles that would overlap until none do */
-    const rad = g => g.list.length === 1 ? r : summarySize(g.list.length, r) / 2 + 2;   // +2: count badge
-    let merged = true;
-    while (merged) {
-      merged = false;
-      for (let i = 0; i < groups.length; i++) {
-        for (let j = i + 1; j < groups.length; j++) {
-          const a = groups[i], b = groups[j];
+  if (z < UNCLUSTER_ZOOM) groups = mergeOverlaps(groups, r);
+  for (const g of groups) {
+    if (g.list.length === 1) addDot(g.list[0], r, res.range);
+    else addSummary(g.list, r, state.map.layerPointToLatLng([g.x, g.y]), res.range);
+  }
+}
+
+/* Merge circles that would overlap, until none do. Uses a spatial hash with cells as large
+   as the biggest possible merge distance, so each pass only compares neighbouring cells. */
+function mergeOverlaps(groups, r) {
+  const rad = g => g.list.length === 1 ? r : summarySize(g.list.length, r) / 2 + 2;   // +2: count badge
+  const cell = 2 * (summarySize(1e6, r) / 2 + 2) + 2;
+  for (let pass = 0; pass < 50; pass++) {
+    const buckets = new Map();
+    groups.forEach((g, i) => {
+      const k = Math.floor(g.x / cell) + ":" + Math.floor(g.y / cell);
+      if (!buckets.has(k)) buckets.set(k, []);
+      buckets.get(k).push(i);
+    });
+    const gone = new Uint8Array(groups.length);
+    let merged = false;
+    for (let i = 0; i < groups.length; i++) {
+      if (gone[i]) continue;
+      const a = groups[i], cx = Math.floor(a.x / cell), cy = Math.floor(a.y / cell);
+      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+        for (const j of buckets.get((cx + dx) + ":" + (cy + dy)) || []) {
+          if (j === i || gone[j]) continue;
+          const b = groups[j];
           if (Math.hypot(a.x - b.x, a.y - b.y) < rad(a) + rad(b) + 2) {
             const n = a.list.length + b.list.length;
             a.x = (a.x * a.list.length + b.x * b.list.length) / n;
             a.y = (a.y * a.list.length + b.y * b.list.length) / n;
             a.list = a.list.concat(b.list);
-            groups.splice(j, 1);
+            gone[j] = 1;
             merged = true;
-            j = i;                          // a grew and moved: check it against everyone again
           }
         }
       }
     }
+    groups = groups.filter((_, i) => !gone[i]);
+    if (!merged) break;
   }
-  for (const g of groups) {
-    if (g.list.length === 1) addDot(g.list[0], r, res.range);
-    else addSummary(g.list, r, state.map.layerPointToLatLng([g.x, g.y]), res.range);
-  }
+  return groups;
 }
 
 const summarySize = (n, r) => Math.round(Math.max(28, 2 * r + 10) + Math.min(6, 2 * Math.log2(n)));
@@ -748,8 +1355,9 @@ function addDot(st, r, range) {
   const opts = st.hasData
     ? { radius: r, color: "#223", weight: r < 7 ? 1.5 : 2, fillColor: colorFor(st.sum), fillOpacity: 0.95 }
     : { radius: Math.max(4, r - 2), color: "#777", weight: 1.5, dashArray: "3 3", fillColor: "#eee", fillOpacity: 0.4 };
+  opts.bubblingMouseEvents = false;         // a tap on a dot must not also pick the area below it
   const m = L.circleMarker([st.lat, st.lon], opts).addTo(state.markerLayer);
-  m.bindTooltip(`${st.name}: ${st.hasData ? fmt1(st.sum) + " mm" : "no data"}`, { direction: "top" });
+  m.bindTooltip(`${st.name}: ${st.hasData ? fmt1(st.sum) + " mm" : st.incomplete ? "incomplete" : "no data"}`, { direction: "top" });
   m.on("click", () => openSheet(st, range));
 }
 
@@ -775,7 +1383,8 @@ function nearestName(list, at) {
   return best.name;
 }
 
-const periodText = range => range.days === 1 ? "last 24 h" : `${dm(range.startIso)} → ${dm(range.endIso)}`;
+const periodText = range => range.days !== 1 ? `${dm(range.startIso)} → ${dm(range.endIso)}`
+  : range.chHours && range.chHours < 23 ? `last ${range.chHours} h` : "last 24 h";
 
 function openSummary(list, at, range) {
   const a = avgOf(list), title = `${list.length} stations around ${nearestName(list, at)}`;
@@ -799,7 +1408,7 @@ function openSummary(list, at, range) {
     const w = st.hasData ? Math.max(1, st.sum / max * 100) : 0;
     row.innerHTML = `<span class="nm"></span>` +
       `<span class="track"><span class="fill" style="width:${w}%;background:${st.hasData ? colorFor(st.sum) : "transparent"}"></span></span>` +
-      `<span class="val">${st.hasData ? fmt1(st.sum) + " mm" : "–"}</span>`;
+      `<span class="val">${st.hasData ? fmt1(st.sum) + " mm" : st.incomplete ? "gaps" : "–"}</span>`;
     row.querySelector(".nm").textContent = st.name;
     row.onclick = () => openSheet(st, range, { title, back: () => openSummary(list, at, range) });
     bars.appendChild(row);
@@ -807,28 +1416,77 @@ function openSummary(list, at, range) {
   showSheet();
 }
 
+/* The legend lists only the colours on screen: from the lowest to the highest class among the
+   station dots and grid cells in view (all classes when nothing is in view yet). */
+const binIndex = mm => BINS.findIndex(b => mm < b[0]);
+function classesInView() {
+  if (!state.map) return null;
+  const view = state.map.getBounds();
+  let mask = 0;
+  if (state.stationsOn && state.lastRes)
+    for (const s of state.lastRes.stations) if (s.hasData && view.contains([s.lat, s.lon])) mask |= 1 << binIndex(s.sum);
+  if (state.gridOn) for (const l of state.gridLayers) if (l._pwIdx) mask |= gridMaskIn(l._pwIdx, view);
+  if (!mask) return null;
+  const lo = 31 - Math.clz32(mask & -mask), hi = 31 - Math.clz32(mask);
+  return [lo, hi];
+}
 function renderLegend() {
-  $("legend").innerHTML = BINS.map(b =>
-    `<span class="item"><span class="swatch" style="background:${b[1]}"></span>${b[2]}${b[0] === 1e9 ? " mm" : ""}</span>`
-  ).join("");
+  const span = classesInView(), [lo, hi] = span || [0, BINS.length - 1];
+  const items = BINS.slice(lo, hi + 1).map((b, i) =>
+    `<span class="item"><span class="swatch" style="background:${b[1]}"></span>${b[2]}${lo + i === hi ? " mm" : ""}</span>`).join("");
+  const html = (span ? `<span class="item lg-title">In view:</span>` : "") + items;
+  if (html !== renderLegend.last) { $("legend").innerHTML = $("fs-legend").innerHTML = html; renderLegend.last = html; }
+}
+
+/* One menu: the four countries first, then the regions of Austria, Germany and Czechia
+   (Switzerland only as a whole). Regions without a station (per regions.json) are left out. */
+const REGION_GROUP = { AT: "Austria · Bundesländer", DE: "Germany · Länder", CZ: "Czechia · regions" };
+function buildRegionOptions() {
+  const sel = $("bl"), counts = state.regionCounts || {};
+  const has = (c, key) => !counts[c] || (counts[c][key] || 0) > 0;
+  const countries = `<optgroup label="Country">` +
+    COUNTRY_ORDER.map(c => `<option value="${c}">${COUNTRIES[c].name}</option>`).join("") + `</optgroup>`;
+  const groups = COUNTRY_ORDER.filter(c => PICK_REGIONS[c]).map(c => {
+    const regions = c === "AT"
+      ? Object.keys(BL_BOUNDS).map(n => [n, n])
+      : Object.entries(COUNTRIES[c].regions).map(([code, r]) => [`${c}-${code}`, r.name]);
+    const opts = regions.filter(([id]) => has(c, c === "AT" ? id : id.slice(3)))
+      .sort((a, b) => a[1].localeCompare(b[1], "de"))
+      .map(([id, name]) => `<option value="${id}">${name}</option>`).join("");
+    return `<optgroup label="${REGION_GROUP[c]}">${opts}</optgroup>`;
+  }).join("");
+  sel.innerHTML = countries + groups;
+  state.pickable = new Set([...sel.options].map(o => o.value));
+  if (!state.pickable.has(state.bl)) state.bl = "Oberösterreich";
+  sel.value = state.bl;
+  $("fs-region").innerHTML = sel.innerHTML;     // the full-screen bar has the same menu
+  $("fs-region").value = state.bl;
+}
+
+function setStationsOn(on) {
+  state.stationsOn = on;
+  $("st-toggle").checked = on;
+  $("fs-st").setAttribute("aria-pressed", String(on));
+  $("key").hidden = !on;
+  if (!on) closeSheet();
+  if (state.map) renderMarkers();
+}
+function setGridOn(on) {
+  state.gridOn = on;
+  $("grid-toggle").checked = on;
+  $("fs-grid").setAttribute("aria-pressed", String(on));
+  if (state.map) { updateGridLayer(currentRange()); renderLegend(); }
 }
 
 function fillBlSelect() {
-  const sel = $("bl");
-  sel.innerHTML = Object.keys(BL_BOUNDS).map(n => `<option value="${n}">${n}</option>`).join("") +
-    `<option value="AT">All of Austria</option>`;
-  sel.value = state.bl;
-  sel.onchange = () => {
-    state.bl = sel.value; savePrefs();
-    state.lastRes = null;                   // don't redraw the old region's dots while zooming
-    closeSheet();
-    renderBorders(); fitRegion(); refresh();
-  };
-  $("grid-toggle").checked = state.gridOn;
-  $("grid-toggle").onchange = e => {
-    state.gridOn = e.target.checked; savePrefs();
-    updateGridLayer(currentRange());
-  };
+  buildRegionOptions();
+  $("bl").onchange = e => selectRegion(e.target.value);
+  $("fs-region").onchange = e => selectRegion(e.target.value);
+  $("st-toggle").onchange = e => setStationsOn(e.target.checked);
+  $("grid-toggle").onchange = e => setGridOn(e.target.checked);
+  $("fs-st").onclick = () => setStationsOn(!state.stationsOn);
+  $("fs-grid").onclick = () => setGridOn(!state.gridOn);
+  setStationsOn(state.stationsOn); setGridOn(state.gridOn);
 }
 
 /* ================= station sheet ================= */
@@ -837,11 +1495,14 @@ function openSheet(st, range, parent) {
   back.hidden = !parent;
   if (parent) { back.textContent = `← ${parent.title}`; back.onclick = parent.back; }
   $("sheet-actions").hidden = true;
-  $("sheet-title").textContent = st.name + (st.state ? ` · ${st.state}` : "") +
+  $("sheet-title").textContent = st.name + (st.state ? ` · ${regionLabel(st)}` : "") +
     (st.altitude != null ? ` · ${Math.round(st.altitude)} m` : "");
+  const days = st.daily.length, gaps = st.missing || 0;
   $("sheet-total").textContent = st.hasData
-    ? `${fmt1(st.sum)} mm total (${periodText(range)})`
-    : "No precipitation data reported for this period.";
+    ? `${fmt1(st.sum)} mm total (${periodText(range)})` + (gaps ? ` · ${gaps} day${gaps > 1 ? "s" : ""} not reported` : "")
+    : st.incomplete
+      ? `Not counted: ${gaps != null ? `only ${days - gaps} of ${days} days` : "too few values"} reported for this period (${periodText(range)}).`
+      : "No precipitation data reported for this period.";
   const bars = $("sheet-bars");
   bars.innerHTML = "";
   const vals = st.daily.filter(d => d.mm != null).map(d => d.mm);
@@ -858,28 +1519,51 @@ function openSheet(st, range, parent) {
   showSheet();
 }
 
-/* ---- opening and closing the sheet: ×, swipe down, tap outside, Esc, Android back ---- */
+/* ---- Back button: the sheet and the full-screen map each add one history entry ---- */
+const overlayStack = [];                 // overlays that own a history entry, bottom to top
+let pendingPops = 0;
+function pushLayer(name) {
+  overlayStack.push(name);
+  try { history.pushState({ pwDepth: overlayStack.length }, ""); } catch (_) {}
+}
+/* closed on the page (×, Esc, tap outside…): drop its entry; several closes in one go become one jump */
+function dropLayer(name) {
+  const i = overlayStack.lastIndexOf(name);
+  if (i < 0) return;
+  pendingPops += overlayStack.length - i;
+  overlayStack.length = i;
+  queueMicrotask(() => { const n = pendingPops; pendingPops = 0; if (n) history.go(-n); });
+}
+window.addEventListener("popstate", e => {
+  const depth = (e.state && e.state.pwDepth) || 0;
+  while (overlayStack.length > depth) {                  // Back pressed: close from the top
+    const name = overlayStack.pop();
+    if (name === "sheet") hideSheet(); else setMapFull(false, true);
+  }
+});
+
+/* ---- opening and closing the sheet: ×, swipe down, tap outside, Esc, Back ---- */
 let sheetOpen = false;
 function showSheet() {
   const el = $("sheet");
   el.scrollTop = 0;
   el.classList.add("open");
-  if (!sheetOpen) {
-    sheetOpen = true;
-    try { history.pushState({ pwSheet: true }, ""); } catch (_) {}
-  }
+  if (!sheetOpen) { sheetOpen = true; pushLayer("sheet"); }
+}
+function hideSheet() {
+  sheetOpen = false;
+  $("sheet").classList.remove("open");
 }
 function closeSheet() {
   if (!sheetOpen) return;
-  sheetOpen = false;
-  $("sheet").classList.remove("open");
-  if (history.state && history.state.pwSheet) history.back();
+  hideSheet();
+  dropLayer("sheet");
 }
-window.addEventListener("popstate", () => {
-  if (sheetOpen) { sheetOpen = false; $("sheet").classList.remove("open"); }
-});
 $("sheet-close").onclick = closeSheet;
-document.addEventListener("keydown", e => { if (e.key === "Escape") closeSheet(); });
+document.addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  if (sheetOpen) closeSheet(); else if (mapFull) setMapFull(false);
+});
 document.addEventListener("click", e => {
   if (!sheetOpen) return;
   /* composedPath is fixed when the tap happens, so it still holds the sheet even if
@@ -919,7 +1603,7 @@ const mercY = lat => Math.log(Math.tan(Math.PI/4 + lat*Math.PI/360));
 function spRegion() {
   const b = regionBounds();
   const pl = (b.n - b.s) * 0.04, pw = (b.e - b.w) * 0.04;
-  return { id: state.bl === "AT" ? "austria" : state.bl.toLowerCase(), name: blName(),
+  return { id: isWholeCountry() ? COUNTRIES[country()].name.toLowerCase() : state.bl.toLowerCase(), name: blName(),
            s: b.s - pl, w: b.w - pw, n: b.n + pl, e: b.e + pw };
 }
 
@@ -944,8 +1628,17 @@ function spPeriod() {
 
 const CHUNK = 250;   /* lat_lon pairs per request (URL ≈ 5.5 kB) */
 function spCost() {
-  const per = gridPeriod(currentRange());
-  $("sp-resrow").style.display = per ? "none" : "flex";
+  const per = gridPeriod(currentRange()), c = country();
+  $("sp-resrow").style.display = per || c !== "AT" ? "none" : "flex";
+  $("sp-render").disabled = !per && c !== "AT";
+  if (!COUNTRIES[c].grid) {
+    $("sp-cost").textContent = `${COUNTRIES[c].name} publishes no daily rain grid, so there's no map image for it.`;
+    return 0;
+  }
+  if (!per && c !== "AT") {
+    $("sp-cost").textContent = `For ${COUNTRIES[c].name} the map image is available for the 7, 14, 30 and 45-day presets.`;
+    return 0;
+  }
   if (per) {
     $("sp-cost").textContent = `Uses the precomputed 1 km grid (${dm(per.start)}–${dm(per.end)}) — no API requests.`;
     return 0;
@@ -963,6 +1656,7 @@ function spUpdateLinks() {
   $("sp-netcdf").href = `${API}/grid/historical/spartacus-v3-1d-1km?parameters=RR` +
     `&start=${isoDate(start)}&end=${isoDate(end)}` +
     `&bbox=${rg.s.toFixed(3)},${rg.w.toFixed(3)},${rg.n.toFixed(3)},${rg.e.toFixed(3)}&output_format=netcdf`;
+  $("sp-netcdf").hidden = country() !== "AT";     // GeoSphere's NetCDF covers Austria
   spCost();
 }
 
@@ -1050,11 +1744,12 @@ async function spDrawBasemap(ctx, rg, x0, y0, w, h) {
 }
 
 function spDrawBorders(ctx, proj) {
-  if (!state.borders) return;
-  for (const f of state.borders.features) {
-    const sel = state.bl !== "AT" && f.properties.name === state.bl;
-    ctx.strokeStyle = sel ? "#b8680c" : "rgba(40,40,40,.7)";
-    ctx.lineWidth = sel ? 3.5 : 1.6;
+  const sets = borderSets().sort((a, b) => (a[1] === "selected") - (b[1] === "selected"));
+  for (const [feats, kind] of sets) for (const f of feats) {
+    const s = BORDER_STYLE[kind];
+    ctx.strokeStyle = s.color;
+    ctx.globalAlpha = s.opacity;
+    ctx.lineWidth = s.weight * 1.4;           // the image is ~1600 px wide, a bit bolder than on screen
     for (const poly of f.geometry.coordinates) for (const ring of poly) {
       ctx.beginPath();
       ring.forEach(([lon, lat], i) => {
@@ -1064,6 +1759,7 @@ function spDrawBorders(ctx, proj) {
       ctx.stroke();
     }
   }
+  ctx.globalAlpha = 1;
 }
 
 async function spRender() {
@@ -1072,14 +1768,20 @@ async function spRender() {
   btn.disabled = true;
   try {
     spUpdateLinks();
-    const rg = spRegion(), per = gridPeriod(currentRange());
-    let start, end, sums = null, lt = null, overlay = null;
+    const rg = spRegion(), range = currentRange(), per = gridPeriod(range);
+    let start, end, sums = null, lt = null, overlays = [];
 
     if (per) {
       start = parseDay(per.start); end = parseDay(per.end);
       setStatus(st, "info", "Loading precomputed grid…");
-      overlay = await loadImage(`${DATA}${per.file}?v=${encodeURIComponent(state.grid.generated)}`);
-      if (!overlay) throw new Error("Precomputed grid image could not be loaded.");
+      /* every country's grid, so border regions show both sides */
+      for (const c of COUNTRY_ORDER) {
+        const p = gridPeriod(range, c), g = gridDoc(c);
+        if (!p) continue;
+        const img = await loadImage(`${DATA}${p.file}?v=${encodeURIComponent(g.generated)}`);
+        if (img) overlays.push({ img, bounds: g.bounds, c });
+      }
+      if (!overlays.length) throw new Error("Precomputed grid image could not be loaded.");
     } else {
       ({ start, end } = spPeriod());
       lt = spLattice(rg);
@@ -1097,7 +1799,8 @@ async function spRender() {
 
     ctx.fillStyle = "#1b241c"; ctx.fillRect(0, 0, cv.width, cv.height);
     ctx.fillStyle = "#e8e6dc"; ctx.font = "bold 28px Georgia, serif";
-    ctx.fillText(`Rain sum ${dm(isoDate(start))}–${dm(isoDate(end))}${end.getFullYear()} · ${rg.name} · SPARTACUS 1 km`, padX, 36);
+    ctx.fillText(`Rain sum ${dm(isoDate(start))}–${dm(isoDate(end))}${end.getFullYear()} · ${rg.name} · ` +
+      `${COUNTRIES[country()].gridLabel} 1 km grid`, padX, 36);
 
     setStatus(st, "info", "Loading basemap tiles…");
     const { tilesDrawn, proj } = await spDrawBasemap(ctx, rg, padX, titleH, mapW, mapH);
@@ -1107,11 +1810,13 @@ async function spRender() {
     /* multiply = rain colour tints the basemap instead of covering it */
     ctx.globalAlpha = tilesDrawn ? 0.85 : 1.0;
     ctx.globalCompositeOperation = tilesDrawn ? "multiply" : "source-over";
-    if (overlay) {
-      const gb = state.grid.bounds;                  // [[s,w],[n,e]]
-      const [ox0, oy0] = proj(gb[1][0], gb[0][1]), [ox1, oy1] = proj(gb[0][0], gb[1][1]);
+    if (overlays.length) {
       ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(overlay, ox0, oy0, ox1 - ox0, oy1 - oy0);
+      for (const o of overlays) {
+        const gb = o.bounds;                         // [[s,w],[n,e]]
+        const [ox0, oy0] = proj(gb[1][0], gb[0][1]), [ox1, oy1] = proj(gb[0][0], gb[1][1]);
+        ctx.drawImage(o.img, ox0, oy0, ox1 - ox0, oy1 - oy0);
+      }
     } else {
       sums.forEach((s, i) => {
         if (s == null) return;
@@ -1131,7 +1836,7 @@ async function spRender() {
 
     ctx.font = "bold 19px system-ui";
     for (const [name, lat, lon, tier] of CITIES) {
-      if (state.bl === "AT" && tier > 1) continue;
+      if (isWholeCountry() && tier > 1) continue;
       if (lat < rg.s || lat > rg.n || lon < rg.w || lon > rg.e) continue;
       const [x, y] = proj(lat, lon);
       ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI*2);
@@ -1148,14 +1853,19 @@ async function spRender() {
     ctx.fillStyle = "#a9b3a5"; ctx.font = "17px system-ui";
     let stats;
     if (per) {
-      const gm = per.mean && per.mean[state.bl === "AT" ? "Österreich" : state.bl];
+      const gm = per.mean && per.mean[meanKey()];
       stats = (gm != null ? `area mean ${fmt1(gm)} mm · ` : "") + "1 km grid";
     } else {
       const valid = sums.filter(s => s != null);
       stats = valid.length ? `min ${fmt1(Math.min(...valid))} mm · max ${fmt1(Math.max(...valid))} mm · ~${lt.resKm} km sampling`
                            : "no grid data returned for this period";
     }
-    ctx.fillText(`${stats} · Data © GeoSphere Austria · Borders © Statistik Austria · Basemap © OpenStreetMap contributors`, padX, fy);
+    const drawn = overlays.length ? overlays.map(o => o.c) : ["AT"];
+    const credits = [drawn.includes("AT") && "Data © GeoSphere Austria · Borders © Statistik Austria",
+                     drawn.includes("DE") && "Source: Deutscher Wetterdienst",
+                     drawn.includes("CH") && "Source: MeteoSwiss",
+                     (drawn.includes("DE") || drawn.includes("CH")) && "Borders: Natural Earth"].filter(Boolean).join(" · ");
+    ctx.fillText(`${stats} · ${credits} · Basemap © OpenStreetMap contributors`, padX, fy);
     fy += 14;
     const sw = Math.min(64, (W - padX*2) / BINS.length);
     BINS.forEach((b, i) => {
@@ -1201,11 +1911,7 @@ function renderChips() {
     b.textContent = r.label;
     b.setAttribute("aria-pressed",
       String(state.range.type === "preset" && state.range.idx === i));
-    b.onclick = () => {
-      state.range = { type: "preset", idx: i };
-      $("customrange").classList.remove("open");
-      renderChips(); refresh();
-    };
+    b.onclick = () => setPreset(i);
     el.appendChild(b);
   });
   const c = document.createElement("button");
@@ -1215,6 +1921,18 @@ function renderChips() {
   c.setAttribute("aria-pressed", String(state.range.type === "custom"));
   c.onclick = () => $("customrange").classList.toggle("open");
   el.appendChild(c);
+  /* the same periods in the full-screen bar (a custom range is set on the page) */
+  const fp = $("fs-period");
+  fp.innerHTML = PRESETS.map((p, i) => `<option value="${i}">${p.label}</option>`).join("") +
+    (state.range.type === "custom" ? `<option value="custom">${dm(state.range.start)} → ${dm(state.range.end)}</option>` : "");
+  fp.value = state.range.type === "custom" ? "custom" : String(state.range.idx);
+  fp.onchange = () => { if (fp.value !== "custom") setPreset(+fp.value); };
+}
+function setPreset(i) {
+  state.range = { type: "preset", idx: i };
+  $("customrange").classList.remove("open");
+  closeSheet();                          // its numbers belong to the old period
+  renderChips(); refresh();
 }
 
 function initCustomRange() {
@@ -1234,23 +1952,37 @@ function initCustomRange() {
     err.textContent = "";
     state.range = { type: "custom", start: isoDate(s), end: isoDate(e) };
     $("customrange").classList.remove("open");
+    closeSheet();
     renderChips(); refresh();
   };
 }
 
 /* ================= wiring ================= */
 async function refresh() {
+  const seq = refresh.seq = (refresh.seq || 0) + 1;     // a newer refresh wins over a slower older one
   spUpdateLinks();
+  setStatus($("status"), "", "");
+  // dim the verdict while loading, so an old verdict is never read as the new one
+  const busyEls = [$("verdict"), $("fs-verdict")];
+  const busy = setTimeout(() => { if (seq === refresh.seq) busyEls.forEach(el => el.classList.add("busy")); }, 150);
+  const done = () => { clearTimeout(busy); busyEls.forEach(el => el.classList.remove("busy")); };
   try {
     const res = await loadRangeData();
+    if (seq !== refresh.seq) return;
+    done();
     $("stcount").textContent = `${res.stations.length} stations`;
     renderVerdict(res);
     renderMarkers(res);
     updateGridLayer(res.range);
   } catch (e) {
-    setStatus($("status"), "err", e.message);
-    $("v-word").textContent = "Error"; $("v-word").className = "word serif bad";
+    if (seq !== refresh.seq) return;
+    done();
+    setStatus($("status"), e.soft ? "info" : "err", e.message);
+    $("v-word").textContent = e.soft ? "Out of range" : "Error"; $("v-word").className = "word serif " + (e.soft ? "none" : "bad");
     $("v-nums").textContent = ""; $("v-meta").textContent = e.message; $("v-hint").textContent = "";
+    fsVerdict(e.soft ? "Out of range" : "Error", e.soft ? "none" : "bad", e.soft ? "pick another period" : "");
+    state.lastRes = null; renderMarkers();   // don't leave another region's dots up
+    $("stcount").textContent = "";
   }
 }
 
@@ -1263,6 +1995,9 @@ window.addEventListener("resize", () => { clearTimeout(sizeMap.t); sizeMap.t = s
   fillBlSelect();
   initMap();
   await loadSiteData();
+  const before = state.bl;
+  buildRegionOptions();                     // now that we know which cantons have stations
+  if (state.bl !== before) fitRegion();
   renderBorders();
   await refresh();
 })();
