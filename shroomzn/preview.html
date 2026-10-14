@@ -28,6 +28,8 @@
   .verdict .headline{display:flex;flex-wrap:wrap;align-items:baseline;gap:12px}
   .verdict .word{font-size:2rem;font-weight:700}
   .verdict .word.bad{color:var(--bad)} .verdict .word.mid{color:var(--mid)} .verdict .word.good{color:var(--good)}
+  .verdict{transition:opacity .2s} .verdict.busy{opacity:.4}
+  .verdict .word.none{color:var(--muted)}
   .verdict .nums{font-size:1.15rem}
   .verdict .nums b{font-size:1.35rem}
   .verdict .meta{color:var(--muted);margin-top:6px;font-size:.92rem}
@@ -55,7 +57,8 @@
     color:var(--muted);font-size:.92rem;margin:0 0 10px}
   select{background:var(--card2);color:var(--text);border:1px solid var(--line);
     border-radius:10px;padding:8px 10px;font-size:.95rem;min-height:44px}
-  #bl{font-size:1rem;font-weight:600;color:var(--amber-soft);border-color:var(--amber);min-width:12.5em}
+  #bl{font-size:1rem;font-weight:600;color:var(--amber-soft);border-color:var(--amber);flex:1 1 15em;min-width:0;max-width:100%}
+  .toolbar .toggles{display:flex;align-items:center;gap:16px;flex:1 1 15em;min-width:0}
   .toggle{display:inline-flex;align-items:center;gap:8px;min-height:44px;cursor:pointer;color:var(--text)}
   .toggle input{width:20px;height:20px;accent-color:var(--amber);margin:0}
   .btn{min-height:44px;padding:10px 16px;border-radius:10px;border:1px solid var(--amber);
@@ -167,16 +170,19 @@
   </div>
 
   <div class="toolbar">
-    <select id="bl" aria-label="Bundesland"></select>
-    <label class="toggle"><input type="checkbox" id="grid-toggle" checked> Rain grid</label>
-    <span class="count" id="stcount"></span>
+    <select id="bl" aria-label="Country or region"></select>
+    <div class="toggles">
+      <label class="toggle"><input type="checkbox" id="grid-toggle" checked> Rain grid</label>
+      <label class="toggle"><input type="checkbox" id="st-toggle" checked> Stations</label>
+      <span class="count" id="stcount"></span>
+    </div>
   </div>
 
   <div class="status" id="status"></div>
 
   <div id="map"></div>
 
-  <div class="key">
+  <div class="key" id="key">
     <span class="kitem"><span class="kdot"></span>One station</span>
     <span class="kitem"><span class="summary" style="width:32px;height:32px;background:#e2ef9f;color:#1a1a1a"><b>12</b><small>mm</small><i class="cnt">5</i></span>Average of 5 stations close together · tap for the list</span>
   </div>
@@ -220,7 +226,7 @@
     <a href="https://opendata.dwd.de/climate_environment/CDC/grids_germany/daily/hyras_de/precipitation/" target="_blank" rel="noopener">HYRAS-DE-PR grid</a> and 10-minute data,
     Source: Deutscher Wetterdienst.
     Czechia: <a href="https://opendata.chmi.cz/meteorology/climate/" target="_blank" rel="noopener">daily and hourly station data</a>, Source: ČHMÚ (CHMI).
-    Borders of cantons, German Länder and Czech regions: Natural Earth.
+    Country outlines, German Länder and Czech regions: Natural Earth.
     Basemap © OpenStreetMap contributors.
     All four services count a day's rain from 06:00 UTC to 06:00 UTC the next day, and every country's
     presets end on the same day.
@@ -417,7 +423,7 @@ const COUNTRIES = {
   DE: { name: "Germany", stations: "de_stations.json", grid: "de_grid.json", now: "de_now.json",
         borders: "laender_de.geojson", bounds: DE, regions: LAENDER, total: "Deutschland", gridLabel: "DWD HYRAS",
         live24: "DWD 10-min data" },
-  CH: { name: "Switzerland", stations: "ch_stations.json", grid: "ch_grid.json", borders: "kantone.geojson",
+  CH: { name: "Switzerland", stations: "ch_stations.json", grid: "ch_grid.json", borders: null,   /* no canton lines */
         bounds: CH, regions: CANTONS, total: "Schweiz", gridLabel: "MeteoSwiss RprelimD", live24: "MeteoSwiss hourly data" },
   CZ: { name: "Czechia", stations: "cz_stations.json", now: "cz_now.json", borders: "kraje_cz.geojson",
         bounds: CZ, regions: KRAJE, total: null, gridLabel: null, live24: "CHMI hourly data" },
@@ -430,30 +436,23 @@ const CH_FILES = {
 };
 
 /* ================= state ================= */
-const prefs = (() => { try { return JSON.parse(localStorage.getItem("pw_prefs") || "{}"); } catch (_) { return {}; } })();
-/* region ids: "AT" or an Austrian Bundesland name; "DE"/"CH"/"CZ" or "DE-XX"/"CH-XX"/"CZ-XX" */
+/* region ids: "AT" or an Austrian Bundesland name; "DE"/"CH"/"CZ"; "DE-XX"/"CZ-XX" for Länder and kraje.
+   Switzerland is small, so only the whole country can be picked. */
+const PICK_REGIONS = { AT: true, DE: true, CH: false, CZ: true };
 const regionCountry = r => {
   const c = String(r || "").slice(0, 2);
   return (COUNTRIES[c] && c !== "AT" && (r.length === 2 || r[2] === "-")) ? c : "AT";
 };
-const validRegion = r => {
-  if (!r) return false;
-  const c = regionCountry(r);
-  if (c === "AT") return r === "AT" || !!BL_BOUNDS[r];
-  return r === c || !!(COUNTRIES[c].regions || {})[r.slice(3)];
-};
 let state = {
   range: { type: "preset", idx: 2 },        // or { type:"custom", start:"YYYY-MM-DD", end:"YYYY-MM-DD" }
-  bl: validRegion(prefs.bl) ? prefs.bl : "Oberösterreich",
-  gridOn: prefs.gridOn !== false,
+  bl: "Oberösterreich",                     // every visit starts in Upper Austria
+  gridOn: true, stationsOn: true,
   st: {}, gr: {}, bd: {}, now: {},         // precomputed files per country: stations, grid, borders, last 24 h
+  outlines: null,                           // national borders (countries.geojson)
   regionCounts: null,                       // stations per region (regions.json)
   klimaStations: null, tawesStations: null, // live-API fallback lists (Austria)
   map: null, markerLayer: null, borderLayer: null, gridLayers: [],
 };
-function savePrefs() {
-  try { localStorage.setItem("pw_prefs", JSON.stringify({ bl: state.bl, gridOn: state.gridOn })); } catch (_) {}
-}
 
 /* ================= helpers ================= */
 const $ = id => document.getElementById(id);
@@ -573,11 +572,12 @@ function cacheSet(key, v) {
 /* at start: all grids, borders and the station counts (small); station files load per country when needed */
 async function loadSiteData() {
   const local = async name => { try { const r = await fetch(name); return r.ok ? await r.json() : null; } catch (_) { return null; } };
-  const jobs = [siteJson("regions.json").then(v => { state.regionCounts = v; })];
+  const jobs = [siteJson("regions.json").then(v => { state.regionCounts = v; }),
+                local("countries.geojson").then(v => { state.outlines = v; })];
   for (const c of COUNTRY_ORDER) {
     const cfg = COUNTRIES[c];
     if (cfg.grid) jobs.push(siteJson(cfg.grid).then(v => { state.gr[c] = v; }));
-    jobs.push(local(cfg.borders).then(v => {
+    if (cfg.borders) jobs.push(local(cfg.borders).then(v => {
       if (v) v.features.forEach(f => { f.properties.country = c; });
       state.bd[c] = v;
     }));
@@ -695,7 +695,8 @@ async function loadRangeData() {
     if (range.src === "tawes") return c === "CH" ? loadCH24h(range) : loadNow(c, range);
     const fromCache = rangeFromCache(range);
     if (fromCache) return fromCache;
-    throw new Error(`For ${COUNTRIES[c].name}, daily data covers the last 45 days. Pick a range inside that window.`);
+    const cc = state.st[c];
+    throw Object.assign(new Error(`For ${COUNTRIES[c].name}, daily data covers ${dm(cc.dates[0])} – ${dm(cc.through)}${cc.through.slice(0, 4)}. Pick a range inside that window, or use a preset.`), { soft: true });
   }
   if (range.src === "klima") {
     const fromCache = rangeFromCache(range);
@@ -770,7 +771,7 @@ async function loadCH24h(range) {
 async function loadRangeLive(range) {
   const status = $("status");
   const bucket = Math.floor(Date.now() / (15*60e3));
-  const key = `pw_data4_${range.src}_${range.startIso}_${range.endIso}_${state.bl}_${bucket}`;
+  const key = `pw_data5_${range.src}_${range.startIso}_${range.endIso}_${state.bl}_${bucket}`;
   const cached = cacheGet(key, 15*60e3);
   if (cached) return { range, ...cached };
 
@@ -814,17 +815,19 @@ async function loadRangeLive(range) {
     let sum = 0, any = false, have = 0;
     const daily = [];
     if (range.src === "tawes") {
+      /* 10-min values -> hourly sums, keyed by the hour they end in (yesterday's 09:00 and today's
+         09:00 are different hours), oldest first */
       const hours = new Map();
       series.forEach((v, i) => {
         if (v == null) return;
         const val = Math.max(0, v);                 // negative = trace, counts as 0
         any = true; sum += val; have++;
-        const t = new Date(timestamps[i]);
-        const k = `${pad(t.getHours())}:00`;
-        hours.set(k, (hours.get(k) || 0) + val);
+        const end = Math.ceil(Date.parse(timestamps[i]) / 3600e3) * 3600e3;
+        hours.set(end, (hours.get(end) || 0) + val);
         lastDataTs = timestamps[i];
       });
-      for (const [k, v] of hours) daily.push({ label: k, mm: v });
+      for (const [end, v] of [...hours].sort((a, b) => a[0] - b[0]))
+        daily.push({ label: `${pad(new Date(end).getHours())}:00`, mm: Math.round(v * 10) / 10 });
     } else {
       series.forEach((v, i) => {
         const t = new Date(timestamps[i]);
@@ -964,13 +967,37 @@ function fitRegion() {
 const isSelected = f => f.properties.country === "AT" ? f.properties.name === state.bl
   : `${f.properties.country}-${f.properties.code}` === state.bl;
 
+/* Which lines to draw: the selected country's regions as thin lines (the picked region
+   highlighted), every other country only as its national border; Switzerland never shows
+   canton lines. Returns [[features, kind]] with kind "selected" | "region" | "country". */
+function borderSets() {
+  const c = country(), sets = [];
+  const outline = cc => ((state.outlines || {}).features || []).filter(f => f.properties.country === cc);
+  for (const cc of COUNTRY_ORDER) {
+    if (cc === c && state.bd[cc]) {
+      const feats = state.bd[cc].features;
+      sets.push([feats.filter(f => !isSelected(f)), "region"]);
+      if (isWholeCountry()) sets.push([outline(cc), "selected"]);
+      else sets.push([feats.filter(isSelected), "selected"]);
+    } else {
+      sets.push([outline(cc), cc === c ? "selected" : "country"]);
+    }
+  }
+  return sets.filter(([f]) => f.length);
+}
+const BORDER_STYLE = {
+  selected: { color: "#b8680c", weight: 2.6, opacity: 0.95 },
+  region:   { color: "#555",    weight: 0.8, opacity: 0.45 },
+  country:  { color: "#444",    weight: 1.2, opacity: 0.6 },
+};
+
 function renderBorders() {
   if (state.borderLayer) { state.map.removeLayer(state.borderLayer); state.borderLayer = null; }
-  const style = f => isSelected(f)
-    ? { color: "#b8680c", weight: 3, opacity: 0.95, fill: false }
-    : { color: "#444", weight: 1.3, opacity: 0.6, fill: false };
-  state.borderLayer = L.featureGroup(COUNTRY_ORDER.map(c => state.bd[c]).filter(Boolean)
-    .map(gj => L.geoJSON(gj, { pane: "bordersPane", interactive: false, style }))).addTo(state.map);
+  const layers = borderSets()
+    .sort((a, b) => (a[1] === "selected") - (b[1] === "selected"))      // highlight on top
+    .map(([feats, kind]) => L.geoJSON({ type: "FeatureCollection", features: feats },
+      { pane: "bordersPane", interactive: false, style: { ...BORDER_STYLE[kind], fill: false } }));
+  state.borderLayer = L.featureGroup(layers).addTo(state.map);
 }
 
 /* Dots shrink when zoomed out; dots that would overlap merge into one
@@ -982,7 +1009,7 @@ function renderMarkers(res) {
   if (res) state.lastRes = res;
   res = state.lastRes;
   state.markerLayer.clearLayers();
-  if (!res) return;
+  if (!res || !state.stationsOn) return;    // "Stations" off: rain grid only
   const z = state.map.getZoom(), r = dotRadius(z);
   const view = state.map.getBounds().pad(0.3);          // only what's (nearly) on screen
   let groups = res.stations.filter(st => view.contains([st.lat, st.lon])).map(st => {
@@ -1110,21 +1137,25 @@ function renderLegend() {
   ).join("");
 }
 
-/* One option group per country, "All of …" first; regions without a station (per regions.json) are left out */
+/* One menu: the four countries first, then the regions of Austria, Germany and Czechia
+   (Switzerland only as a whole). Regions without a station (per regions.json) are left out. */
+const REGION_GROUP = { AT: "Austria · Bundesländer", DE: "Germany · Länder", CZ: "Czechia · regions" };
 function buildRegionOptions() {
   const sel = $("bl"), counts = state.regionCounts || {};
   const has = (c, key) => !counts[c] || (counts[c][key] || 0) > 0;
-  sel.innerHTML = COUNTRY_ORDER.map(c => {
-    const cfg = COUNTRIES[c];
+  const countries = `<optgroup label="Country">` +
+    COUNTRY_ORDER.map(c => `<option value="${c}">${COUNTRIES[c].name}</option>`).join("") + `</optgroup>`;
+  const groups = COUNTRY_ORDER.filter(c => PICK_REGIONS[c]).map(c => {
     const regions = c === "AT"
       ? Object.keys(BL_BOUNDS).map(n => [n, n])
-      : Object.entries(cfg.regions).map(([code, r]) => [`${c}-${code}`, r.name]);
+      : Object.entries(COUNTRIES[c].regions).map(([code, r]) => [`${c}-${code}`, r.name]);
     const opts = regions.filter(([id]) => has(c, c === "AT" ? id : id.slice(3)))
       .sort((a, b) => a[1].localeCompare(b[1], "de"))
       .map(([id, name]) => `<option value="${id}">${name}</option>`).join("");
-    return `<optgroup label="${cfg.name}"><option value="${c}">All of ${cfg.name}</option>${opts}</optgroup>`;
+    return `<optgroup label="${REGION_GROUP[c]}">${opts}</optgroup>`;
   }).join("");
-  if (![...sel.options].some(o => o.value === state.bl)) state.bl = country() === "AT" ? "Oberösterreich" : country();
+  sel.innerHTML = countries + groups;
+  if (![...sel.options].some(o => o.value === state.bl)) state.bl = "Oberösterreich";
   sel.value = state.bl;
 }
 
@@ -1132,14 +1163,21 @@ function fillBlSelect() {
   const sel = $("bl");
   buildRegionOptions();
   sel.onchange = () => {
-    state.bl = sel.value; savePrefs();
+    state.bl = sel.value;
     state.lastRes = null;                   // don't redraw the old region's dots while zooming
     closeSheet();
     renderBorders(); fitRegion(); refresh();
   };
+  $("st-toggle").checked = state.stationsOn;
+  $("st-toggle").onchange = e => {
+    state.stationsOn = e.target.checked;
+    $("key").hidden = !state.stationsOn;
+    if (!state.stationsOn) closeSheet();
+    renderMarkers();
+  };
   $("grid-toggle").checked = state.gridOn;
   $("grid-toggle").onchange = e => {
-    state.gridOn = e.target.checked; savePrefs();
+    state.gridOn = e.target.checked;
     updateGridLayer(currentRange());
   };
 }
@@ -1376,11 +1414,12 @@ async function spDrawBasemap(ctx, rg, x0, y0, w, h) {
 }
 
 function spDrawBorders(ctx, proj) {
-  const feats = COUNTRY_ORDER.map(c => state.bd[c]).filter(Boolean).flatMap(g => g.features);
-  for (const f of feats) {
-    const sel = isSelected(f);
-    ctx.strokeStyle = sel ? "#b8680c" : "rgba(40,40,40,.7)";
-    ctx.lineWidth = sel ? 3.5 : 1.6;
+  const sets = borderSets().sort((a, b) => (a[1] === "selected") - (b[1] === "selected"));
+  for (const [feats, kind] of sets) for (const f of feats) {
+    const s = BORDER_STYLE[kind];
+    ctx.strokeStyle = s.color;
+    ctx.globalAlpha = s.opacity;
+    ctx.lineWidth = s.weight * 1.4;           // the image is ~1600 px wide, a bit bolder than on screen
     for (const poly of f.geometry.coordinates) for (const ring of poly) {
       ctx.beginPath();
       ring.forEach(([lon, lat], i) => {
@@ -1390,6 +1429,7 @@ function spDrawBorders(ctx, proj) {
       ctx.stroke();
     }
   }
+  ctx.globalAlpha = 1;
 }
 
 async function spRender() {
@@ -1544,6 +1584,7 @@ function renderChips() {
     b.onclick = () => {
       state.range = { type: "preset", idx: i };
       $("customrange").classList.remove("open");
+      closeSheet();                          // its numbers belong to the old period
       renderChips(); refresh();
     };
     el.appendChild(b);
@@ -1574,6 +1615,7 @@ function initCustomRange() {
     err.textContent = "";
     state.range = { type: "custom", start: isoDate(s), end: isoDate(e) };
     $("customrange").classList.remove("open");
+    closeSheet();
     renderChips(); refresh();
   };
 }
@@ -1583,17 +1625,22 @@ async function refresh() {
   const seq = refresh.seq = (refresh.seq || 0) + 1;     // a newer refresh wins over a slower older one
   spUpdateLinks();
   setStatus($("status"), "", "");
+  // dim the verdict while loading, so an old verdict is never read as the new one
+  const busy = setTimeout(() => { if (seq === refresh.seq) $("verdict").classList.add("busy"); }, 150);
+  const done = () => { clearTimeout(busy); $("verdict").classList.remove("busy"); };
   try {
     const res = await loadRangeData();
     if (seq !== refresh.seq) return;
+    done();
     $("stcount").textContent = `${res.stations.length} stations`;
     renderVerdict(res);
     renderMarkers(res);
     updateGridLayer(res.range);
   } catch (e) {
     if (seq !== refresh.seq) return;
-    setStatus($("status"), "err", e.message);
-    $("v-word").textContent = "Error"; $("v-word").className = "word serif bad";
+    done();
+    setStatus($("status"), e.soft ? "info" : "err", e.message);
+    $("v-word").textContent = e.soft ? "Out of range" : "Error"; $("v-word").className = "word serif " + (e.soft ? "none" : "bad");
     $("v-nums").textContent = ""; $("v-meta").textContent = e.message; $("v-hint").textContent = "";
     state.lastRes = null; state.markerLayer.clearLayers();   // don't leave another region's dots up
     $("stcount").textContent = "";
