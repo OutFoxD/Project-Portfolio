@@ -7,29 +7,19 @@ permissions:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - run: pip install requests numpy xarray netCDF4 pyproj pillow matplotlib
-      - name: Previous data
-        run: git clone --depth 1 --branch shroomzn-data "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" "$RUNNER_TEMP/data"
-      - name: Full run
-        env: { SHROOMZN_CACHE: "${{ runner.temp }}/cache" }
+      - name: Previous dry-run output
+        run: git clone --depth 1 --branch shroomzn-probe-out "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" "$RUNNER_TEMP/data"
+      - name: Verify only (+ regions.json via the alignment step)
         run: |
-          start=$(date +%s)
-          python shroomzn/precompute.py "$RUNNER_TEMP/out" "$RUNNER_TEMP/data" full 2>&1 | tee "$RUNNER_TEMP/log.txt" || true
-          echo "full run took $(( $(date +%s) - start )) s" >> "$RUNNER_TEMP/log.txt"
-          cp "$RUNNER_TEMP"/out/* "$RUNNER_TEMP/data"/
-          start=$(date +%s)
-          python shroomzn/verify.py "$RUNNER_TEMP/data" "$RUNNER_TEMP/cache" > "$RUNNER_TEMP/verify_log.txt" 2>&1 || true
-          echo "verify took $(( $(date +%s) - start )) s" >> "$RUNNER_TEMP/verify_log.txt"
-          start=$(date +%s)
-          python shroomzn/precompute.py "$RUNNER_TEMP/out_now" "$RUNNER_TEMP/data" now > "$RUNNER_TEMP/now_log.txt" 2>&1 || true
-          echo "now run took $(( $(date +%s) - start )) s" >> "$RUNNER_TEMP/now_log.txt"
-          cp "$RUNNER_TEMP"/log.txt "$RUNNER_TEMP"/verify_log.txt "$RUNNER_TEMP"/now_log.txt "$RUNNER_TEMP/data"/
-          cp "$RUNNER_TEMP"/out_now/meta_now.json "$RUNNER_TEMP/data"/ || true
+          python -c "import sys; sys.path.insert(0,'shroomzn'); import precompute as p; print(p.align_station_files('$RUNNER_TEMP/data', None))"
+          mkdir -p "$RUNNER_TEMP/cache" && curl -sS -o "$RUNNER_TEMP/cache/pr_hyras_1_2026_v6-1_de.nc" https://opendata.dwd.de/climate_environment/CDC/grids_germany/daily/hyras_de/precipitation/pr_hyras_1_2026_v6-1_de.nc
+          python shroomzn/verify.py "$RUNNER_TEMP/data" "$RUNNER_TEMP/cache" > "$RUNNER_TEMP/data/verify_log.txt" 2>&1 || true
       - name: Publish probe output
         run: |
           cd "$RUNNER_TEMP/data" && rm -rf .git && git init -q -b shroomzn-probe-out && git config user.name probe && git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

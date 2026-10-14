@@ -1130,6 +1130,13 @@ def align_station_files(out_dir, prev_dir):
         d["through_own"] = own[c]
         d["through"] = common if own[c] and own[c] >= common else own[c]
         write_json(out_dir, STATION_FILES[c], d)
+    # stations per region, so the page's menu can leave out regions without any
+    counts = {}
+    for c, d in docs.items():
+        for s in d["stations"]:
+            counts.setdefault(c, {}).setdefault(s["state"], 0)
+            counts[c][s["state"]] += 1
+    write_json(out_dir, "regions.json", counts)
     return {"common_through": common, "own": own}
 
 

@@ -236,7 +236,8 @@ def grid_alignment(data, cache_dir):
     res = {}
     # a) SPARTACUS (Austria) at nearby stations of the other countries, via GeoSphere's point API
     if "AT" in data:
-        dates = data["AT"]["dates"]
+        through = min(d["through"] for d in data.values() if d.get("through"))
+        dates = [d for d in data["AT"]["dates"] if d <= through]     # SPARTACUS ends ~1-2 days back
         others = [s for c, d in data.items() if c != "AT" for s in d["stations"]]
         cand = near(others, data["AT"]["stations"], 25)[:240]
         try:
