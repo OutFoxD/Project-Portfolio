@@ -2,19 +2,28 @@
 # `shroomzn-data` branch (one commit, replaced every run, so main's history
 # stays clean). Then it re-runs the Pages deploy, which copies that branch
 # into shroomzn/data/.
+#
+#   full  (06:17 and 12:17 UTC): station sums + rain grids for AT, CH, DE, CZ,
+#         then verify.py cross-checks them (verify.json)
+#   now   (every 3 hours in between): only the last-24-hours files for DE and CZ
 name: Update shroomzn data
 
 on:
   schedule:
     - cron: "17 6 * * *"     # ~08:17 Vienna (summer time): yesterday's daily sums are in
-    - cron: "17 12 * * *"    # ~14:17: late station reports + newer SPARTACUS day
-  workflow_dispatch: {}
+    - cron: "17 12 * * *"    # ~14:17: late station reports, DWD and newer grid days
+    - cron: "37 0,3,9,15,18,21 * * *"   # last 24 h for Germany and Czechia
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "full or now"
+        default: "full"
   push:
     branches: ["main"]
     paths:
       - "shroomzn/precompute.py"
-      - "shroomzn/bundeslaender.geojson"
-      - "shroomzn/kantone.geojson"
+      - "shroomzn/verify.py"
+      - "shroomzn/*.geojson"
       - ".github/workflows/shroomzn-data.yml"
 
 permissions:
@@ -25,10 +34,13 @@ concurrency:
   group: shroomzn-data
   cancel-in-progress: false
 
+env:
+  MODE: ${{ github.event.schedule == '37 0,3,9,15,18,21 * * *' && 'now' || inputs.mode || 'full' }}
+
 jobs:
   precompute:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
 
@@ -50,21 +62,29 @@ jobs:
             mkdir -p "$DATA"
           fi
 
-      - name: Compute station sums and rain grids (Austria + Switzerland)
-        run: python shroomzn/precompute.py "$RUNNER_TEMP/out" "$RUNNER_TEMP/data"
+      - name: Compute (${{ env.MODE }})
+        env:
+          SHROOMZN_CACHE: ${{ runner.temp }}/cache
+        run: python shroomzn/precompute.py "$RUNNER_TEMP/out" "$RUNNER_TEMP/data" "$MODE"
+
+      - name: Merge with the previous data
+        run: cp "$RUNNER_TEMP"/out/* "$RUNNER_TEMP/data"/
+
+      - name: Cross-check the data (verify.json)
+        if: env.MODE == 'full'
+        continue-on-error: true
+        run: python shroomzn/verify.py "$RUNNER_TEMP/data" "$RUNNER_TEMP/cache"
 
       - name: Publish to the shroomzn-data branch
         run: |
           set -e
-          DATA="$RUNNER_TEMP/data"
-          cp "$RUNNER_TEMP"/out/* "$DATA"/
-          cd "$DATA"
+          cd "$RUNNER_TEMP/data"
           rm -rf .git
           git init -q -b shroomzn-data
           git config user.name  "shroomzn-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -q -m "shroomzn data $(date -u +%Y-%m-%dT%H:%MZ)"
+          git commit -q -m "shroomzn data ($MODE) $(date -u +%Y-%m-%dT%H:%MZ)"
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" shroomzn-data
           ls -la
 

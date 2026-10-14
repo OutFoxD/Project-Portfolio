@@ -144,7 +144,7 @@
 <body>
 <div class="wrap">
   <h1 class="serif"><span>Pilz</span><span class="accent">wetter</span> 🍄</h1>
-  <p class="sub">Has it rained enough? Real station measurements across Austria and Switzerland · data © GeoSphere Austria, MeteoSwiss</p>
+  <p class="sub">Has it rained enough? Real station measurements across Austria, Germany, Switzerland and Czechia · data: GeoSphere Austria, DWD, MeteoSwiss, ČHMÚ</p>
 
   <div class="verdict" id="verdict">
     <div class="headline">
@@ -182,7 +182,7 @@
   </div>
   <div class="legend" id="legend"></div>
   <p class="note" id="grid-note"></p>
-  <p class="note">Tap a circle for daily values. Circles show the rain measured at weather stations (klima-v2-1d daily, TAWES 10-min for the 24 h view); the coloured background is GeoSphere's interpolated 1&nbsp;km grid (SPARTACUS). Gray dashed circles: no data for this period.</p>
+  <p class="note">Tap a circle for daily values. Circles show the rain measured at each country's weather stations; the coloured background is each country's interpolated 1&nbsp;km grid. Gray dashed circles: no data, or too many days missing to count (a station may miss 1 day in 14, 2 in 30, 3 in 45).</p>
 
   <details class="spartacus" id="spartacus">
     <summary>Rain map image (1 km grid, downloadable)</summary>
@@ -215,11 +215,19 @@
     © GeoSphere Austria (CC&nbsp;BY&nbsp;4.0) · Bundesland borders © Statistik Austria (CC&nbsp;BY&nbsp;4.0).
     Switzerland: <a href="https://opendatadocs.meteoswiss.ch/a-data-groundbased/a1-automatic-weather-stations" target="_blank" rel="noopener">SwissMetNet stations</a> and
     <a href="https://opendatadocs.meteoswiss.ch/c-climate-data/c3-ground-based-climate-data" target="_blank" rel="noopener">RprelimD precipitation grid</a>,
-    Source: MeteoSwiss · canton borders: Natural Earth.
+    Source: MeteoSwiss.
+    Germany: <a href="https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/more_precip/" target="_blank" rel="noopener">daily precipitation stations</a>,
+    <a href="https://opendata.dwd.de/climate_environment/CDC/grids_germany/daily/hyras_de/precipitation/" target="_blank" rel="noopener">HYRAS-DE-PR grid</a> and 10-minute data,
+    Source: Deutscher Wetterdienst.
+    Czechia: <a href="https://opendata.chmi.cz/meteorology/climate/" target="_blank" rel="noopener">daily and hourly station data</a>, Source: ČHMÚ (CHMI).
+    Borders of cantons, German Länder and Czech regions: Natural Earth.
     Basemap © OpenStreetMap contributors.
+    All four services count a day's rain from 06:00 UTC to 06:00 UTC the next day, and every country's
+    presets end on the same day.
     <span id="cache-info">Station sums and the rain grids are precomputed a few times a day;</span>
-    the 24 h view and Austrian custom ranges outside the cache query the APIs live (GeoSphere limit: 240 requests/hour).
-    Swiss custom ranges cover the last 45 days.
+    the 24 h view for Austria and Switzerland and Austrian custom ranges outside the cache query the services live
+    (GeoSphere limit: 240 requests/hour); the 24 h view for Germany and Czechia is refreshed every 3 hours.
+    Custom ranges outside Austria cover the last 45 days.
   </footer>
 </div>
 
@@ -308,6 +316,27 @@ const CITIES = [
   ["Delémont",47.366,7.343,2],["Bellinzona",46.192,9.017,2],["Locarno",46.170,8.795,2],["Davos",46.802,9.836,2],
   ["St. Moritz",46.498,9.839,2],["Brig",46.316,7.988,2],["Martigny",46.102,7.073,2],["Interlaken",46.686,7.863,2],
   ["Montreux",46.431,6.911,2],["Yverdon",46.778,6.641,2],["Vaduz",47.141,9.521,2],
+  ["Berlin",52.520,13.405,1],["Hamburg",53.551,9.994,1],["München",48.137,11.575,1],["Köln",50.938,6.960,1],
+  ["Frankfurt",50.110,8.682,1],["Stuttgart",48.776,9.183,1],["Dresden",51.051,13.738,1],["Leipzig",51.340,12.375,1],
+  ["Hannover",52.376,9.732,1],["Nürnberg",49.452,11.077,1],["Bremen",53.079,8.802,1],["Kiel",54.323,10.123,1],
+  ["Rostock",54.092,12.099,1],["Erfurt",50.978,11.029,1],["Magdeburg",52.121,11.628,1],["Saarbrücken",49.234,6.997,1],
+  ["Mainz",49.993,8.247,1],["Düsseldorf",51.228,6.774,1],["Potsdam",52.391,13.064,1],["Schwerin",53.636,11.401,1],
+  ["Passau",48.567,13.431,2],["Regensburg",49.013,12.102,2],["Augsburg",48.371,10.898,2],["Rosenheim",47.856,12.128,2],
+  ["Traunstein",47.869,12.643,2],["Berchtesgaden",47.630,13.003,2],["Freyung",48.807,13.547,2],["Zwiesel",49.016,13.233,2],
+  ["Deggendorf",48.834,12.963,2],["Landshut",48.537,12.152,2],["Ingolstadt",48.766,11.425,2],["Kempten",47.727,10.316,2],
+  ["Garmisch",47.492,11.096,2],["Lindau",47.546,9.684,2],["Konstanz",47.660,9.175,2],["Freiburg",47.999,7.842,2],
+  ["Würzburg",49.792,9.954,2],["Bayreuth",49.946,11.578,2],["Hof",50.313,11.912,2],["Chemnitz",50.833,12.920,2],
+  ["Görlitz",51.153,14.987,2],["Kassel",51.312,9.481,2],["Göttingen",51.541,9.916,2],["Ulm",48.401,9.988,2],
+  ["Karlsruhe",49.007,8.404,2],["Trier",49.750,6.637,2],["Koblenz",50.356,7.594,2],["Münster",51.961,7.626,2],
+  ["Osnabrück",52.279,8.047,2],["Bielefeld",52.022,8.532,2],["Braunschweig",52.269,10.527,2],["Lüneburg",53.250,10.414,2],
+  ["Oldenburg",53.144,8.214,2],["Flensburg",54.788,9.437,2],["Greifswald",54.093,13.388,2],["Cottbus",51.756,14.333,2],
+  ["Praha",50.075,14.437,1],["Brno",49.195,16.608,1],["Ostrava",49.835,18.292,1],["Plzeň",49.738,13.373,1],
+  ["České Budějovice",48.975,14.474,1],["Liberec",50.767,15.056,1],["Hradec Králové",50.209,15.833,1],["Olomouc",49.594,17.251,1],
+  ["Český Krumlov",48.811,14.315,2],["Jindřichův Hradec",49.144,15.003,2],["Třeboň",49.004,14.771,2],["Prachatice",49.013,13.998,2],
+  ["Tábor",49.414,14.658,2],["Písek",49.309,14.148,2],["Jihlava",49.396,15.591,2],["Znojmo",48.856,16.049,2],
+  ["Klatovy",49.395,13.295,2],["Karlovy Vary",50.231,12.872,2],["Ústí n. L.",50.661,14.032,2],["Pardubice",50.034,15.781,2],
+  ["Zlín",49.226,17.667,2],["Kladno",50.147,14.103,2],["Cheb",50.080,12.374,2],["Mikulov",48.806,16.638,2],
+  ["Břeclav",48.759,16.882,2],["Opava",49.938,17.902,2],["Trutnov",50.561,15.913,2],["Vimperk",49.053,13.783,2],
 ];
 
 /* Switzerland: "CH" = whole country, "CH-XX" = canton (MeteoSwiss station_canton codes) */
@@ -341,6 +370,59 @@ const CANTONS = {
   "ZH": { name: "Zürich", s: 47.16, w: 8.35, n: 47.70, e: 8.97 },
 };
 const cantonName = code => (CANTONS[code] || {}).name || (code === "FL" ? "Liechtenstein" : code);
+
+/* Germany: "DE" = whole country, "DE-XX" = Land (ISO code, from DWD's station list) */
+const DE = { s: 47.27, w: 5.87, n: 55.06, e: 15.04 };
+const LAENDER = {
+  "BW": { name: "Baden-Württemberg", s: 47.53, w: 7.51, n: 49.80, e: 10.50 },
+  "BY": { name: "Bayern", s: 47.27, w: 8.98, n: 50.56, e: 13.82 },
+  "BE": { name: "Berlin", s: 52.34, w: 13.09, n: 52.66, e: 13.75 },
+  "BB": { name: "Brandenburg", s: 51.35, w: 11.27, n: 53.54, e: 14.76 },
+  "HB": { name: "Bremen", s: 53.02, w: 8.50, n: 53.62, e: 8.99 },
+  "HH": { name: "Hamburg", s: 53.40, w: 9.74, n: 53.73, e: 10.33 },
+  "HE": { name: "Hessen", s: 49.40, w: 7.77, n: 51.66, e: 10.23 },
+  "MV": { name: "Mecklenburg-Vorpommern", s: 53.11, w: 10.60, n: 54.69, e: 14.39 },
+  "NI": { name: "Niedersachsen", s: 51.29, w: 6.66, n: 53.89, e: 11.58 },
+  "NW": { name: "Nordrhein-Westfalen", s: 50.32, w: 5.85, n: 52.52, e: 9.46 },
+  "RP": { name: "Rheinland-Pfalz", s: 48.96, w: 6.10, n: 50.93, e: 8.50 },
+  "SL": { name: "Saarland", s: 49.10, w: 6.35, n: 49.63, e: 7.39 },
+  "SN": { name: "Sachsen", s: 50.16, w: 11.90, n: 51.67, e: 15.02 },
+  "ST": { name: "Sachsen-Anhalt", s: 50.93, w: 10.57, n: 53.05, e: 13.24 },
+  "SH": { name: "Schleswig-Holstein", s: 53.36, w: 7.88, n: 55.07, e: 11.31 },
+  "TH": { name: "Thüringen", s: 50.21, w: 9.88, n: 51.64, e: 12.65 },
+};
+/* Czechia: "CZ" = whole country, "CZ-XX" = kraj (ISO code) */
+const CZ = { s: 48.55, w: 12.09, n: 51.06, e: 18.86 };
+const KRAJE = {
+  "PR": { name: "Praha", s: 49.95, w: 14.21, n: 50.17, e: 14.68 },
+  "ST": { name: "Středočeský kraj", s: 49.49, w: 13.41, n: 50.60, e: 15.50 },
+  "JC": { name: "Jihočeský kraj", s: 48.56, w: 13.52, n: 49.61, e: 15.60 },
+  "PL": { name: "Plzeňský kraj", s: 48.94, w: 12.38, n: 50.11, e: 13.84 },
+  "KA": { name: "Karlovarský kraj", s: 49.90, w: 12.08, n: 50.44, e: 13.29 },
+  "US": { name: "Ústecký kraj", s: 50.08, w: 12.96, n: 51.04, e: 14.63 },
+  "LI": { name: "Liberecký kraj", s: 50.46, w: 14.34, n: 51.02, e: 15.62 },
+  "KR": { name: "Královéhradecký kraj", s: 50.02, w: 15.12, n: 50.78, e: 16.58 },
+  "PA": { name: "Pardubický kraj", s: 49.60, w: 15.34, n: 50.19, e: 16.87 },
+  "VY": { name: "Kraj Vysočina", s: 48.95, w: 14.88, n: 49.88, e: 16.41 },
+  "JM": { name: "Jihomoravský kraj", s: 48.60, w: 15.54, n: 49.63, e: 17.65 },
+  "OL": { name: "Olomoucký kraj", s: 49.26, w: 16.72, n: 50.43, e: 17.91 },
+  "ZL": { name: "Zlínský kraj", s: 48.84, w: 17.11, n: 49.53, e: 18.39 },
+  "MO": { name: "Moravskoslezský kraj", s: 49.38, w: 17.13, n: 50.32, e: 18.83 },
+};
+
+/* everything that differs per country, in one place */
+const COUNTRIES = {
+  AT: { name: "Austria", stations: "stations.json", grid: "grid.json", borders: "bundeslaender.geojson",
+        bounds: AT, total: "Österreich", gridLabel: "SPARTACUS", live24: "TAWES 10-min data" },
+  DE: { name: "Germany", stations: "de_stations.json", grid: "de_grid.json", now: "de_now.json",
+        borders: "laender_de.geojson", bounds: DE, regions: LAENDER, total: "Deutschland", gridLabel: "DWD HYRAS",
+        live24: "DWD 10-min data" },
+  CH: { name: "Switzerland", stations: "ch_stations.json", grid: "ch_grid.json", borders: "kantone.geojson",
+        bounds: CH, regions: CANTONS, total: "Schweiz", gridLabel: "MeteoSwiss RprelimD", live24: "MeteoSwiss hourly data" },
+  CZ: { name: "Czechia", stations: "cz_stations.json", now: "cz_now.json", borders: "kraje_cz.geojson",
+        bounds: CZ, regions: KRAJE, total: null, gridLabel: null, live24: "CHMI hourly data" },
+};
+const COUNTRY_ORDER = ["AT", "DE", "CH", "CZ"];
 /* MeteoSwiss station files, by the `src` tag precompute.py stores per station */
 const CH_FILES = {
   "smn":        ["https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn", "ogd-smn"],
@@ -349,15 +431,25 @@ const CH_FILES = {
 
 /* ================= state ================= */
 const prefs = (() => { try { return JSON.parse(localStorage.getItem("pw_prefs") || "{}"); } catch (_) { return {}; } })();
-const validRegion = r => r === "AT" || r === "CH" || !!BL_BOUNDS[r] || (/^CH-/.test(r || "") && !!CANTONS[r.slice(3)]);
+/* region ids: "AT" or an Austrian Bundesland name; "DE"/"CH"/"CZ" or "DE-XX"/"CH-XX"/"CZ-XX" */
+const regionCountry = r => {
+  const c = String(r || "").slice(0, 2);
+  return (COUNTRIES[c] && c !== "AT" && (r.length === 2 || r[2] === "-")) ? c : "AT";
+};
+const validRegion = r => {
+  if (!r) return false;
+  const c = regionCountry(r);
+  if (c === "AT") return r === "AT" || !!BL_BOUNDS[r];
+  return r === c || !!(COUNTRIES[c].regions || {})[r.slice(3)];
+};
 let state = {
   range: { type: "preset", idx: 2 },        // or { type:"custom", start:"YYYY-MM-DD", end:"YYYY-MM-DD" }
-  bl: validRegion(prefs.bl) ? prefs.bl : "Oberösterreich",   // region: AT, Bundesland, CH or CH-XX
+  bl: validRegion(prefs.bl) ? prefs.bl : "Oberösterreich",
   gridOn: prefs.gridOn !== false,
-  cache: null, grid: null, borders: null,   // precomputed files, Austria
-  chCache: null, chGrid: null, chBorders: null,   // precomputed files, Switzerland
-  klimaStations: null, tawesStations: null, // live-API fallback lists
-  map: null, markerLayer: null, borderLayer: null, gridLayer: null,
+  st: {}, gr: {}, bd: {}, now: {},         // precomputed files per country: stations, grid, borders, last 24 h
+  regionCounts: null,                       // stations per region (regions.json)
+  klimaStations: null, tawesStations: null, // live-API fallback lists (Austria)
+  map: null, markerLayer: null, borderLayer: null, gridLayers: [],
 };
 function savePrefs() {
   try { localStorage.setItem("pw_prefs", JSON.stringify({ bl: state.bl, gridOn: state.gridOn })); } catch (_) {}
@@ -372,19 +464,20 @@ const isoMin  = d => `${isoDate(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const parseDay = s => { const d = new Date(s + "T00:00:00"); return isNaN(d) ? null : d; };
 const dm = iso => `${iso.slice(8, 10)}.${iso.slice(5, 7)}.`;
-const country = () => state.bl.startsWith("CH") ? "CH" : "AT";
-const blName = () => state.bl === "AT" ? "Austria" : state.bl === "CH" ? "Switzerland"
-  : state.bl.startsWith("CH-") ? cantonName(state.bl.slice(3)) : state.bl;
-/* station s belongs to the selected region (s.country is set when the cache loads) */
-const inBl = s => country() === "CH"
-  ? s.country === "CH" && (state.bl === "CH" || "CH-" + s.state === state.bl)
-  : s.country !== "CH" && (state.bl === "AT" || s.state === state.bl);
-const regionBounds = () => state.bl === "AT" ? AT : state.bl === "CH" ? CH
-  : state.bl.startsWith("CH-") ? CANTONS[state.bl.slice(3)] : BL_BOUNDS[state.bl];
+const country = () => regionCountry(state.bl);
+const isWholeCountry = () => state.bl === country();
+const regionName = (c, code) => c === "AT" ? code : c === "CH" ? cantonName(code) : ((COUNTRIES[c].regions || {})[code] || {}).name || code;
+const blName = () => isWholeCountry() ? COUNTRIES[country()].name
+  : country() === "AT" ? state.bl : regionName(country(), state.bl.slice(3));
+/* the region id a station belongs to (s.country is set when its file loads) */
+const stationRegion = s => s.country === "AT" ? s.state : `${s.country}-${s.state}`;
+const inBl = s => s.country === country() && (isWholeCountry() || stationRegion(s) === state.bl);
+const regionBounds = () => isWholeCountry() ? COUNTRIES[country()].bounds
+  : country() === "AT" ? BL_BOUNDS[state.bl] : COUNTRIES[country()].regions[state.bl.slice(3)];
 /* key of the selected region in a grid's "mean" table */
-const meanKey = () => state.bl === "AT" ? "Österreich" : state.bl === "CH" ? "Schweiz"
-  : state.bl.startsWith("CH-") ? state.bl.slice(3) : state.bl;
-const regionLabel = s => s.country === "CH" ? cantonName(s.state) : s.state;
+const meanKey = () => isWholeCountry() ? COUNTRIES[country()].total
+  : country() === "AT" ? state.bl : state.bl.slice(3);
+const regionLabel = s => regionName(s.country, s.state);
 
 /* Resolve the active range into concrete dates + thresholds. */
 function currentRange() {
@@ -477,19 +570,35 @@ function cacheSet(key, v) {
 }
 
 /* ================= precomputed cache ================= */
+/* at start: all grids, borders and the station counts (small); station files load per country when needed */
 async function loadSiteData() {
   const local = async name => { try { const r = await fetch(name); return r.ok ? await r.json() : null; } catch (_) { return null; } };
-  const [cache, grid, borders, chCache, chGrid, chBorders] = await Promise.all([
-    siteJson("stations.json"), siteJson("grid.json"), local("bundeslaender.geojson"),
-    siteJson("ch_stations.json"), siteJson("ch_grid.json"), local("kantone.geojson"),
-  ]);
-  if (cache && cache.stations) cache.stations.forEach(s => { s.country = "AT"; });
-  if (chCache && chCache.stations) chCache.stations.forEach(s => { s.country = "CH"; });
-  Object.assign(state, { cache, grid, borders, chCache, chGrid, chBorders });
-  if (cache && cache.generated) {
-    const t = new Date(cache.generated);
-    $("cache-info").textContent = `Station sums and the rain grids are precomputed a few times a day (last update ${t.toLocaleString("de-AT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })});`;
+  const jobs = [siteJson("regions.json").then(v => { state.regionCounts = v; })];
+  for (const c of COUNTRY_ORDER) {
+    const cfg = COUNTRIES[c];
+    if (cfg.grid) jobs.push(siteJson(cfg.grid).then(v => { state.gr[c] = v; }));
+    jobs.push(local(cfg.borders).then(v => {
+      if (v) v.features.forEach(f => { f.properties.country = c; });
+      state.bd[c] = v;
+    }));
   }
+  await Promise.all(jobs);
+}
+
+const stationPromises = {};
+function ensureCountry(c) {
+  if (!stationPromises[c]) {
+    stationPromises[c] = siteJson(COUNTRIES[c].stations).then(doc => {
+      if (doc && doc.stations) doc.stations.forEach(s => { s.country = c; });
+      state.st[c] = doc;
+      if (doc && doc.generated) {
+        const t = new Date(doc.generated);
+        $("cache-info").textContent = `Station sums and the rain grids are precomputed a few times a day (last update ${t.toLocaleString("de-AT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })});`;
+      }
+      return doc;
+    });
+  }
+  return stationPromises[c];
 }
 
 function cacheUsable(c) {
@@ -497,9 +606,12 @@ function cacheUsable(c) {
             Date.now() - Date.parse(c.generated) < CACHE_MAX_AGE_H * 3600e3);
 }
 
-/* Serve a daily range straight from stations.json / ch_stations.json when it covers it. */
+/* missing days a station may have and still count for a period: 0 of 7, 1 of 14, 2 of 30, 3 of 45 */
+const allowedGaps = days => days >= 14 ? Math.round(days / 15) : 0;
+
+/* Serve a daily range straight from the country's precomputed station file when it covers it. */
 function rangeFromCache(range) {
-  const c = country() === "CH" ? state.chCache : state.cache;
+  const c = state.st[country()];
   if (!cacheUsable(c)) return null;
   const dates = c.dates;
   let i0, i1;
@@ -512,18 +624,20 @@ function rangeFromCache(range) {
   }
   if (i1 < 0 || i0 < 0 || i0 > i1) return null;
 
-  const stations = [];
+  const stations = [], days = i1 - i0 + 1, allowed = allowedGaps(days);
   for (const st of c.stations) {
     if (!inBl(st)) continue;
-    let sum = 0, any = false;
+    let sum = 0, have = 0;
     const daily = [];
     for (let k = i0; k <= i1; k++) {
       const v = st.rr[k];
       daily.push({ label: dm(dates[k]), mm: v == null ? null : v });
-      if (v != null) { sum += v; any = true; }
+      if (v != null) { sum += v; have++; }
     }
+    const counted = have > 0 && days - have <= allowed;     // a sum with too many gaps would understate the rain
     stations.push({ id: st.id, name: st.name, state: st.state, country: st.country, src: st.src,
-                    lat: st.lat, lon: st.lon, altitude: st.alt, sum: any ? sum : null, daily, hasData: any });
+                    lat: st.lat, lon: st.lon, altitude: st.alt, sum: counted ? sum : null, daily, hasData: counted,
+                    missing: days - have, incomplete: have > 0 && !counted });
   }
   const r = { ...range, startIso: dates[i0], endIso: dates[i1], days: i1 - i0 + 1, cached: true };
   return { range: r, stations, lastDataTs: c.through };
@@ -531,11 +645,11 @@ function rangeFromCache(range) {
 
 /* ================= station metadata for live queries (7-day cache) ================= */
 async function loadStationList(kind) {
-  if (kind === "klima" && state.cache && state.cache.stations) {
-    return state.cache.stations.map(s => ({ id: s.id, name: s.name, state: s.state,
+  if (kind === "klima" && state.st.AT && state.st.AT.stations) {
+    return state.st.AT.stations.map(s => ({ id: s.id, name: s.name, state: s.state, country: "AT",
       lat: s.lat, lon: s.lon, altitude: s.alt }));
   }
-  const key = `pw_st_${kind}_v3`;
+  const key = `pw_st_${kind}_v4`;
   const cached = cacheGet(key, 7*24*3600e3);
   if (cached) return cached;
 
@@ -557,7 +671,7 @@ async function loadStationList(kind) {
   const combined = new Set(active.filter(s => s.type === "COMBINED").map(s => s.id));
   const slim = active
     .filter(s => !(s.type === "INDIVIDUAL" && combined.has(s.group_id)))
-    .map(s => ({ id: s.id, name: s.name, state: s.state || "", lat: s.lat, lon: s.lon, altitude: s.altitude }));
+    .map(s => ({ id: s.id, name: s.name, state: s.state || "", country: "AT", lat: s.lat, lon: s.lon, altitude: s.altitude }));
 
   cacheSet(key, slim);
   return slim;
@@ -570,19 +684,40 @@ async function ensureStations(kind) {
 
 /* ================= range data ================= */
 async function loadRangeData() {
-  const range = currentRange();
-  if (country() === "CH") {
-    if (!state.chCache) throw new Error("Swiss data isn't available right now. Try again later.");
-    if (range.src === "tawes") return loadCH24h(range);
+  const range = currentRange(), c = country();
+  if (!state.st[c]) {
+    setStatus($("status"), "info", `Loading ${COUNTRIES[c].name}…`);
+    await ensureCountry(c);
+    setStatus($("status"), "", "");
+  }
+  if (c !== "AT") {
+    if (!state.st[c]) throw new Error(`Data for ${COUNTRIES[c].name} isn't available right now. Try again later.`);
+    if (range.src === "tawes") return c === "CH" ? loadCH24h(range) : loadNow(c, range);
     const fromCache = rangeFromCache(range);
     if (fromCache) return fromCache;
-    throw new Error("For Switzerland, daily data covers the last 45 days. Pick a range inside that window.");
+    throw new Error(`For ${COUNTRIES[c].name}, daily data covers the last 45 days. Pick a range inside that window.`);
   }
   if (range.src === "klima") {
     const fromCache = rangeFromCache(range);
     if (fromCache) return fromCache;
   }
   return loadRangeLive(range);
+}
+
+/* Germany and Czechia, last 24 h: their servers can't be read from a browser, so the
+   hourly values are collected on GitHub every 3 hours (de_now.json / cz_now.json). */
+async function loadNow(c, range) {
+  if (!state.now[c]) state.now[c] = await siteJson(COUNTRIES[c].now);
+  const doc = state.now[c];
+  if (!doc || !doc.stations) throw new Error(`The last 24 h for ${COUNTRIES[c].name} aren't available right now.`);
+  const labels = doc.hours.map(h => `${pad(new Date(h).getHours())}:00`);    // hour ends, local time
+  const stations = doc.stations.map(s => ({ ...s, country: c })).filter(inBl).map(s => {
+    const vals = s.h.filter(v => v != null);
+    return { id: s.id, name: s.name, state: s.state, country: c, lat: s.lat, lon: s.lon, altitude: s.alt,
+             sum: vals.length ? vals.reduce((a, b) => a + b, 0) : null, hasData: vals.length > 0,
+             daily: s.h.map((v, i) => ({ label: labels[i], mm: v })) };
+  });
+  return { range: { ...range, nowEnd: doc.end }, stations, lastDataTs: doc.end };
 }
 
 /* Switzerland, last 24 h: MeteoSwiss hourly "now" files (yesterday 12 UTC → now),
@@ -593,7 +728,7 @@ async function loadCH24h(range) {
   const cached = cacheGet(key, 10 * 60e3);
   if (cached) return { range: { ...range, ...cached.rangeInfo }, stations: cached.stations, lastDataTs: cached.lastDataTs };
 
-  const list = state.chCache.stations.filter(inBl);
+  const list = state.st.CH.stations.filter(inBl);
   if (!list.length) throw new Error(`No stations in ${blName()}.`);
   setStatus($("status"), "info", `Loading the last 24 h for ${list.length} stations…`);
   const since = Date.now() - 24 * 3600e3;
@@ -635,7 +770,7 @@ async function loadCH24h(range) {
 async function loadRangeLive(range) {
   const status = $("status");
   const bucket = Math.floor(Date.now() / (15*60e3));
-  const key = `pw_data3_${range.src}_${range.startIso}_${range.endIso}_${state.bl}_${bucket}`;
+  const key = `pw_data4_${range.src}_${range.startIso}_${range.endIso}_${state.bl}_${bucket}`;
   const cached = cacheGet(key, 15*60e3);
   if (cached) return { range, ...cached };
 
@@ -676,14 +811,14 @@ async function loadRangeLive(range) {
   for (const st of stations) {
     const series = byId[String(st.id)];
     if (!series) continue;
-    let sum = 0, any = false;
+    let sum = 0, any = false, have = 0;
     const daily = [];
     if (range.src === "tawes") {
       const hours = new Map();
       series.forEach((v, i) => {
         if (v == null) return;
         const val = Math.max(0, v);                 // negative = trace, counts as 0
-        any = true; sum += val;
+        any = true; sum += val; have++;
         const t = new Date(timestamps[i]);
         const k = `${pad(t.getHours())}:00`;
         hours.set(k, (hours.get(k) || 0) + val);
@@ -696,12 +831,16 @@ async function loadRangeLive(range) {
         const label = `${pad(t.getDate())}.${pad(t.getMonth()+1)}.`;
         if (v == null) { daily.push({ label, mm: null }); return; }
         const val = Math.max(0, v);
-        any = true; sum += val;
+        any = true; sum += val; have++;
         daily.push({ label, mm: val });
         if (!lastDataTs || timestamps[i] > lastDataTs) lastDataTs = timestamps[i];
       });
     }
-    out.push({ ...st, sum: any ? sum : null, daily, hasData: any });
+    /* same rule as the cached data: too many gaps would understate the rain */
+    const counted = any && (range.src === "tawes" ? have >= 132                       // 22 of 24 h of 10-min values
+                                                  : series.length - have <= allowedGaps(series.length));
+    out.push({ ...st, sum: counted ? sum : null, daily, hasData: counted, incomplete: any && !counted,
+               missing: range.src === "tawes" ? null : series.length - have });
   }
 
   setStatus(status, "", "");
@@ -709,8 +848,8 @@ async function loadRangeLive(range) {
   return { range, stations: out, lastDataTs };
 }
 
-/* ================= grid (precomputed SPARTACUS) ================= */
-const gridDoc = (c = country()) => c === "CH" ? state.chGrid : state.grid;
+/* ================= grids (precomputed 1 km analyses: SPARTACUS, HYRAS, RprelimD) ================= */
+const gridDoc = (c = country()) => state.gr[c] || null;
 function gridPeriod(range, c = country()) {
   const g = gridDoc(c);
   if (!g || !g.periods || range.type !== "preset" || range.src !== "klima") return null;
@@ -718,21 +857,22 @@ function gridPeriod(range, c = country()) {
   return g.periods[String(range.days)] || null;
 }
 
-/* both countries' grids are drawn when available; each is clipped to its own border */
+/* every country's grid is drawn when available; each is clipped to its own border */
 function updateGridLayer(range) {
   (state.gridLayers || []).forEach(l => state.map.removeLayer(l));
   state.gridLayers = [];
-  const per = gridPeriod(range), note = $("grid-note");
-  const src = country() === "CH" ? "MeteoSwiss RprelimD" : "SPARTACUS";
-  if (!per) {
+  const per = gridPeriod(range), note = $("grid-note"), cfg = COUNTRIES[country()];
+  if (!cfg.grid) {
+    note.textContent = `Rain grid: ${cfg.name} publishes no daily rain grid, so the map shows its stations only.`;
+  } else if (!per) {
     note.textContent = gridDoc()
       ? "Rain grid: shown for the 7, 14, 30 and 45-day presets."
       : "Rain grid: not available right now.";
   } else {
-    note.textContent = `Rain grid: ${dm(per.start)}–${dm(per.end)} (${src}; the grid can lag a day or two behind the stations).`;
+    note.textContent = `Rain grid: ${dm(per.start)}–${dm(per.end)} (${cfg.gridLabel}; all grids end on the same day, which can be a day before the stations).`;
   }
   if (!state.gridOn) return;
-  for (const c of ["AT", "CH"]) {
+  for (const c of COUNTRY_ORDER) {
     const p = gridPeriod(range, c), g = gridDoc(c);
     if (!p) continue;
     state.gridLayers.push(L.imageOverlay(`${DATA}${p.file}?v=${encodeURIComponent(g.generated)}`, g.bounds,
@@ -762,9 +902,14 @@ function renderVerdict(res) {
   numsEl.innerHTML = `<b>${fmt1(avg)}</b> mm avg · <b>${fmt1(maxSt.sum)}</b> mm max`;
 
   let when;
+  const c = country();
   if (r.days !== 1) when = `${dm(r.startIso)} → ${dm(r.endIso)} (${r.days} days)`;
-  else if (country() === "AT") when = "last 24 h (TAWES 10-min data)";
-  else if ((r.chHours || 0) >= 23) when = "last 24 h (MeteoSwiss hourly data)";
+  else if (r.nowEnd) {
+    const e = new Date(r.nowEnd);
+    when = `last 24 h until ${pad(e.getHours())}:00 ${dm(isoDate(e))} (${COUNTRIES[c].live24}, refreshed every 3 h)`;
+  }
+  else if (c === "AT") when = `last 24 h (${COUNTRIES.AT.live24})`;
+  else if ((r.chHours || 0) >= 23) when = `last 24 h (${COUNTRIES.CH.live24})`;
   else {
     /* MeteoSwiss' live hourly files start at 12:00 UTC yesterday */
     const y = new Date(); y.setUTCDate(y.getUTCDate() - 1); y.setUTCHours(12, 0, 0, 0);
@@ -806,7 +951,7 @@ function initMap() {
   state.map.createPane("bordersPane").style.zIndex = 380;
   state.map.getPane("bordersPane").style.pointerEvents = "none";
   state.markerLayer = L.layerGroup().addTo(state.map);
-  state.map.on("zoomend", () => renderMarkers());
+  state.map.on("moveend", () => renderMarkers());     // after zoom and pan: only stations in view are drawn
 }
 
 function fitRegion() {
@@ -815,15 +960,16 @@ function fitRegion() {
   state.map.fitBounds([[b.s, b.w], [b.n, b.e]], { padding: [8, 8] });
 }
 
-/* is this border feature the selected region? (Bundesland by name, canton by code) */
-const isSelected = f => f.properties.code ? "CH-" + f.properties.code === state.bl : f.properties.name === state.bl;
+/* is this border feature the selected region? (Austrian Bundesland by name, others by code) */
+const isSelected = f => f.properties.country === "AT" ? f.properties.name === state.bl
+  : `${f.properties.country}-${f.properties.code}` === state.bl;
 
 function renderBorders() {
   if (state.borderLayer) { state.map.removeLayer(state.borderLayer); state.borderLayer = null; }
   const style = f => isSelected(f)
     ? { color: "#b8680c", weight: 3, opacity: 0.95, fill: false }
     : { color: "#444", weight: 1.3, opacity: 0.6, fill: false };
-  state.borderLayer = L.featureGroup([state.borders, state.chBorders].filter(Boolean)
+  state.borderLayer = L.featureGroup(COUNTRY_ORDER.map(c => state.bd[c]).filter(Boolean)
     .map(gj => L.geoJSON(gj, { pane: "bordersPane", interactive: false, style }))).addTo(state.map);
 }
 
@@ -838,36 +984,54 @@ function renderMarkers(res) {
   state.markerLayer.clearLayers();
   if (!res) return;
   const z = state.map.getZoom(), r = dotRadius(z);
-  let groups = res.stations.map(st => {
+  const view = state.map.getBounds().pad(0.3);          // only what's (nearly) on screen
+  let groups = res.stations.filter(st => view.contains([st.lat, st.lon])).map(st => {
     const p = state.map.latLngToLayerPoint([st.lat, st.lon]);
     return { list: [st], x: p.x, y: p.y };
   });
-  if (z < UNCLUSTER_ZOOM) {
-    /* keep merging any two circles that would overlap until none do */
-    const rad = g => g.list.length === 1 ? r : summarySize(g.list.length, r) / 2 + 2;   // +2: count badge
-    let merged = true;
-    while (merged) {
-      merged = false;
-      for (let i = 0; i < groups.length; i++) {
-        for (let j = i + 1; j < groups.length; j++) {
-          const a = groups[i], b = groups[j];
+  if (z < UNCLUSTER_ZOOM) groups = mergeOverlaps(groups, r);
+  for (const g of groups) {
+    if (g.list.length === 1) addDot(g.list[0], r, res.range);
+    else addSummary(g.list, r, state.map.layerPointToLatLng([g.x, g.y]), res.range);
+  }
+}
+
+/* Merge circles that would overlap, until none do. Uses a spatial hash with cells as large
+   as the biggest possible merge distance, so each pass only compares neighbouring cells. */
+function mergeOverlaps(groups, r) {
+  const rad = g => g.list.length === 1 ? r : summarySize(g.list.length, r) / 2 + 2;   // +2: count badge
+  const cell = 2 * (summarySize(1e6, r) / 2 + 2) + 2;
+  for (let pass = 0; pass < 50; pass++) {
+    const buckets = new Map();
+    groups.forEach((g, i) => {
+      const k = Math.floor(g.x / cell) + ":" + Math.floor(g.y / cell);
+      if (!buckets.has(k)) buckets.set(k, []);
+      buckets.get(k).push(i);
+    });
+    const gone = new Uint8Array(groups.length);
+    let merged = false;
+    for (let i = 0; i < groups.length; i++) {
+      if (gone[i]) continue;
+      const a = groups[i], cx = Math.floor(a.x / cell), cy = Math.floor(a.y / cell);
+      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+        for (const j of buckets.get((cx + dx) + ":" + (cy + dy)) || []) {
+          if (j === i || gone[j]) continue;
+          const b = groups[j];
           if (Math.hypot(a.x - b.x, a.y - b.y) < rad(a) + rad(b) + 2) {
             const n = a.list.length + b.list.length;
             a.x = (a.x * a.list.length + b.x * b.list.length) / n;
             a.y = (a.y * a.list.length + b.y * b.list.length) / n;
             a.list = a.list.concat(b.list);
-            groups.splice(j, 1);
+            gone[j] = 1;
             merged = true;
-            j = i;                          // a grew and moved: check it against everyone again
           }
         }
       }
     }
+    groups = groups.filter((_, i) => !gone[i]);
+    if (!merged) break;
   }
-  for (const g of groups) {
-    if (g.list.length === 1) addDot(g.list[0], r, res.range);
-    else addSummary(g.list, r, state.map.layerPointToLatLng([g.x, g.y]), res.range);
-  }
+  return groups;
 }
 
 const summarySize = (n, r) => Math.round(Math.max(28, 2 * r + 10) + Math.min(6, 2 * Math.log2(n)));
@@ -881,7 +1045,7 @@ function addDot(st, r, range) {
     ? { radius: r, color: "#223", weight: r < 7 ? 1.5 : 2, fillColor: colorFor(st.sum), fillOpacity: 0.95 }
     : { radius: Math.max(4, r - 2), color: "#777", weight: 1.5, dashArray: "3 3", fillColor: "#eee", fillOpacity: 0.4 };
   const m = L.circleMarker([st.lat, st.lon], opts).addTo(state.markerLayer);
-  m.bindTooltip(`${st.name}: ${st.hasData ? fmt1(st.sum) + " mm" : "no data"}`, { direction: "top" });
+  m.bindTooltip(`${st.name}: ${st.hasData ? fmt1(st.sum) + " mm" : st.incomplete ? "incomplete" : "no data"}`, { direction: "top" });
   m.on("click", () => openSheet(st, range));
 }
 
@@ -932,7 +1096,7 @@ function openSummary(list, at, range) {
     const w = st.hasData ? Math.max(1, st.sum / max * 100) : 0;
     row.innerHTML = `<span class="nm"></span>` +
       `<span class="track"><span class="fill" style="width:${w}%;background:${st.hasData ? colorFor(st.sum) : "transparent"}"></span></span>` +
-      `<span class="val">${st.hasData ? fmt1(st.sum) + " mm" : "–"}</span>`;
+      `<span class="val">${st.hasData ? fmt1(st.sum) + " mm" : st.incomplete ? "gaps" : "–"}</span>`;
     row.querySelector(".nm").textContent = st.name;
     row.onclick = () => openSheet(st, range, { title, back: () => openSummary(list, at, range) });
     bars.appendChild(row);
@@ -946,20 +1110,21 @@ function renderLegend() {
   ).join("");
 }
 
-/* Austria and Switzerland as option groups; cantons without a station are left out once the data is in */
+/* One option group per country, "All of …" first; regions without a station (per regions.json) are left out */
 function buildRegionOptions() {
-  const sel = $("bl");
-  const have = state.chCache && state.chCache.stations ? new Set(state.chCache.stations.map(s => s.state)) : null;
-  const cantons = Object.entries(CANTONS).filter(([code]) => !have || have.has(code))
-    .sort((a, b) => a[1].name.localeCompare(b[1].name, "de"));
-  sel.innerHTML =
-    `<optgroup label="Austria">` +
-      Object.keys(BL_BOUNDS).map(n => `<option value="${n}">${n}</option>`).join("") +
-      `<option value="AT">All of Austria</option></optgroup>` +
-    `<optgroup label="Switzerland"><option value="CH">All of Switzerland</option>` +
-      cantons.map(([code, c]) => `<option value="CH-${code}">${c.name}</option>`).join("") +
-    `</optgroup>`;
-  if (![...sel.options].some(o => o.value === state.bl)) state.bl = state.bl.startsWith("CH") ? "CH" : "Oberösterreich";
+  const sel = $("bl"), counts = state.regionCounts || {};
+  const has = (c, key) => !counts[c] || (counts[c][key] || 0) > 0;
+  sel.innerHTML = COUNTRY_ORDER.map(c => {
+    const cfg = COUNTRIES[c];
+    const regions = c === "AT"
+      ? Object.keys(BL_BOUNDS).map(n => [n, n])
+      : Object.entries(cfg.regions).map(([code, r]) => [`${c}-${code}`, r.name]);
+    const opts = regions.filter(([id]) => has(c, c === "AT" ? id : id.slice(3)))
+      .sort((a, b) => a[1].localeCompare(b[1], "de"))
+      .map(([id, name]) => `<option value="${id}">${name}</option>`).join("");
+    return `<optgroup label="${cfg.name}"><option value="${c}">All of ${cfg.name}</option>${opts}</optgroup>`;
+  }).join("");
+  if (![...sel.options].some(o => o.value === state.bl)) state.bl = country() === "AT" ? "Oberösterreich" : country();
   sel.value = state.bl;
 }
 
@@ -987,9 +1152,12 @@ function openSheet(st, range, parent) {
   $("sheet-actions").hidden = true;
   $("sheet-title").textContent = st.name + (st.state ? ` · ${regionLabel(st)}` : "") +
     (st.altitude != null ? ` · ${Math.round(st.altitude)} m` : "");
+  const days = st.daily.length, gaps = st.missing || 0;
   $("sheet-total").textContent = st.hasData
-    ? `${fmt1(st.sum)} mm total (${periodText(range)})`
-    : "No precipitation data reported for this period.";
+    ? `${fmt1(st.sum)} mm total (${periodText(range)})` + (gaps ? ` · ${gaps} day${gaps > 1 ? "s" : ""} not reported` : "")
+    : st.incomplete
+      ? `Not counted: ${gaps != null ? `only ${days - gaps} of ${days} days` : "too few values"} reported for this period (${periodText(range)}).`
+      : "No precipitation data reported for this period.";
   const bars = $("sheet-bars");
   bars.innerHTML = "";
   const vals = st.daily.filter(d => d.mm != null).map(d => d.mm);
@@ -1067,7 +1235,7 @@ const mercY = lat => Math.log(Math.tan(Math.PI/4 + lat*Math.PI/360));
 function spRegion() {
   const b = regionBounds();
   const pl = (b.n - b.s) * 0.04, pw = (b.e - b.w) * 0.04;
-  return { id: state.bl === "AT" ? "austria" : state.bl.toLowerCase(), name: blName(),
+  return { id: isWholeCountry() ? COUNTRIES[country()].name.toLowerCase() : state.bl.toLowerCase(), name: blName(),
            s: b.s - pl, w: b.w - pw, n: b.n + pl, e: b.e + pw };
 }
 
@@ -1092,11 +1260,15 @@ function spPeriod() {
 
 const CHUNK = 250;   /* lat_lon pairs per request (URL ≈ 5.5 kB) */
 function spCost() {
-  const per = gridPeriod(currentRange());
-  $("sp-resrow").style.display = per || country() === "CH" ? "none" : "flex";
-  $("sp-render").disabled = !per && country() === "CH";
-  if (!per && country() === "CH") {
-    $("sp-cost").textContent = "For Switzerland the map image is available for the 7, 14, 30 and 45-day presets.";
+  const per = gridPeriod(currentRange()), c = country();
+  $("sp-resrow").style.display = per || c !== "AT" ? "none" : "flex";
+  $("sp-render").disabled = !per && c !== "AT";
+  if (!COUNTRIES[c].grid) {
+    $("sp-cost").textContent = `${COUNTRIES[c].name} publishes no daily rain grid, so there's no map image for it.`;
+    return 0;
+  }
+  if (!per && c !== "AT") {
+    $("sp-cost").textContent = `For ${COUNTRIES[c].name} the map image is available for the 7, 14, 30 and 45-day presets.`;
     return 0;
   }
   if (per) {
@@ -1116,7 +1288,7 @@ function spUpdateLinks() {
   $("sp-netcdf").href = `${API}/grid/historical/spartacus-v3-1d-1km?parameters=RR` +
     `&start=${isoDate(start)}&end=${isoDate(end)}` +
     `&bbox=${rg.s.toFixed(3)},${rg.w.toFixed(3)},${rg.n.toFixed(3)},${rg.e.toFixed(3)}&output_format=netcdf`;
-  $("sp-netcdf").hidden = country() === "CH";     // GeoSphere's NetCDF covers Austria
+  $("sp-netcdf").hidden = country() !== "AT";     // GeoSphere's NetCDF covers Austria
   spCost();
 }
 
@@ -1204,7 +1376,7 @@ async function spDrawBasemap(ctx, rg, x0, y0, w, h) {
 }
 
 function spDrawBorders(ctx, proj) {
-  const feats = [state.borders, state.chBorders].filter(Boolean).flatMap(g => g.features);
+  const feats = COUNTRY_ORDER.map(c => state.bd[c]).filter(Boolean).flatMap(g => g.features);
   for (const f of feats) {
     const sel = isSelected(f);
     ctx.strokeStyle = sel ? "#b8680c" : "rgba(40,40,40,.7)";
@@ -1232,8 +1404,8 @@ async function spRender() {
     if (per) {
       start = parseDay(per.start); end = parseDay(per.end);
       setStatus(st, "info", "Loading precomputed grid…");
-      /* both countries' grids, so border regions show both sides */
-      for (const c of ["AT", "CH"]) {
+      /* every country's grid, so border regions show both sides */
+      for (const c of COUNTRY_ORDER) {
         const p = gridPeriod(range, c), g = gridDoc(c);
         if (!p) continue;
         const img = await loadImage(`${DATA}${p.file}?v=${encodeURIComponent(g.generated)}`);
@@ -1258,7 +1430,7 @@ async function spRender() {
     ctx.fillStyle = "#1b241c"; ctx.fillRect(0, 0, cv.width, cv.height);
     ctx.fillStyle = "#e8e6dc"; ctx.font = "bold 28px Georgia, serif";
     ctx.fillText(`Rain sum ${dm(isoDate(start))}–${dm(isoDate(end))}${end.getFullYear()} · ${rg.name} · ` +
-      (country() === "CH" ? "MeteoSwiss 1 km grid" : "SPARTACUS 1 km"), padX, 36);
+      `${COUNTRIES[country()].gridLabel} 1 km grid`, padX, 36);
 
     setStatus(st, "info", "Loading basemap tiles…");
     const { tilesDrawn, proj } = await spDrawBasemap(ctx, rg, padX, titleH, mapW, mapH);
@@ -1294,7 +1466,7 @@ async function spRender() {
 
     ctx.font = "bold 19px system-ui";
     for (const [name, lat, lon, tier] of CITIES) {
-      if ((state.bl === "AT" || state.bl === "CH") && tier > 1) continue;
+      if (isWholeCountry() && tier > 1) continue;
       if (lat < rg.s || lat > rg.n || lon < rg.w || lon > rg.e) continue;
       const [x, y] = proj(lat, lon);
       ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI*2);
@@ -1320,7 +1492,9 @@ async function spRender() {
     }
     const drawn = overlays.length ? overlays.map(o => o.c) : ["AT"];
     const credits = [drawn.includes("AT") && "Data © GeoSphere Austria · Borders © Statistik Austria",
-                     drawn.includes("CH") && "Source: MeteoSwiss · Cantons: Natural Earth"].filter(Boolean).join(" · ");
+                     drawn.includes("DE") && "Source: Deutscher Wetterdienst",
+                     drawn.includes("CH") && "Source: MeteoSwiss",
+                     (drawn.includes("DE") || drawn.includes("CH")) && "Borders: Natural Earth"].filter(Boolean).join(" · ");
     ctx.fillText(`${stats} · ${credits} · Basemap © OpenStreetMap contributors`, padX, fy);
     fy += 14;
     const sw = Math.min(64, (W - padX*2) / BINS.length);
@@ -1406,15 +1580,18 @@ function initCustomRange() {
 
 /* ================= wiring ================= */
 async function refresh() {
+  const seq = refresh.seq = (refresh.seq || 0) + 1;     // a newer refresh wins over a slower older one
   spUpdateLinks();
   setStatus($("status"), "", "");
   try {
     const res = await loadRangeData();
+    if (seq !== refresh.seq) return;
     $("stcount").textContent = `${res.stations.length} stations`;
     renderVerdict(res);
     renderMarkers(res);
     updateGridLayer(res.range);
   } catch (e) {
+    if (seq !== refresh.seq) return;
     setStatus($("status"), "err", e.message);
     $("v-word").textContent = "Error"; $("v-word").className = "word serif bad";
     $("v-nums").textContent = ""; $("v-meta").textContent = e.message; $("v-hint").textContent = "";
