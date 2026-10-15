@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pilzwetter 🍄 — has it rained enough?</title>
+<title>Pilzwetter 🍄 – hat es genug geregnet?</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
   :root{
@@ -20,6 +20,12 @@
   .wrap{max-width:900px;margin:0 auto;padding:16px 14px 40px}
 
   h1{font-size:2rem;margin:6px 0 2px}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .lang{display:inline-flex;border:1px solid var(--amber);border-radius:999px;overflow:hidden;flex:0 0 auto}
+  .lang button{background:transparent;border:none;color:var(--amber-soft);font:600 .85rem system-ui,sans-serif;
+    padding:7px 12px;min-height:36px;cursor:pointer;letter-spacing:.03em}
+  .lang button[aria-pressed="true"]{background:var(--amber);color:#20180a}
+  .lang button:focus-visible{outline:3px solid #fff;outline-offset:-3px}
   h1 .accent{color:var(--amber)}
   .sub{color:var(--muted);margin:0 0 14px;font-size:.95rem}
 
@@ -87,14 +93,14 @@
     background:rgba(27,36,28,.93);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:6px;
     font:14px/1.3 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;box-shadow:0 4px 16px #0006;cursor:default}
   .fs-row{display:flex;gap:6px;align-items:center}
-  .fs-row+.fs-row{margin-top:5px;padding:0 2px}
+  .fs-row+.fs-row{margin-top:5px;padding:0 2px;flex-wrap:wrap;row-gap:5px}
   .fs-row select{flex:1 1 0;min-width:0;min-height:34px;padding:3px 6px;font-size:16px;border-radius:8px}
   #fs-region{color:var(--amber-soft);font-weight:600;border-color:var(--amber);flex-grow:1.3}
-  #fs-verdict{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.88rem;transition:opacity .2s}
+  #fs-verdict{flex:1 0 auto;max-width:100%;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.88rem;transition:opacity .2s}
   #fs-verdict.busy{opacity:.4}
   @media (max-width:520px){ #fs-verdict .mx{display:none} }
   #fs-verdict b.good{color:var(--good)} #fs-verdict b.mid{color:var(--mid)} #fs-verdict b.bad{color:var(--bad)} #fs-verdict b.none{color:var(--muted)}
-  .fs-tg{display:flex;gap:4px;flex:0 0 auto}
+  .fs-tg{display:flex;gap:4px;flex:0 0 auto;margin-left:auto}
   .fs-tg button{background:transparent;border:1px solid var(--amber);color:var(--amber-soft);border-radius:999px;
     padding:3px 9px;min-height:28px;font:600 .78rem system-ui,sans-serif;cursor:pointer}
   .fs-tg button[aria-pressed="true"]{background:var(--amber);color:#20180a}
@@ -182,34 +188,39 @@
 </head>
 <body>
 <div class="wrap">
-  <h1 class="serif"><span>Pilz</span><span class="accent">wetter</span> 🍄</h1>
-  <p class="sub">Has it rained enough? Real station measurements across Austria, Germany, Switzerland and Czechia · data: GeoSphere Austria, DWD, MeteoSwiss, ČHMÚ</p>
+  <div class="topbar">
+    <h1 class="serif"><span>Pilz</span><span class="accent">wetter</span> 🍄</h1>
+    <div class="lang" role="group" data-i18n-aria="langGroup" aria-label="Sprache">
+      <button type="button" data-lang="de" aria-pressed="true" lang="de">DE</button><button type="button" data-lang="en" aria-pressed="false" lang="en">EN</button>
+    </div>
+  </div>
+  <p class="sub" data-i18n="sub">Hat es genug geregnet? Echte Messwerte von Wetterstationen in Österreich, Deutschland, der Schweiz und Tschechien · Daten: GeoSphere Austria, DWD, MeteoSwiss, ČHMÚ</p>
 
   <div class="verdict" id="verdict">
     <div class="headline">
-      <span class="word serif" id="v-word">Loading…</span>
+      <span class="word serif" id="v-word">Lädt…</span>
       <span class="nums" id="v-nums"></span>
     </div>
     <div class="meta" id="v-meta"></div>
     <div class="hint" id="v-hint"></div>
   </div>
 
-  <div class="chips" id="chips" role="group" aria-label="Time range"></div>
+  <div class="chips" id="chips" role="group" data-i18n-aria="timeRange" aria-label="Zeitraum"></div>
 
   <div class="customrange" id="customrange">
-    <label for="c-start">From</label>
+    <label for="c-start" data-i18n="from">Von</label>
     <input type="date" id="c-start">
-    <label for="c-end">to</label>
+    <label for="c-end" data-i18n="to">bis</label>
     <input type="date" id="c-end">
-    <button class="btn primary" id="c-apply">Apply</button>
+    <button class="btn primary" id="c-apply" data-i18n="apply">Anwenden</button>
     <span class="err" id="c-err"></span>
   </div>
 
   <div class="toolbar">
-    <select id="bl" aria-label="Country or region"></select>
+    <select id="bl" data-i18n-aria="region" aria-label="Land oder Region"></select>
     <div class="toggles">
-      <label class="toggle"><input type="checkbox" id="grid-toggle" checked> Rain grid</label>
-      <label class="toggle"><input type="checkbox" id="st-toggle" checked> Stations</label>
+      <label class="toggle"><input type="checkbox" id="grid-toggle" checked> <span data-i18n="rainGrid">Regenraster</span></label>
+      <label class="toggle"><input type="checkbox" id="st-toggle" checked> <span data-i18n="stations">Stationen</span></label>
       <span class="count" id="stcount"></span>
     </div>
   </div>
@@ -219,12 +230,12 @@
   <div id="map">
     <div class="fs-bar" id="fs-bar">
       <div class="fs-row">
-        <select id="fs-region" aria-label="Country or region"></select>
-        <select id="fs-period" aria-label="Time range"></select>
+        <select id="fs-region" data-i18n-aria="region" aria-label="Land oder Region"></select>
+        <select id="fs-period" data-i18n-aria="timeRange" aria-label="Zeitraum"></select>
       </div>
       <div class="fs-row">
-        <span id="fs-verdict">Loading…</span>
-        <span class="fs-tg"><button type="button" id="fs-grid" aria-pressed="true">Grid</button><button type="button" id="fs-st" aria-pressed="true">Stations</button></span>
+        <span id="fs-verdict">Lädt…</span>
+        <span class="fs-tg"><button type="button" id="fs-grid" aria-pressed="true" data-i18n="grid">Raster</button><button type="button" id="fs-st" aria-pressed="true" data-i18n="stations">Stationen</button></span>
       </div>
     </div>
     <div class="fs-legend" id="fs-legend"></div>
@@ -232,19 +243,19 @@
   </div>
 
   <div class="key" id="key">
-    <span class="kitem"><span class="kdot"></span>One station</span>
-    <span class="kitem"><span class="summary" style="width:32px;height:32px;background:#e2ef9f;color:#1a1a1a"><b>12</b><small>mm</small><i class="cnt">5</i></span>Average of 5 stations close together · tap for the list</span>
+    <span class="kitem"><span class="kdot"></span><span data-i18n="keyOne">Eine Station</span></span>
+    <span class="kitem"><span class="summary" style="width:32px;height:32px;background:#e2ef9f;color:#1a1a1a"><b>12</b><small>mm</small><i class="cnt">5</i></span><span data-i18n="keyMany">Schnitt aus 5 nahe beieinander liegenden Stationen · antippen für die Liste</span></span>
   </div>
   <div class="legend" id="legend"></div>
   <p class="note" id="grid-note"></p>
-  <p class="note">Tap a circle for daily values, or tap an area on the map to switch to it. Circles show the rain measured at each country's weather stations; the coloured background is each country's interpolated 1&nbsp;km grid. Gray dashed circles: no data, or too many days missing to count (a station may miss 1 day in 14, 2 in 30, 3 in 45).</p>
+  <p class="note" data-i18n="noteMain"></p>
 
   <details class="spartacus" id="spartacus">
-    <summary>Rain map image (1 km grid, downloadable)</summary>
+    <summary data-i18n="spSummary">Regenkarte als Bild (1-km-Raster, zum Herunterladen)</summary>
     <div class="spartacus-body">
-      <p class="note">GeoSphere's interpolated 1&nbsp;km analysis (SPARTACUS&nbsp;v3) for the selected Bundesland, drawn over an OpenStreetMap basemap with borders and towns. Values can differ from single-station measurements; the last ~7 days are preliminary.</p>
+      <p class="note" data-i18n="spNote"></p>
       <div class="btnrow" id="sp-resrow">
-        <label for="sp-res">Detail</label>
+        <label for="sp-res" data-i18n="spDetail">Auflösung</label>
         <select id="sp-res">
           <option value="8">~8 km</option>
           <option value="5" selected>~5 km</option>
@@ -252,8 +263,8 @@
         </select>
       </div>
       <div class="btnrow">
-        <button class="btn primary" id="sp-render">Render map</button>
-        <button class="btn" id="sp-download" disabled>Download PNG</button>
+        <button class="btn primary" id="sp-render" data-i18n="spRender">Karte erstellen</button>
+        <button class="btn" id="sp-download" disabled data-i18n="spDownload">PNG herunterladen</button>
         <a class="btnlink" id="sp-netcdf" href="#" target="_blank" rel="noopener">NetCDF ↓</a>
       </div>
       <div class="note" id="sp-cost"></div>
@@ -263,40 +274,16 @@
     </div>
   </details>
 
-  <footer>
-    Data: <a href="https://data.hub.geosphere.at/dataset/klima-v2-1d" target="_blank" rel="noopener">klima-v2-1d</a>,
-    <a href="https://data.hub.geosphere.at/dataset/tawes-v1-10min" target="_blank" rel="noopener">tawes-v1-10min</a> and
-    <a href="https://data.hub.geosphere.at/dataset/spartacus-v3-1d-1km" target="_blank" rel="noopener">spartacus-v3-1d-1km</a>
-    © GeoSphere Austria (CC&nbsp;BY&nbsp;4.0) · Bundesland borders © Statistik Austria (CC&nbsp;BY&nbsp;4.0).
-    Switzerland: <a href="https://opendatadocs.meteoswiss.ch/a-data-groundbased/a1-automatic-weather-stations" target="_blank" rel="noopener">SwissMetNet stations</a> and
-    <a href="https://opendatadocs.meteoswiss.ch/c-climate-data/c3-ground-based-climate-data" target="_blank" rel="noopener">RprelimD precipitation grid</a>,
-    Source: MeteoSwiss.
-    Germany: <a href="https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/more_precip/" target="_blank" rel="noopener">daily precipitation stations</a>,
-    <a href="https://opendata.dwd.de/climate_environment/CDC/grids_germany/daily/hyras_de/precipitation/" target="_blank" rel="noopener">HYRAS-DE-PR grid</a> and 10-minute data,
-    Source: Deutscher Wetterdienst.
-    Czechia: <a href="https://opendata.chmi.cz/meteorology/climate/" target="_blank" rel="noopener">daily and hourly station data</a>, Source: ČHMÚ (CHMI).
-    Country outlines, German Länder and Czech regions: Natural Earth.
-    Basemap © OpenStreetMap contributors.
-    All four services count a day's rain from 06:00 UTC to 06:00 UTC the next day, and every country's
-    presets end on the same day.
-    <span id="cache-info">Station sums and the rain grids are precomputed a few times a day;</span>
-    the 24 h view for Austria and Switzerland and Austrian custom ranges outside the cache query the services live
-    (GeoSphere limit: 240 requests/hour); the 24 h view for Germany and Czechia is refreshed every 3 hours.
-    Daily station values are archived (since January 2025 for Austria, April 2025 for Germany, October
-    2025 for Czechia and January 2026 for Switzerland), so custom ranges reach that far back; for
-    Austria, older ranges are queried live from GeoSphere.
-    <br><br>Pilzwetter was built by <a href="https://protofox.at" target="_blank" rel="noopener">OutFoxD</a>
-    together with Claude, Anthropic's AI.
-  </footer>
+  <footer data-i18n-html="footer"><span id="cache-info"></span></footer>
 </div>
 
 <div class="sheet" id="sheet" role="dialog" aria-labelledby="sheet-title">
   <div class="grab" aria-hidden="true"></div>
-  <button class="close" id="sheet-close" aria-label="Close">×</button>
+  <button class="close" id="sheet-close" data-i18n-aria="close" aria-label="Schließen">×</button>
   <button class="back" id="sheet-back" hidden></button>
   <h3 id="sheet-title"></h3>
   <div class="total" id="sheet-total"></div>
-  <div class="actions" id="sheet-actions" hidden><button class="btn" id="sheet-zoom">Zoom in here</button></div>
+  <div class="actions" id="sheet-actions" hidden><button class="btn" id="sheet-zoom" data-i18n="zoomHere">Hier hineinzoomen</button></div>
   <div class="bars" id="sheet-bars"></div>
 </div>
 
@@ -309,11 +296,11 @@ const API = "https://dataset.api.hub.geosphere.at/v1";
 const DATA = "data/";                 // precomputed by GitHub Actions (branch shroomzn-data)
 const CACHE_MAX_AGE_H = 36;           // older cache -> fall back to the live API
 const PRESETS = [
-  { days: 1,  label: "Last 24 h",   src: "tawes", good: 10,  mid: 3  },
-  { days: 7,  label: "Last 7 days", src: "klima", good: 25,  mid: 10 },
-  { days: 14, label: "Last 14 days",src: "klima", good: 40,  mid: 20 },
-  { days: 30, label: "Last 30 days",src: "klima", good: 70,  mid: 35 },
-  { days: 45, label: "Last 45 days",src: "klima", good: 100, mid: 50 },
+  { days: 1,  src: "tawes", good: 10,  mid: 3  },
+  { days: 7,  src: "klima", good: 25,  mid: 10 },
+  { days: 14, src: "klima", good: 40,  mid: 20 },
+  { days: 30, src: "klima", good: 70,  mid: 35 },
+  { days: 45, src: "klima", good: 100, mid: 50 },
 ];
 const BINS = [
   [2,   "#ffffff", "0–2"],
@@ -471,15 +458,14 @@ const KRAJE = {
 
 /* everything that differs per country, in one place */
 const COUNTRIES = {
-  AT: { name: "Austria", stations: "stations.json", grid: "grid.json", borders: "bundeslaender.geojson",
-        bounds: AT, total: "Österreich", gridLabel: "SPARTACUS", live24: "TAWES 10-min data" },
-  DE: { name: "Germany", stations: "de_stations.json", grid: "de_grid.json", now: "de_now.json",
-        borders: "laender_de.geojson", bounds: DE, regions: LAENDER, total: "Deutschland", gridLabel: "DWD HYRAS",
-        live24: "DWD 10-min data" },
-  CH: { name: "Switzerland", stations: "ch_stations.json", grid: "ch_grid.json", borders: null,   /* no canton lines */
-        bounds: CH, regions: CANTONS, total: "Schweiz", gridLabel: "MeteoSwiss RprelimD", live24: "MeteoSwiss hourly data" },
-  CZ: { name: "Czechia", stations: "cz_stations.json", now: "cz_now.json", borders: "kraje_cz.geojson",
-        bounds: CZ, regions: KRAJE, total: null, gridLabel: null, live24: "CHMI hourly data" },
+  AT: { stations: "stations.json", grid: "grid.json", borders: "bundeslaender.geojson",
+        bounds: AT, total: "Österreich", gridLabel: "SPARTACUS" },
+  DE: { stations: "de_stations.json", grid: "de_grid.json", now: "de_now.json",
+        borders: "laender_de.geojson", bounds: DE, regions: LAENDER, total: "Deutschland", gridLabel: "DWD HYRAS" },
+  CH: { stations: "ch_stations.json", grid: "ch_grid.json", borders: null,   /* no canton lines */
+        bounds: CH, regions: CANTONS, total: "Schweiz", gridLabel: "MeteoSwiss RprelimD" },
+  CZ: { stations: "cz_stations.json", now: "cz_now.json", borders: "kraje_cz.geojson",
+        bounds: CZ, regions: KRAJE, total: null, gridLabel: null },
 };
 const COUNTRY_ORDER = ["AT", "DE", "CH", "CZ"];
 /* MeteoSwiss station files, by the `src` tag precompute.py stores per station */
@@ -509,7 +495,7 @@ let state = {
 
 /* ================= helpers ================= */
 const $ = id => document.getElementById(id);
-const fmt1 = n => (Math.round(n * 10) / 10).toLocaleString("de-AT");
+const fmt1 = n => (Math.round(n * 10) / 10).toLocaleString(lang === "de" ? "de-AT" : "en-GB");
 const pad = n => String(n).padStart(2, "0");
 const isoDate = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -517,10 +503,258 @@ const parseDay = s => { const d = new Date(s + "T00:00:00"); return isNaN(d) ? n
 const dm = iso => `${iso.slice(8, 10)}.${iso.slice(5, 7)}.`;
 /* with the year when it isn't this year (custom ranges can reach into the archive) */
 const dmy = iso => dm(iso) + (iso.slice(0, 4) === String(new Date().getFullYear()) ? "" : iso.slice(0, 4));
+
+/* ================= language (German by default, English on request) ================= */
+const LANGS = ["de", "en"];
+let lang = (() => {
+  try {
+    const q = new URLSearchParams(location.search).get("lang");
+    if (LANGS.includes(q)) return q;
+    const s = localStorage.getItem("pw_lang");
+    if (LANGS.includes(s)) return s;
+  } catch (_) {}
+  return "de";
+})();
+const numLoc = () => lang === "de" ? "de-AT" : "en-GB";
+const plural = (n, one, many) => n === 1 ? one : many;
+const A = `target="_blank" rel="noopener"`;
+const I18N = {
+  de: {
+    title: "Pilzwetter 🍄 – hat es genug geregnet?",
+    sub: "Hat es genug geregnet? Echte Messwerte von Wetterstationen in Österreich, Deutschland, der Schweiz und Tschechien · Daten: GeoSphere Austria, DWD, MeteoSwiss, ČHMÚ",
+    langGroup: "Sprache", loading: "Lädt…", timeRange: "Zeitraum", from: "Von", to: "bis", apply: "Anwenden",
+    region: "Land oder Region", rainGrid: "Regenraster", stations: "Stationen", grid: "Raster",
+    stCount: p => `${p.n} ${plural(p.n, "Station", "Stationen")}`,
+    keyOne: "Eine Station", keyMany: "Schnitt aus 5 nahe beieinander liegenden Stationen · antippen für die Liste",
+    noteMain: "Kreis antippen für die Tageswerte, oder eine Fläche auf der Karte antippen, um dorthin zu wechseln. Die Kreise zeigen den an den Wetterstationen gemessenen Regen, der farbige Hintergrund das interpolierte 1-km-Raster jedes Landes. Grau gestrichelte Kreise: keine Daten oder zu viele fehlende Tage (erlaubt sind 1 fehlender Tag von 14, 2 von 30, 3 von 45).",
+    spSummary: "Regenkarte als Bild (1-km-Raster, zum Herunterladen)",
+    spNote: "Die interpolierte 1-km-Analyse für die gewählte Region (GeoSphere SPARTACUS für Österreich, DWD HYRAS, MeteoSwiss RprelimD) über einer OpenStreetMap-Karte mit Grenzen und Orten. Die Werte können von einzelnen Stationsmessungen abweichen; die letzten Tage sind vorläufig.",
+    spDetail: "Auflösung", spRender: "Karte erstellen", spDownload: "PNG herunterladen",
+    close: "Schließen", zoomHere: "Hier hineinzoomen", zoomIn: "Hineinzoomen", zoomOut: "Herauszoomen",
+    leafletTitle: "Eine JavaScript-Bibliothek für interaktive Karten",
+    cacheInfo: p => p.t ? `Stationssummen und Regenraster werden mehrmals täglich vorberechnet (letztes Update ${p.t});` : "Stationssummen und Regenraster werden mehrmals täglich vorberechnet;",
+    footer: `Daten: <a href="https://data.hub.geosphere.at/dataset/klima-v2-1d" ${A}>klima-v2-1d</a>,
+      <a href="https://data.hub.geosphere.at/dataset/tawes-v1-10min" ${A}>tawes-v1-10min</a> und
+      <a href="https://data.hub.geosphere.at/dataset/spartacus-v3-1d-1km" ${A}>spartacus-v3-1d-1km</a>
+      © GeoSphere Austria (CC&nbsp;BY&nbsp;4.0) · Grenzen der Bundesländer © Statistik Austria (CC&nbsp;BY&nbsp;4.0).
+      Schweiz: <a href="https://opendatadocs.meteoswiss.ch/a-data-groundbased/a1-automatic-weather-stations" ${A}>SwissMetNet-Stationen</a> und
+      <a href="https://opendatadocs.meteoswiss.ch/c-climate-data/c3-ground-based-climate-data" ${A}>RprelimD-Niederschlagsraster</a>, Quelle: MeteoSwiss.
+      Deutschland: <a href="https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/more_precip/" ${A}>tägliche Niederschlagsstationen</a>,
+      <a href="https://opendata.dwd.de/climate_environment/CDC/grids_germany/daily/hyras_de/precipitation/" ${A}>HYRAS-DE-PR-Raster</a> und 10-Minuten-Daten, Quelle: Deutscher Wetterdienst.
+      Tschechien: <a href="https://opendata.chmi.cz/meteorology/climate/" ${A}>Tages- und Stundenwerte der Stationen</a>, Quelle: ČHMÚ.
+      Ländergrenzen, deutsche Bundesländer und tschechische Regionen: Natural Earth. Karte © OpenStreetMap-Mitwirkende.
+      Alle vier Dienste zählen den Regen eines Tages von 06:00 UTC bis 06:00 UTC am nächsten Tag, und die Vorauswahlen enden in allen Ländern am selben Tag.
+      <span id="cache-info"></span>
+      die 24-h-Ansicht für Österreich und die Schweiz sowie österreichische Zeiträume vor dem Archiv werden live bei den Diensten abgefragt
+      (GeoSphere-Limit: 240 Anfragen pro Stunde); die 24-h-Ansicht für Deutschland und Tschechien wird alle 3 Stunden aktualisiert.
+      Die Tageswerte der Stationen werden archiviert (Österreich seit Jänner 2025, Deutschland seit April 2025, Tschechien seit Oktober 2025,
+      Schweiz seit Jänner 2026), eigene Zeiträume reichen daher so weit zurück; für Österreich werden ältere Zeiträume live bei GeoSphere abgefragt.
+      <br><br>Pilzwetter wurde von <a href="https://protofox.at" ${A}>OutFoxD</a> gemeinsam mit Claude, der KI von Anthropic, gebaut.`,
+    preset: p => p.n === 1 ? "Letzte 24 h" : `Letzte ${p.n} Tage`, presetShort: p => p.n === 1 ? "24 h" : `${p.n} Tage`,
+    customChip: "Zeitraum wählen…", customSet: p => `Zeitraum: ${p.a} → ${p.b}`,
+    errBoth: "Bitte beide Daten wählen.", errOrder: "Der Beginn muss vor dem Ende liegen.",
+    errFuture: "Das Ende darf nicht in der Zukunft liegen.", errMax: "Höchstens 365 Tage.",
+    "country.AT": "Österreich", "country.DE": "Deutschland", "country.CH": "Schweiz", "country.CZ": "Tschechien",
+    groupCountry: "Ganzes Land", "group.AT": "Österreich · Bundesländer", "group.DE": "Deutschland · Bundesländer", "group.CZ": "Tschechien · Regionen",
+    "live.AT": "TAWES-10-Minuten-Daten", "live.DE": "DWD-10-Minuten-Daten", "live.CH": "MeteoSwiss-Stundenwerte", "live.CZ": "ČHMÚ-Stundenwerte",
+    "w.good": "Sieht gut aus", "w.mid": "Grenzwertig", "w.bad": "Zu trocken", "w.nodata": "Keine Daten", "w.out": "Nicht verfügbar", "w.error": "Fehler",
+    nums: p => `<b>${p.avg}</b> mm Schnitt · <b>${p.max}</b> mm Maximum`,
+    metaNoData: p => `Keine Station in ${p.r} hat für diesen Zeitraum bisher Niederschlag gemeldet.`,
+    whenDays: p => `${p.a} → ${p.b} (${p.n} Tage)`, fromArchive: ", aus dem Archiv",
+    when24now: p => `letzte 24 h bis ${p.time} am ${p.date} (${p.src}, alle 3 h aktualisiert)`,
+    when24until: p => `letzte 24 h bis ${p.time} (${p.src})`, when24: p => `letzte 24 h (${p.src})`,
+    whenCH: p => `seit gestern ${p.time} (${p.h} h, ${p.src})`,
+    metaLine: p => `${p.r} · ${p.when} · ${p.k} von ${p.n} Stationen`,
+    wettest: p => `Am nassesten: ${p.name} (${p.v} mm).`, areaMean: p => ` Flächenmittel (1-km-Raster): ${p.v} mm.`,
+    availThrough: p => ` Tageswerte derzeit bis ${p.d} verfügbar.`,
+    lastYear: p => ` Dieselben Tage im Vorjahr (${p.a}–${p.b}): Ø ${p.v} mm.`,
+    pickOther: "anderen Zeitraum wählen",
+    netErr: "Netzwerkfehler – die GeoSphere-API ist nicht erreichbar.",
+    rateLimit: p => "GeoSphere-Abfragelimit überschritten (höchstens 5 Anfragen pro Sekunde und 240 pro Stunde)." +
+      (p.hint ? ` Der Server meldet:${p.hint}.` : "") + " Bitte in ein paar Minuten nochmal versuchen.",
+    reqFailed: "Anfrage fehlgeschlagen",
+    loadingCountry: p => `Lade ${p.c}…`, loadingArchive: "Lade archivierte Tageswerte…",
+    countryUnavailable: p => `Die Daten für ${p.c} sind gerade nicht verfügbar. Bitte später nochmal versuchen.`,
+    outOfWindow: p => `Für ${p.c} reichen die Tageswerte von ${p.a} bis ${p.b}. Bitte einen Zeitraum darin wählen oder eine Vorauswahl nutzen.`,
+    nowUnavailable: p => `Die letzten 24 h für ${p.c} sind gerade nicht verfügbar.`,
+    noStations: p => `Keine Stationen in ${p.r}.`, noActive: p => `Keine aktiven Stationen in ${p.r} gefunden.`,
+    loading24: p => `Lade die letzten 24 h für ${p.n} Stationen…`,
+    loadingStations: "Lade Stationsliste…", loadingPrecip: "Lade Niederschlagsdaten…",
+    gnNoGrid: p => `Regenraster: ${p.c} veröffentlicht kein tägliches Regenraster, die Karte zeigt dort nur die Stationen.`,
+    gnPresets: "Regenraster: nur für die Vorauswahlen, nicht für eigene Zeiträume.",
+    gnUnavailable: "Regenraster: derzeit nicht verfügbar.",
+    gn24: p => `Regenraster: Die Raster gibt es nur tageweise, daher zeigt die Karte den neuesten vollen Tag jedes Landes, nicht die letzten 24 h: ${p.days}. Die Stationen zeigen die letzten 24 h bis jetzt.`,
+    gnPeriod: p => `Regenraster: ${p.a}–${p.b} (${p.label}; alle Raster enden am selben Tag, eventuell einen Tag vor den Stationen).`,
+    inView: "Sichtbar:", gridDay: p => `Raster: ganzer Tag bis ${p.t}`,
+    msgBothOff: "Regenraster und Stationen sind beide ausgeschaltet.",
+    msgNoGridCountry: p => `${p.c} veröffentlicht kein Regenraster. Stationen einschalten, um die Messwerte zu sehen.`,
+    msgNoGridCustom: "Für eigene Zeiträume gibt es kein Regenraster.", msgNoGridNow: "Für diesen Zeitraum gibt es gerade kein Regenraster.",
+    msgSwitchOn: " Stationen einschalten, um die Messwerte zu sehen.",
+    tipIncomplete: "unvollständig", tipNoData: "keine Daten",
+    sumTitle: p => `${p.n} Stationen, Schnitt ${p.v}`, around: p => `${p.n} Stationen um ${p.name}`,
+    noDataPeriod: p => `Keine Daten (${p.period})`, gaps: "Lücken",
+    stTotal: p => `${p.v} mm gesamt (${p.period})`, notReported: p => ` · ${p.n} ${plural(p.n, "Tag", "Tage")} nicht gemeldet`,
+    stLastYear: p => ` · dieselben Tage im Vorjahr: ${p.v} mm`,
+    notCounted: p => `Nicht gezählt: ${p.have != null ? `nur ${p.have} von ${p.days} Tagen` : "zu wenige Werte"} für diesen Zeitraum gemeldet (${p.period}).`,
+    noPrecip: "Für diesen Zeitraum wurden keine Niederschlagsdaten gemeldet.",
+    period24: "letzte 24 h", periodH: p => `letzte ${p.h} h`,
+    fsOpen: "Karte im Vollbild", fsClose: "Vollbild beenden",
+    spNoGrid: p => `${p.c} veröffentlicht kein tägliches Regenraster, daher gibt es dafür kein Kartenbild.`,
+    spPresetsOnly: p => `Für ${p.c} gibt es das Kartenbild für die Vorauswahlen.`,
+    spPrecomputed: p => `Verwendet das vorberechnete 1-km-Raster (${p.a}–${p.b}) – keine API-Anfragen.`,
+    spCustom: p => `Eigener Zeitraum: ${p.cols} × ${p.rows} Raster (~${p.km} km) → ${p.n} ${plural(p.n, "Live-Anfrage", "Live-Anfragen")} von deinen 240 pro Stunde. Wird je Region, Auflösung und Zeitraum zwischengespeichert.`,
+    spLoadingPre: "Lade vorberechnetes Raster…", spImgFail: "Das vorberechnete Rasterbild konnte nicht geladen werden.",
+    spLoadingApi: "Lade Raster von der API…", spLoadingTiles: "Lade Kartenkacheln…",
+    spTitle: p => `Regensumme ${p.a}–${p.b} · ${p.r} · ${p.label} 1-km-Raster`,
+    spAreaMean: p => `Flächenmittel ${p.v} mm · `, sp1km: "1-km-Raster",
+    spMinMax: p => `min. ${p.a} mm · max. ${p.b} mm · ~${p.km} km Abtastung`, spNoData: "für diesen Zeitraum keine Rasterdaten",
+    spCredAT: "Daten © GeoSphere Austria · Grenzen © Statistik Austria", spCredDE: "Quelle: Deutscher Wetterdienst",
+    spCredCH: "Quelle: MeteoSwiss", spCredNE: "Grenzen: Natural Earth", spCredOSM: "Karte © OpenStreetMap-Mitwirkende",
+    spNoTiles: "Die Kartenkacheln konnten nicht geladen werden – es wird nur das Raster gezeigt.",
+    spPngBlocked: "Der Browser blockiert den PNG-Export (Kartenkacheln ohne CORS). Karte neu erstellen und nochmal versuchen, oder einen Screenshot machen.",
+  },
+  en: {
+    title: "Pilzwetter 🍄 — has it rained enough?",
+    sub: "Has it rained enough? Real station measurements across Austria, Germany, Switzerland and Czechia · data: GeoSphere Austria, DWD, MeteoSwiss, ČHMÚ",
+    langGroup: "Language", loading: "Loading…", timeRange: "Time range", from: "From", to: "to", apply: "Apply",
+    region: "Country or region", rainGrid: "Rain grid", stations: "Stations", grid: "Grid",
+    stCount: p => `${p.n} ${plural(p.n, "station", "stations")}`,
+    keyOne: "One station", keyMany: "Average of 5 stations close together · tap for the list",
+    noteMain: "Tap a circle for daily values, or tap an area on the map to switch to it. Circles show the rain measured at each country's weather stations; the coloured background is each country's interpolated 1 km grid. Gray dashed circles: no data, or too many days missing to count (a station may miss 1 day in 14, 2 in 30, 3 in 45).",
+    spSummary: "Rain map image (1 km grid, downloadable)",
+    spNote: "The interpolated 1 km analysis for the selected region (GeoSphere SPARTACUS for Austria, DWD HYRAS, MeteoSwiss RprelimD), drawn over an OpenStreetMap basemap with borders and towns. Values can differ from single-station measurements; the last days are preliminary.",
+    spDetail: "Detail", spRender: "Render map", spDownload: "Download PNG",
+    close: "Close", zoomHere: "Zoom in here", zoomIn: "Zoom in", zoomOut: "Zoom out",
+    leafletTitle: "A JavaScript library for interactive maps",
+    cacheInfo: p => p.t ? `Station sums and the rain grids are precomputed a few times a day (last update ${p.t});` : "Station sums and the rain grids are precomputed a few times a day;",
+    footer: `Data: <a href="https://data.hub.geosphere.at/dataset/klima-v2-1d" ${A}>klima-v2-1d</a>,
+      <a href="https://data.hub.geosphere.at/dataset/tawes-v1-10min" ${A}>tawes-v1-10min</a> and
+      <a href="https://data.hub.geosphere.at/dataset/spartacus-v3-1d-1km" ${A}>spartacus-v3-1d-1km</a>
+      © GeoSphere Austria (CC&nbsp;BY&nbsp;4.0) · Bundesland borders © Statistik Austria (CC&nbsp;BY&nbsp;4.0).
+      Switzerland: <a href="https://opendatadocs.meteoswiss.ch/a-data-groundbased/a1-automatic-weather-stations" ${A}>SwissMetNet stations</a> and
+      <a href="https://opendatadocs.meteoswiss.ch/c-climate-data/c3-ground-based-climate-data" ${A}>RprelimD precipitation grid</a>, Source: MeteoSwiss.
+      Germany: <a href="https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/more_precip/" ${A}>daily precipitation stations</a>,
+      <a href="https://opendata.dwd.de/climate_environment/CDC/grids_germany/daily/hyras_de/precipitation/" ${A}>HYRAS-DE-PR grid</a> and 10-minute data, Source: Deutscher Wetterdienst.
+      Czechia: <a href="https://opendata.chmi.cz/meteorology/climate/" ${A}>daily and hourly station data</a>, Source: ČHMÚ (CHMI).
+      Country outlines, German Länder and Czech regions: Natural Earth. Basemap © OpenStreetMap contributors.
+      All four services count a day's rain from 06:00 UTC to 06:00 UTC the next day, and every country's presets end on the same day.
+      <span id="cache-info"></span>
+      the 24 h view for Austria and Switzerland and Austrian custom ranges before the archive query the services live
+      (GeoSphere limit: 240 requests/hour); the 24 h view for Germany and Czechia is refreshed every 3 hours.
+      Daily station values are archived (since January 2025 for Austria, April 2025 for Germany, October 2025 for Czechia
+      and January 2026 for Switzerland), so custom ranges reach that far back; for Austria, older ranges are queried live from GeoSphere.
+      <br><br>Pilzwetter was built by <a href="https://protofox.at" ${A}>OutFoxD</a> together with Claude, Anthropic's AI.`,
+    preset: p => p.n === 1 ? "Last 24 h" : `Last ${p.n} days`, presetShort: p => p.n === 1 ? "24 h" : `${p.n} days`,
+    customChip: "Custom…", customSet: p => `Custom: ${p.a} → ${p.b}`,
+    errBoth: "Please pick both dates.", errOrder: "Start must be before end.",
+    errFuture: "End cannot be in the future.", errMax: "Maximum range is 365 days.",
+    "country.AT": "Austria", "country.DE": "Germany", "country.CH": "Switzerland", "country.CZ": "Czechia",
+    groupCountry: "Country", "group.AT": "Austria · Bundesländer", "group.DE": "Germany · Länder", "group.CZ": "Czechia · regions",
+    "live.AT": "TAWES 10-min data", "live.DE": "DWD 10-min data", "live.CH": "MeteoSwiss hourly data", "live.CZ": "CHMI hourly data",
+    "w.good": "Looking good", "w.mid": "Borderline", "w.bad": "Too dry", "w.nodata": "No data", "w.out": "Out of range", "w.error": "Error",
+    nums: p => `<b>${p.avg}</b> mm avg · <b>${p.max}</b> mm max`,
+    metaNoData: p => `No station in ${p.r} reported precipitation for this period yet.`,
+    whenDays: p => `${p.a} → ${p.b} (${p.n} days)`, fromArchive: ", from the archive",
+    when24now: p => `last 24 h until ${p.time} ${p.date} (${p.src}, refreshed every 3 h)`,
+    when24until: p => `last 24 h until ${p.time} (${p.src})`, when24: p => `last 24 h (${p.src})`,
+    whenCH: p => `since ${p.time} yesterday (${p.h} h, ${p.src})`,
+    metaLine: p => `${p.r} · ${p.when} · ${p.k} of ${p.n} stations`,
+    wettest: p => `Wettest: ${p.name} (${p.v} mm).`, areaMean: p => ` Area mean (1 km grid): ${p.v} mm.`,
+    availThrough: p => ` Daily data currently available through ${p.d}.`,
+    lastYear: p => ` Same days last year (${p.a}–${p.b}): Ø ${p.v} mm.`,
+    pickOther: "pick another period",
+    netErr: "Network error — GeoSphere API not reachable.",
+    rateLimit: p => "GeoSphere rate limit exceeded (max 5 requests/s and 240 requests/hour per user)." +
+      (p.hint ? ` Server says:${p.hint}.` : "") + " Try again in a few minutes.",
+    reqFailed: "request failed",
+    loadingCountry: p => `Loading ${p.c}…`, loadingArchive: "Loading archived daily values…",
+    countryUnavailable: p => `Data for ${p.c} isn't available right now. Try again later.`,
+    outOfWindow: p => `For ${p.c}, daily data covers ${p.a} – ${p.b}. Pick a range inside that window, or use a preset.`,
+    nowUnavailable: p => `The last 24 h for ${p.c} aren't available right now.`,
+    noStations: p => `No stations in ${p.r}.`, noActive: p => `No active stations found in ${p.r}.`,
+    loading24: p => `Loading the last 24 h for ${p.n} stations…`,
+    loadingStations: "Loading station list…", loadingPrecip: "Loading precipitation data…",
+    gnNoGrid: p => `Rain grid: ${p.c} publishes no daily rain grid, so the map shows its stations only.`,
+    gnPresets: "Rain grid: shown for the presets, not for custom periods.",
+    gnUnavailable: "Rain grid: not available right now.",
+    gn24: p => `Rain grid: the grids are daily, so this shows each country's newest full day, not the last 24 h: ${p.days}. The stations show the last 24 h until now.`,
+    gnPeriod: p => `Rain grid: ${p.a}–${p.b} (${p.label}; all grids end on the same day, which can be a day before the stations).`,
+    inView: "In view:", gridDay: p => `Grid: full day to ${p.t}`,
+    msgBothOff: "Rain grid and stations are both switched off.",
+    msgNoGridCountry: p => `${p.c} publishes no rain grid. Switch on Stations to see its measurements.`,
+    msgNoGridCustom: "There's no rain grid for custom periods.", msgNoGridNow: "No rain grid for this period right now.",
+    msgSwitchOn: " Switch on Stations to see the measurements.",
+    tipIncomplete: "incomplete", tipNoData: "no data",
+    sumTitle: p => `${p.n} stations, average ${p.v}`, around: p => `${p.n} stations around ${p.name}`,
+    noDataPeriod: p => `No data (${p.period})`, gaps: "gaps",
+    stTotal: p => `${p.v} mm total (${p.period})`, notReported: p => ` · ${p.n} ${plural(p.n, "day", "days")} not reported`,
+    stLastYear: p => ` · same days last year: ${p.v} mm`,
+    notCounted: p => `Not counted: ${p.have != null ? `only ${p.have} of ${p.days} days` : "too few values"} reported for this period (${p.period}).`,
+    noPrecip: "No precipitation data reported for this period.",
+    period24: "last 24 h", periodH: p => `last ${p.h} h`,
+    fsOpen: "Full screen map", fsClose: "Exit full screen",
+    spNoGrid: p => `${p.c} publishes no daily rain grid, so there's no map image for it.`,
+    spPresetsOnly: p => `For ${p.c} the map image is available for the presets.`,
+    spPrecomputed: p => `Uses the precomputed 1 km grid (${p.a}–${p.b}) — no API requests.`,
+    spCustom: p => `Custom period: ${p.cols} × ${p.rows} grid (~${p.km} km) → ${p.n} live API ${plural(p.n, "request", "requests")} of your 240/hour. Cached per region, detail and period.`,
+    spLoadingPre: "Loading precomputed grid…", spImgFail: "Precomputed grid image could not be loaded.",
+    spLoadingApi: "Loading grid from the API…", spLoadingTiles: "Loading basemap tiles…",
+    spTitle: p => `Rain sum ${p.a}–${p.b} · ${p.r} · ${p.label} 1 km grid`,
+    spAreaMean: p => `area mean ${p.v} mm · `, sp1km: "1 km grid",
+    spMinMax: p => `min ${p.a} mm · max ${p.b} mm · ~${p.km} km sampling`, spNoData: "no grid data returned for this period",
+    spCredAT: "Data © GeoSphere Austria · Borders © Statistik Austria", spCredDE: "Source: Deutscher Wetterdienst",
+    spCredCH: "Source: MeteoSwiss", spCredNE: "Borders: Natural Earth", spCredOSM: "Basemap © OpenStreetMap contributors",
+    spNoTiles: "Basemap tiles could not be loaded — showing grid only.",
+    spPngBlocked: "PNG export blocked by the browser (basemap tiles without CORS). Re-render and try again, or screenshot the map.",
+  },
+};
+/* translate: a string, or a function of the parameters */
+function tr(key, p = {}) {
+  const v = I18N[lang][key] ?? I18N.en[key];
+  return v == null ? key : typeof v === "function" ? v(p) : v;
+}
+const cname = c => tr(`country.${c}`);
+
+/* static texts carry data-i18n (text), data-i18n-html (markup) or data-i18n-aria (aria-label) */
+function applyStatic() {
+  document.documentElement.lang = lang;
+  document.title = tr("title");
+  document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = tr(el.dataset.i18n); });
+  document.querySelectorAll("[data-i18n-html]").forEach(el => { el.innerHTML = tr(el.dataset.i18nHtml); });
+  document.querySelectorAll("[data-i18n-aria]").forEach(el => el.setAttribute("aria-label", tr(el.dataset.i18nAria)));
+  document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
+  renderCacheInfo();
+}
+function renderCacheInfo() {
+  const el = $("cache-info");
+  if (!el) return;
+  const g = state.generated && new Date(state.generated);
+  el.textContent = tr("cacheInfo", { t: g ? g.toLocaleString(numLoc(), { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "" });
+}
+function setLang(l) {
+  if (!LANGS.includes(l) || l === lang) return;
+  lang = l;
+  try { localStorage.setItem("pw_lang", l); } catch (_) {}
+  closeSheet();
+  applyStatic();
+  renderChips(); buildRegionOptions(); updateFsButton(); spCost();
+  if (state.map) { localizeLeaflet(); renderLegend(); refresh(); }
+}
+/* Leaflet's own controls: zoom button titles and the attribution link's tooltip */
+let leafletPrefix = null;
+function localizeLeaflet() {
+  const zc = state.map.zoomControl, ac = state.map.attributionControl;
+  for (const [b, k] of [[zc && zc._zoomInButton, "zoomIn"], [zc && zc._zoomOutButton, "zoomOut"]])
+    if (b) { b.title = tr(k); b.setAttribute("aria-label", tr(k)); }
+  if (ac) {
+    if (leafletPrefix == null) leafletPrefix = ac.options.prefix || "";
+    if (typeof leafletPrefix === "string") ac.setPrefix(leafletPrefix.replace("A JavaScript library for interactive maps", tr("leafletTitle")));
+  }
+}
 const country = () => regionCountry(state.bl);
 const isWholeCountry = () => state.bl === country();
 const regionName = (c, code) => c === "AT" ? code : c === "CH" ? cantonName(code) : ((COUNTRIES[c].regions || {})[code] || {}).name || code;
-const blName = () => isWholeCountry() ? COUNTRIES[country()].name
+const blName = () => isWholeCountry() ? cname(country())
   : country() === "AT" ? state.bl : regionName(country(), state.bl.slice(3));
 /* the region id a station belongs to (s.country is set when its file loads) */
 const stationRegion = s => s.country === "AT" ? s.state : `${s.country}-${s.state}`;
@@ -561,20 +795,17 @@ async function apiFetch(url) {
 
   let res;
   try { res = await fetch(url); }
-  catch (e) { throw new Error("Network error — GeoSphere API not reachable."); }
+  catch (e) { throw new Error(tr("netErr")); }
 
   if (res.status === 429) {
     let hint = "";
     for (const [k, v] of res.headers.entries()) {
       if (/ratelimit|retry-after/i.test(k)) hint += ` ${k}=${v}`;
     }
-    throw new Error(
-      "GeoSphere rate limit exceeded (max 5 requests/s and 240 requests/hour per user)." +
-      (hint ? ` Server says:${hint}.` : "") + " Try again in a few minutes."
-    );
+    throw new Error(tr("rateLimit", { hint }));
   }
   if (!res.ok) {
-    let msg = res.statusText || "request failed";
+    let msg = res.statusText || tr("reqFailed");
     try {
       const j = await res.json();
       msg = j.message || j.detail || (Array.isArray(j) && j[0] && j[0].msg) || JSON.stringify(j).slice(0, 200);
@@ -649,10 +880,7 @@ function ensureCountry(c) {
     stationPromises[c] = siteJson(COUNTRIES[c].stations).then(doc => {
       if (doc && doc.stations) doc.stations.forEach(s => { s.country = c; });
       state.st[c] = doc;
-      if (doc && doc.generated) {
-        const t = new Date(doc.generated);
-        $("cache-info").textContent = `Station sums and the rain grids are precomputed a few times a day (last update ${t.toLocaleString("de-AT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })});`;
-      }
+      if (doc && doc.generated) { state.generated = doc.generated; renderCacheInfo(); }
       return doc;
     });
   }
@@ -727,7 +955,7 @@ async function rangeFromArchive(range) {
     if (!cov.years[y]) return null;
     files.push(cov.years[y].file);
   }
-  setStatus($("status"), "info", "Loading archived daily values…");
+  setStatus($("status"), "info", tr("loadingArchive"));
   const docs = await Promise.all(files.map(loadHist));
   setStatus($("status"), "", "");
   if (docs.some(d => !d || !d.stations)) return null;
@@ -801,18 +1029,18 @@ async function ensureStations(kind) {
 async function loadRangeData() {
   const range = currentRange(), c = country();
   if (!state.st[c]) {
-    setStatus($("status"), "info", `Loading ${COUNTRIES[c].name}…`);
+    setStatus($("status"), "info", tr("loadingCountry", { c: cname(c) }));
     await ensureCountry(c);
     setStatus($("status"), "", "");
   }
   if (c !== "AT") {
-    if (!state.st[c]) throw new Error(`Data for ${COUNTRIES[c].name} isn't available right now. Try again later.`);
+    if (!state.st[c]) throw new Error(tr("countryUnavailable", { c: cname(c) }));
     if (range.src === "tawes") return c === "CH" ? loadCH24h(range) : loadNow(c, range);
     const fromCache = rangeFromCache(range) || await rangeFromArchive(range);
     if (fromCache) return fromCache;
     const cc = state.st[c], cov = archiveCoverage(c);
     const [a, b] = cov ? [cov.first, cov.last] : [cc.dates[0], cc.through];
-    throw Object.assign(new Error(`For ${COUNTRIES[c].name}, daily data covers ${dm(a)}${a.slice(0, 4)} – ${dm(b)}${b.slice(0, 4)}. Pick a range inside that window, or use a preset.`), { soft: true });
+    throw Object.assign(new Error(tr("outOfWindow", { c: cname(c), a: dm(a) + a.slice(0, 4), b: dm(b) + b.slice(0, 4) })), { soft: true });
   }
   if (range.src === "klima") {
     const fromCache = rangeFromCache(range) || await rangeFromArchive(range);
@@ -826,7 +1054,7 @@ async function loadRangeData() {
 async function loadNow(c, range) {
   if (!state.now[c]) state.now[c] = await siteJson(COUNTRIES[c].now);
   const doc = state.now[c];
-  if (!doc || !doc.stations) throw new Error(`The last 24 h for ${COUNTRIES[c].name} aren't available right now.`);
+  if (!doc || !doc.stations) throw new Error(tr("nowUnavailable", { c: cname(c) }));
   const labels = doc.hours.map(h => `${pad(new Date(h).getHours())}:00`);    // hour ends, local time
   const stations = doc.stations.map(s => ({ ...s, country: c })).filter(inBl).map(s => {
     const vals = s.h.filter(v => v != null);
@@ -846,8 +1074,8 @@ async function loadCH24h(range) {
   if (cached) return { range: { ...range, ...cached.rangeInfo }, stations: cached.stations, lastDataTs: cached.lastDataTs };
 
   const list = state.st.CH.stations.filter(inBl);
-  if (!list.length) throw new Error(`No stations in ${blName()}.`);
-  setStatus($("status"), "info", `Loading the last 24 h for ${list.length} stations…`);
+  if (!list.length) throw new Error(tr("noStations", { r: blName() }));
+  setStatus($("status"), "info", tr("loading24", { n: list.length }));
   const since = Date.now() - 24 * 3600e3;
   let first = Infinity, lastTs = null;
   const tasks = list.map(st => async () => {
@@ -891,13 +1119,13 @@ async function loadRangeLive(range) {
   const cached = cacheGet(key, 15*60e3);
   if (cached) return { range, ...cached };
 
-  setStatus(status, "info", "Loading station list…");
+  setStatus(status, "info", tr("loadingStations"));
   await ensureStations(range.src);
-  setStatus(status, "info", "Loading precipitation data…");
+  setStatus(status, "info", tr("loadingPrecip"));
 
   const all = range.src === "tawes" ? state.tawesStations : state.klimaStations;
   const stations = all.filter(inBl);
-  if (!stations.length) throw new Error(`No active stations found in ${blName()}.`);
+  if (!stations.length) throw new Error(tr("noActive", { r: blName() }));
 
   const ids = stations.map(s => s.id).join(",");
   let url, paramName;
@@ -998,17 +1226,17 @@ function updateGridLayer(range) {
   state.gridLayers = [];
   const per = gridPeriod(range), note = $("grid-note"), cfg = COUNTRIES[country()];
   if (!cfg.grid) {
-    note.textContent = `Rain grid: ${cfg.name} publishes no daily rain grid, so the map shows its stations only.`;
+    note.textContent = tr("gnNoGrid", { c: cname(country()) });
   } else if (!per) {
     note.textContent = gridDoc()
-      ? "Rain grid: shown for the presets, not for custom periods."
-      : "Rain grid: not available right now.";
+      ? tr("gnPresets")
+      : tr("gnUnavailable");
   } else if (range.days === 1) {
     const days = COUNTRY_ORDER.map(c => [c, gridPeriod(range, c)]).filter(([, p]) => p)
-      .map(([c, p]) => `${COUNTRIES[c].name} ${gridDayText(p.end)}`);
-    note.textContent = `Rain grid: the grids are daily, so this shows each country's newest full day, not the last 24 h: ${days.join("; ")}. The stations show the last 24 h until now.`;
+      .map(([c, p]) => `${cname(c)} ${gridDayText(p.end)}`);
+    note.textContent = tr("gn24", { days: days.join("; ") });
   } else {
-    note.textContent = `Rain grid: ${dm(per.start)}–${dm(per.end)} (${cfg.gridLabel}; all grids end on the same day, which can be a day before the stations).`;
+    note.textContent = tr("gnPeriod", { a: dm(per.start), b: dm(per.end), label: cfg.gridLabel });
   }
   if (!state.gridOn) return;
   for (const c of COUNTRY_ORDER) {
@@ -1081,7 +1309,7 @@ function lastYearText(res) {
   const vals = res.stations.filter(s => s.ly != null).map(s => s.ly);
   if (!vals.length || vals.length < 0.5 * res.stations.filter(s => s.hasData).length) return "";
   const end = r.lyThrough, start = isoOf(dayNo(end) - r.days + 1);
-  return ` Same days last year (${dm(start)}–${dm(end)}${end.slice(0, 4)}): Ø ${fmt1(vals.reduce((a, b) => a + b, 0) / vals.length)} mm.`;
+  return tr("lastYear", { a: dm(start), b: dm(end) + end.slice(0, 4), v: fmt1(vals.reduce((a, b) => a + b, 0) / vals.length) });
 }
 function renderVerdict(res) {
   const r = res.range;
@@ -1089,48 +1317,48 @@ function renderVerdict(res) {
   const wordEl = $("v-word"), numsEl = $("v-nums"), metaEl = $("v-meta"), hintEl = $("v-hint");
 
   if (!withData.length) {
-    wordEl.textContent = "No data"; wordEl.className = "word serif mid";
-    numsEl.textContent = ""; metaEl.textContent = `No station in ${blName()} reported precipitation for this period yet.`;
-    hintEl.textContent = ""; fsVerdict("No data", "mid", ""); return;
+    wordEl.textContent = tr("w.nodata"); wordEl.className = "word serif mid";
+    numsEl.textContent = ""; metaEl.textContent = tr("metaNoData", { r: blName() });
+    hintEl.textContent = ""; fsVerdict(tr("w.nodata"), "mid", ""); return;
   }
   const avg = withData.reduce((a, s) => a + s.sum, 0) / withData.length;
   const maxSt = withData.reduce((a, s) => (s.sum > a.sum ? s : a), withData[0]);
 
   let word, cls;
-  if (avg >= r.good)      { word = "Looking good"; cls = "good"; }
-  else if (avg >= r.mid)  { word = "Borderline";   cls = "mid";  }
-  else                    { word = "Too dry";      cls = "bad";  }
+  if (avg >= r.good)      { word = tr("w.good"); cls = "good"; }
+  else if (avg >= r.mid)  { word = tr("w.mid");  cls = "mid";  }
+  else                    { word = tr("w.bad");  cls = "bad";  }
   wordEl.textContent = word; wordEl.className = `word serif ${cls}`;
-  numsEl.innerHTML = `<b>${fmt1(avg)}</b> mm avg · <b>${fmt1(maxSt.sum)}</b> mm max`;
+  numsEl.innerHTML = tr("nums", { avg: fmt1(avg), max: fmt1(maxSt.sum) });
   fsVerdict(word, cls, `Ø ${fmt1(avg)} mm`, ` · max ${fmt1(maxSt.sum)}`);
 
   let when;
   const c = country();
-  if (r.days !== 1) when = `${dmy(r.startIso)} → ${dmy(r.endIso)} (${r.days} days)` + (r.archive ? ", from the archive" : "");
+  if (r.days !== 1) when = tr("whenDays", { a: dmy(r.startIso), b: dmy(r.endIso), n: r.days }) + (r.archive ? tr("fromArchive") : "");
   else if (r.nowEnd) {
     const e = new Date(r.nowEnd);
-    when = `last 24 h until ${pad(e.getHours())}:00 ${dm(isoDate(e))} (${COUNTRIES[c].live24}, refreshed every 3 h)`;
+    when = tr("when24now", { time: `${pad(e.getHours())}:00`, date: dm(isoDate(e)), src: tr(`live.${c}`) });
   }
   else if (c === "AT") {
     const e = res.lastDataTs && new Date(res.lastDataTs);
-    when = e ? `last 24 h until ${pad(e.getHours())}:${pad(e.getMinutes())} (${COUNTRIES.AT.live24})` : `last 24 h (${COUNTRIES.AT.live24})`;
+    when = e ? tr("when24until", { time: `${pad(e.getHours())}:${pad(e.getMinutes())}`, src: tr("live.AT") }) : tr("when24", { src: tr("live.AT") });
   }
-  else if ((r.chHours || 0) >= 23) when = `last 24 h (${COUNTRIES.CH.live24})`;
+  else if ((r.chHours || 0) >= 23) when = tr("when24", { src: tr("live.CH") });
   else {
     /* MeteoSwiss' live hourly files start at 12:00 UTC yesterday */
     const y = new Date(); y.setUTCDate(y.getUTCDate() - 1); y.setUTCHours(12, 0, 0, 0);
-    when = `since ${pad(y.getHours())}:00 yesterday (${r.chHours || 0} h, MeteoSwiss hourly data)`;
+    when = tr("whenCH", { time: `${pad(y.getHours())}:00`, h: r.chHours || 0, src: tr("live.CH") });
   }
-  metaEl.textContent = `${blName()} · ${when} · ${withData.length} of ${res.stations.length} stations`;
+  metaEl.textContent = tr("metaLine", { r: blName(), when, k: withData.length, n: res.stations.length });
 
-  let hint = `Wettest: ${maxSt.name} (${fmt1(maxSt.sum)} mm).`;
+  let hint = tr("wettest", { name: maxSt.name, v: fmt1(maxSt.sum) });
   const per = r.days === 1 ? null : gridPeriod(r);      // the 24 h grid is a different period
   const gm = per && per.mean && per.mean[meanKey()];
-  if (gm != null) hint += ` Area mean (1 km grid): ${fmt1(gm)} mm.`;
+  if (gm != null) hint += tr("areaMean", { v: fmt1(gm) });
   hint += lastYearText(res);
   if (!r.cached && r.days > 1 && res.lastDataTs) {
     const last = res.lastDataTs.slice(0, 10);
-    if (last < r.endIso) hint += ` Daily data currently available through ${dm(last)}.`;
+    if (last < r.endIso) hint += tr("availThrough", { d: dm(last) });
   }
   hintEl.textContent = hint;
 }
@@ -1165,6 +1393,7 @@ function initMap() {
     L.DomEvent.disableScrollPropagation($(id));
   }
   initAreaPicking();
+  localizeLeaflet();
 }
 
 /* fit the selected region; in full screen leave room for the bar on top and the legend below */
@@ -1233,7 +1462,7 @@ function areaFeature(id) {
   if (id === c || !state.bd[c]) return outlineOf(c);
   return state.bd[c].features.find(f => regionFeatureId(c, f) === id);
 }
-const areaName = id => { const c = regionCountry(id); return id === c ? COUNTRIES[c].name : c === "AT" ? id : regionName(c, id.slice(3)); };
+const areaName = id => { const c = regionCountry(id); return id === c ? cname(c) : c === "AT" ? id : regionName(c, id.slice(3)); };
 
 function initAreaPicking() {
   const map = state.map;
@@ -1306,7 +1535,7 @@ const FullscreenControl = L.Control.extend({
 function updateFsButton(b = $("fs-btn")) {
   if (!b) return;
   b.innerHTML = mapFull ? FS_ICON.close : FS_ICON.open;
-  b.title = mapFull ? "Exit full screen" : "Full screen map";
+  b.title = mapFull ? tr("fsClose") : tr("fsOpen");
   b.setAttribute("aria-label", b.title);
 }
 /* The whole page goes full screen (where the browser allows it, so the address bar hides) and
@@ -1459,7 +1688,7 @@ function addDot(st, r, range) {
     : { radius: Math.max(4, r - 2), color: "#777", weight: 1.5, dashArray: "3 3", fillColor: "#eee", fillOpacity: 0.4 };
   opts.bubblingMouseEvents = false;         // a tap on a dot must not also pick the area below it
   const m = L.circleMarker([st.lat, st.lon], opts).addTo(state.markerLayer);
-  m.bindTooltip(`${st.name}: ${st.hasData ? fmt1(st.sum) + " mm" : st.incomplete ? "incomplete" : "no data"}`, { direction: "top" });
+  m.bindTooltip(`${st.name}: ${st.hasData ? fmt1(st.sum) + " mm" : st.incomplete ? tr("tipIncomplete") : tr("tipNoData")}`, { direction: "top" });
   m.on("click", () => openSheet(st, range));
 }
 
@@ -1470,7 +1699,7 @@ function addSummary(list, r, at, range) {
     `color:${a && a.mean >= 150 ? "#fff" : "#1a1a1a"}"><b>${label}</b><small>mm</small><i class="cnt">${list.length}</i></div>`;
   const m = L.marker(at, {
     icon: L.divIcon({ className: "", html, iconSize: [size, size], iconAnchor: [size / 2, size / 2] }),
-    title: `${list.length} stations, average ${a ? fmt1(a.mean) + " mm" : "no data"}`,
+    title: tr("sumTitle", { n: list.length, v: a ? fmt1(a.mean) + " mm" : tr("tipNoData") }),
   }).addTo(state.markerLayer);
   m.on("click", () => openSummary(list, at, range));
 }
@@ -1486,15 +1715,15 @@ function nearestName(list, at) {
 }
 
 const periodText = range => range.days !== 1 ? `${dmy(range.startIso)} → ${dmy(range.endIso)}`
-  : range.chHours && range.chHours < 23 ? `last ${range.chHours} h` : "last 24 h";
+  : range.chHours && range.chHours < 23 ? tr("periodH", { h: range.chHours }) : tr("period24");
 
 function openSummary(list, at, range) {
-  const a = avgOf(list), title = `${list.length} stations around ${nearestName(list, at)}`;
+  const a = avgOf(list), title = tr("around", { n: list.length, name: nearestName(list, at) });
   $("sheet-back").hidden = true;
   $("sheet-title").textContent = title;
   $("sheet-total").textContent = a
     ? `Ø ${fmt1(a.mean)} mm · ${fmt1(a.min)}–${fmt1(a.max)} mm (${periodText(range)})`
-    : `No data (${periodText(range)})`;
+    : tr("noDataPeriod", { period: periodText(range) });
   $("sheet-actions").hidden = false;
   $("sheet-zoom").onclick = () => {
     closeSheet();
@@ -1510,7 +1739,7 @@ function openSummary(list, at, range) {
     const w = st.hasData ? Math.max(1, st.sum / max * 100) : 0;
     row.innerHTML = `<span class="nm"></span>` +
       `<span class="track"><span class="fill" style="width:${w}%;background:${st.hasData ? colorFor(st.sum) : "transparent"}"></span></span>` +
-      `<span class="val">${st.hasData ? fmt1(st.sum) + " mm" : st.incomplete ? "gaps" : "–"}</span>`;
+      `<span class="val">${st.hasData ? fmt1(st.sum) + " mm" : st.incomplete ? tr("gaps") : "–"}</span>`;
     row.querySelector(".nm").textContent = st.name;
     row.onclick = () => openSheet(st, range, { title, back: () => openSummary(list, at, range) });
     bars.appendChild(row);
@@ -1542,11 +1771,11 @@ function renderLegend() {
     const span = classesInView(), [lo, hi] = span || [0, BINS.length - 1];
     const items = BINS.slice(lo, hi + 1).map((b, i) =>
       `<span class="item"><span class="swatch" style="background:${b[1]}"></span>${b[2]}${lo + i === hi ? " mm" : ""}</span>`).join("");
-    html = (span ? `<span class="item lg-title">In view:</span>` : "") + items;
+    html = (span ? `<span class="item lg-title">${tr("inView")}</span>` : "") + items;
     const range = currentRange();
     if (range.days === 1 && state.gridOn && state.gridLayers.length) {
       const p = gridPeriod(range) || COUNTRY_ORDER.map(c => gridPeriod(range, c)).find(Boolean);
-      if (p) html += `<span class="item lg-title">Grid: full day to ${gridDayText(p.end).split(" → ")[1]}</span>`;
+      if (p) html += `<span class="item lg-title">${tr("gridDay", { t: gridDayText(p.end).split(" → ")[1] })}</span>`;
     }
   }
   if (html !== renderLegend.last) { $("legend").innerHTML = $("fs-legend").innerHTML = html; renderLegend.last = html; }
@@ -1555,23 +1784,21 @@ function renderLegend() {
 /* what to say when the map shows nothing at all ("" when something is drawn, or while loading) */
 function mapMessage() {
   if (!state.map || !state.lastRes) return "";
-  if (!state.gridOn && !state.stationsOn) return "Rain grid and stations are both switched off.";
+  if (!state.gridOn && !state.stationsOn) return tr("msgBothOff");
   if (state.stationsOn) return "";
   const cfg = COUNTRIES[country()], range = currentRange();
-  if (!cfg.grid) return `${cfg.name} publishes no rain grid. Switch on Stations to see its measurements.`;
-  if (!gridPeriod(range)) return (range.type === "custom" ? "There's no rain grid for custom periods." : "No rain grid for this period right now.") +
-    " Switch on Stations to see the measurements.";
+  if (!cfg.grid) return tr("msgNoGridCountry", { c: cname(country()) });
+  if (!gridPeriod(range)) return (range.type === "custom" ? tr("msgNoGridCustom") : tr("msgNoGridNow")) + tr("msgSwitchOn");
   return "";
 }
 
 /* One menu: the four countries first, then the regions of Austria, Germany and Czechia
    (Switzerland only as a whole). Regions without a station (per regions.json) are left out. */
-const REGION_GROUP = { AT: "Austria · Bundesländer", DE: "Germany · Länder", CZ: "Czechia · regions" };
 function buildRegionOptions() {
   const sel = $("bl"), counts = state.regionCounts || {};
   const has = (c, key) => !counts[c] || (counts[c][key] || 0) > 0;
-  const countries = `<optgroup label="Country">` +
-    COUNTRY_ORDER.map(c => `<option value="${c}">${COUNTRIES[c].name}</option>`).join("") + `</optgroup>`;
+  const countries = `<optgroup label="${tr("groupCountry")}">` +
+    COUNTRY_ORDER.map(c => `<option value="${c}">${cname(c)}</option>`).join("") + `</optgroup>`;
   const groups = COUNTRY_ORDER.filter(c => PICK_REGIONS[c]).map(c => {
     const regions = c === "AT"
       ? Object.keys(BL_BOUNDS).map(n => [n, n])
@@ -1579,7 +1806,7 @@ function buildRegionOptions() {
     const opts = regions.filter(([id]) => has(c, c === "AT" ? id : id.slice(3)))
       .sort((a, b) => a[1].localeCompare(b[1], "de"))
       .map(([id, name]) => `<option value="${id}">${name}</option>`).join("");
-    return `<optgroup label="${REGION_GROUP[c]}">${opts}</optgroup>`;
+    return `<optgroup label="${tr(`group.${c}`)}">${opts}</optgroup>`;
   }).join("");
   sel.innerHTML = countries + groups;
   state.pickable = new Set([...sel.options].map(o => o.value));
@@ -1625,11 +1852,11 @@ function openSheet(st, range, parent) {
     (st.altitude != null ? ` · ${Math.round(st.altitude)} m` : "");
   const days = st.daily.length, gaps = st.missing || 0;
   $("sheet-total").textContent = st.hasData
-    ? `${fmt1(st.sum)} mm total (${periodText(range)})` + (gaps ? ` · ${gaps} day${gaps > 1 ? "s" : ""} not reported` : "") +
-      (st.ly != null ? ` · same days last year: ${fmt1(st.ly)} mm` : "")
+    ? tr("stTotal", { v: fmt1(st.sum), period: periodText(range) }) + (gaps ? tr("notReported", { n: gaps }) : "") +
+      (st.ly != null ? tr("stLastYear", { v: fmt1(st.ly) }) : "")
     : st.incomplete
-      ? `Not counted: ${gaps != null ? `only ${days - gaps} of ${days} days` : "too few values"} reported for this period (${periodText(range)}).`
-      : "No precipitation data reported for this period.";
+      ? tr("notCounted", { have: st.missing != null ? days - gaps : null, days, period: periodText(range) })
+      : tr("noPrecip");
   const bars = $("sheet-bars");
   bars.innerHTML = "";
   const vals = st.daily.filter(d => d.mm != null).map(d => d.mm);
@@ -1730,7 +1957,7 @@ const mercY = lat => Math.log(Math.tan(Math.PI/4 + lat*Math.PI/360));
 function spRegion() {
   const b = regionBounds();
   const pl = (b.n - b.s) * 0.04, pw = (b.e - b.w) * 0.04;
-  return { id: isWholeCountry() ? COUNTRIES[country()].name.toLowerCase() : state.bl.toLowerCase(), name: blName(),
+  return { id: state.bl.toLowerCase(), name: blName(),
            s: b.s - pl, w: b.w - pw, n: b.n + pl, e: b.e + pw };
 }
 
@@ -1759,21 +1986,21 @@ function spCost() {
   $("sp-resrow").style.display = per || c !== "AT" ? "none" : "flex";
   $("sp-render").disabled = !per && c !== "AT";
   if (!COUNTRIES[c].grid) {
-    $("sp-cost").textContent = `${COUNTRIES[c].name} publishes no daily rain grid, so there's no map image for it.`;
+    $("sp-cost").textContent = tr("spNoGrid", { c: cname(c) });
     return 0;
   }
   if (!per && c !== "AT") {
-    $("sp-cost").textContent = `For ${COUNTRIES[c].name} the map image is available for the 7, 14, 30 and 45-day presets.`;
+    $("sp-cost").textContent = tr("spPresetsOnly", { c: cname(c) });
     return 0;
   }
   if (per) {
-    $("sp-cost").textContent = `Uses the precomputed 1 km grid (${dm(per.start)}–${dm(per.end)}) — no API requests.`;
+    $("sp-cost").textContent = tr("spPrecomputed", { a: dm(per.start), b: dm(per.end) });
     return 0;
   }
   const rg = spRegion(), lt = spLattice(rg);
   const reqs = Math.ceil((lt.cols * lt.rows) / CHUNK);
   $("sp-cost").textContent =
-    `Custom period: ${lt.cols} × ${lt.rows} grid (~${lt.resKm} km) → ${reqs} live API request${reqs > 1 ? "s" : ""} of your 240/hour. Cached per region, detail and period.`;
+    tr("spCustom", { cols: lt.cols, rows: lt.rows, km: lt.resKm, n: reqs });
   return reqs;
 }
 
@@ -1900,7 +2127,7 @@ async function spRender() {
 
     if (per) {
       start = parseDay(per.start); end = parseDay(per.end);
-      setStatus(st, "info", "Loading precomputed grid…");
+      setStatus(st, "info", tr("spLoadingPre"));
       /* every country's grid, so border regions show both sides */
       for (const c of COUNTRY_ORDER) {
         const p = gridPeriod(range, c), g = gridDoc(c);
@@ -1908,12 +2135,12 @@ async function spRender() {
         const img = await loadImage(`${DATA}${p.file}?v=${encodeURIComponent(g.generated)}`);
         if (img) overlays.push({ img, bounds: g.bounds, c });
       }
-      if (!overlays.length) throw new Error("Precomputed grid image could not be loaded.");
+      if (!overlays.length) throw new Error(tr("spImgFail"));
     } else {
       ({ start, end } = spPeriod());
       lt = spLattice(rg);
       prog.style.display = "block"; pfill.style.width = "0%";
-      setStatus(st, "info", "Loading grid from the API…");
+      setStatus(st, "info", tr("spLoadingApi"));
       sums = await spFetchSums(rg, lt, start, end, f => { pfill.style.width = Math.round(f * 100) + "%"; });
       pfill.style.width = "100%";
     }
@@ -1926,10 +2153,10 @@ async function spRender() {
 
     ctx.fillStyle = "#1b241c"; ctx.fillRect(0, 0, cv.width, cv.height);
     ctx.fillStyle = "#e8e6dc"; ctx.font = "bold 28px Georgia, serif";
-    ctx.fillText(`Rain sum ${dm(isoDate(start))}–${dm(isoDate(end))}${end.getFullYear()} · ${rg.name} · ` +
-      `${COUNTRIES[country()].gridLabel} 1 km grid`, padX, 36);
+    ctx.fillText(tr("spTitle", { a: dm(isoDate(start)), b: dm(isoDate(end)) + end.getFullYear(), r: rg.name,
+      label: COUNTRIES[country()].gridLabel }), padX, 36);
 
-    setStatus(st, "info", "Loading basemap tiles…");
+    setStatus(st, "info", tr("spLoadingTiles"));
     const { tilesDrawn, proj } = await spDrawBasemap(ctx, rg, padX, titleH, mapW, mapH);
 
     ctx.save();
@@ -1981,18 +2208,18 @@ async function spRender() {
     let stats;
     if (per) {
       const gm = per.mean && per.mean[meanKey()];
-      stats = (gm != null ? `area mean ${fmt1(gm)} mm · ` : "") + "1 km grid";
+      stats = (gm != null ? tr("spAreaMean", { v: fmt1(gm) }) : "") + tr("sp1km");
     } else {
       const valid = sums.filter(s => s != null);
-      stats = valid.length ? `min ${fmt1(Math.min(...valid))} mm · max ${fmt1(Math.max(...valid))} mm · ~${lt.resKm} km sampling`
-                           : "no grid data returned for this period";
+      stats = valid.length ? tr("spMinMax", { a: fmt1(Math.min(...valid)), b: fmt1(Math.max(...valid)), km: lt.resKm })
+                           : tr("spNoData");
     }
     const drawn = overlays.length ? overlays.map(o => o.c) : ["AT"];
-    const credits = [drawn.includes("AT") && "Data © GeoSphere Austria · Borders © Statistik Austria",
-                     drawn.includes("DE") && "Source: Deutscher Wetterdienst",
-                     drawn.includes("CH") && "Source: MeteoSwiss",
-                     (drawn.includes("DE") || drawn.includes("CH")) && "Borders: Natural Earth"].filter(Boolean).join(" · ");
-    ctx.fillText(`${stats} · ${credits} · Basemap © OpenStreetMap contributors`, padX, fy);
+    const credits = [drawn.includes("AT") && tr("spCredAT"),
+                     drawn.includes("DE") && tr("spCredDE"),
+                     drawn.includes("CH") && tr("spCredCH"),
+                     (drawn.includes("DE") || drawn.includes("CH")) && tr("spCredNE")].filter(Boolean).join(" · ");
+    ctx.fillText(`${stats} · ${credits} · ${tr("spCredOSM")}`, padX, fy);
     fy += 14;
     const sw = Math.min(64, (W - padX*2) / BINS.length);
     BINS.forEach((b, i) => {
@@ -2006,7 +2233,7 @@ async function spRender() {
     $("sp-download").disabled = false;
     SP.lastRender = `pilzwetter_${rg.id}_${isoDate(start)}_${isoDate(end)}.png`;
     setStatus(st, "", "");
-    if (!tilesDrawn) setStatus(st, "info", "Basemap tiles could not be loaded — showing grid only.");
+    if (!tilesDrawn) setStatus(st, "info", tr("spNoTiles"));
   } catch (e) {
     setStatus(st, "err", e.message);
   } finally {
@@ -2024,7 +2251,7 @@ $("sp-download").onclick = () => {
     a.href = $("sp-canvas").toDataURL("image/png");
     a.click();
   } catch (e) {
-    setStatus($("sp-status"), "err", "PNG export blocked by the browser (basemap tiles without CORS). Re-render and try again, or screenshot the map.");
+    setStatus($("sp-status"), "err", tr("spPngBlocked"));
   }
 };
 
@@ -2035,7 +2262,7 @@ function renderChips() {
   PRESETS.forEach((r, i) => {
     const b = document.createElement("button");
     b.className = "chip";
-    b.textContent = r.label;
+    b.textContent = tr("preset", { n: r.days });
     b.setAttribute("aria-pressed",
       String(state.range.type === "preset" && state.range.idx === i));
     b.onclick = () => setPreset(i);
@@ -2044,13 +2271,13 @@ function renderChips() {
   const c = document.createElement("button");
   c.className = "chip";
   c.textContent = state.range.type === "custom"
-    ? `Custom: ${state.range.start} → ${state.range.end}` : "Custom…";
+    ? tr("customSet", { a: state.range.start, b: state.range.end }) : tr("customChip");
   c.setAttribute("aria-pressed", String(state.range.type === "custom"));
   c.onclick = () => $("customrange").classList.toggle("open");
   el.appendChild(c);
   /* the same periods in the full-screen bar (a custom range is set on the page) */
   const fp = $("fs-period");
-  fp.innerHTML = PRESETS.map((p, i) => `<option value="${i}">${p.label}</option>`).join("") +
+  fp.innerHTML = PRESETS.map((p, i) => `<option value="${i}">${tr("presetShort", { n: p.days })}</option>`).join("") +
     (state.range.type === "custom" ? `<option value="custom">${dm(state.range.start)} → ${dm(state.range.end)}</option>` : "");
   fp.value = state.range.type === "custom" ? "custom" : String(state.range.idx);
   fp.onchange = () => { if (fp.value !== "custom") setPreset(+fp.value); };
@@ -2072,10 +2299,10 @@ function initCustomRange() {
   $("c-apply").onclick = () => {
     const s = parseDay($("c-start").value), e = parseDay($("c-end").value);
     const err = $("c-err");
-    if (!s || !e) { err.textContent = "Please pick both dates."; return; }
-    if (s > e) { err.textContent = "Start must be before end."; return; }
-    if (e > new Date()) { err.textContent = "End cannot be in the future."; return; }
-    if ((e - s) / 86400e3 > 365) { err.textContent = "Maximum range is 365 days."; return; }
+    if (!s || !e) { err.textContent = tr("errBoth"); return; }
+    if (s > e) { err.textContent = tr("errOrder"); return; }
+    if (e > new Date()) { err.textContent = tr("errFuture"); return; }
+    if ((e - s) / 86400e3 > 365) { err.textContent = tr("errMax"); return; }
     err.textContent = "";
     state.range = { type: "custom", start: isoDate(s), end: isoDate(e) };
     $("customrange").classList.remove("open");
@@ -2097,7 +2324,7 @@ async function refresh() {
     const res = await loadRangeData();
     if (seq !== refresh.seq) return;
     done();
-    $("stcount").textContent = `${res.stations.length} stations`;
+    $("stcount").textContent = tr("stCount", { n: res.stations.length });
     renderVerdict(res);
     renderMarkers(res);
     updateGridLayer(res.range);
@@ -2105,9 +2332,9 @@ async function refresh() {
     if (seq !== refresh.seq) return;
     done();
     setStatus($("status"), e.soft ? "info" : "err", e.message);
-    $("v-word").textContent = e.soft ? "Out of range" : "Error"; $("v-word").className = "word serif " + (e.soft ? "none" : "bad");
+    $("v-word").textContent = tr(e.soft ? "w.out" : "w.error"); $("v-word").className = "word serif " + (e.soft ? "none" : "bad");
     $("v-nums").textContent = ""; $("v-meta").textContent = e.message; $("v-hint").textContent = "";
-    fsVerdict(e.soft ? "Out of range" : "Error", e.soft ? "none" : "bad", e.soft ? "pick another period" : "");
+    fsVerdict(tr(e.soft ? "w.out" : "w.error"), e.soft ? "none" : "bad", e.soft ? tr("pickOther") : "");
     state.lastRes = null; renderMarkers();   // don't leave another region's dots up
     $("stcount").textContent = "";
   }
@@ -2116,6 +2343,9 @@ async function refresh() {
 window.addEventListener("resize", () => { clearTimeout(sizeMap.t); sizeMap.t = setTimeout(sizeMap, 200); });
 
 (async function main() {
+  applyStatic();
+  $("v-word").textContent = $("fs-verdict").textContent = tr("loading");
+  document.querySelectorAll(".lang button").forEach(b => { b.onclick = () => setLang(b.dataset.lang); });
   renderChips();
   initCustomRange();
   renderLegend();
