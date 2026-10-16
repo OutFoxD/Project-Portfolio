@@ -1,0 +1,75 @@
+{
+ "generated": "2026-10-15T17:10:09+00:00",
+ "start": "2025-01-01",
+ "countries": {
+  "AT": {
+   "years": {
+    "2025": {
+     "file": "hist_at_2025.json",
+     "first": "2025-01-01",
+     "last": "2025-12-31",
+     "stations": 280,
+     "values": 101700
+    },
+    "2026": {
+     "file": "hist_at_2026.json",
+     "first": "2026-01-01",
+     "last": "2026-10-14",
+     "stations": 281,
+     "values": 79703
+    }
+   },
+   "backfilled": true
+  },
+  "CH": {
+   "years": {
+    "2026": {
+     "file": "hist_ch_2026.json",
+     "first": "2026-01-01",
+     "last": "2026-10-14",
+     "stations": 281,
+     "values": 79596
+    }
+   },
+   "backfilled": true
+  },
+  "DE": {
+   "years": {
+    "2025": {
+     "file": "hist_de_2025.json",
+     "first": "2025-04-12",
+     "last": "2025-12-31",
+     "stations": 2184,
+     "values": 571116
+    },
+    "2026": {
+     "file": "hist_de_2026.json",
+     "first": "2026-01-01",
+     "last": "2026-10-14",
+     "stations": 2192,
+     "values": 623069
+    }
+   },
+   "backfilled": true
+  },
+  "CZ": {
+   "years": {
+    "2025": {
+     "file": "hist_cz_2025.json",
+     "first": "2025-10-01",
+     "last": "2025-12-31",
+     "stations": 702,
+     "values": 64047
+    },
+    "2026": {
+     "file": "hist_cz_2026.json",
+     "first": "2026-01-01",
+     "last": "2026-10-14",
+     "stations": 704,
+     "values": 190485
+    }
+   },
+   "backfilled": true
+  }
+ }
+}

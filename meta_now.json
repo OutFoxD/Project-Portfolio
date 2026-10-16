@@ -1,0 +1,14 @@
+{
+ "ran": "2026-10-16T04:52:59+00:00",
+ "mode": "now",
+ "de_now": {
+  "stations": 1338,
+  "end": "2026-10-16T04:00Z",
+  "carried_hours": 55,
+  "prev_stations": 1338
+ },
+ "cz_now": {
+  "stations": 427,
+  "end": "2026-10-16T04:00Z"
+ }
+}

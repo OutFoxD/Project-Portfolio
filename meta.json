@@ -1,0 +1,185 @@
+{
+ "ran": "2026-10-15T17:06:01+00:00",
+ "mode": "full",
+ "stations": {
+  "stations": 272,
+  "through": "2026-10-14",
+  "not_reporting": 1
+ },
+ "ch_stations": {
+  "smn_meta": 159,
+  "smn-precip_meta": 141,
+  "stations": 280,
+  "through": "2026-10-14",
+  "not_reporting": 1,
+  "without_file": 0
+ },
+ "de_stations": {
+  "stations": 2188,
+  "through": "2026-10-14",
+  "not_reporting": 0,
+  "listed": 2192,
+  "failed": 0
+ },
+ "cz_stations": {
+  "stations": 452,
+  "through": "2026-10-14",
+  "not_reporting": 245,
+  "months": {
+   "202608": "08/",
+   "202609": "09/",
+   "202610": "root"
+  }
+ },
+ "alignment": {
+  "common_through": "2026-10-14",
+  "own": {
+   "AT": "2026-10-14",
+   "CH": "2026-10-14",
+   "DE": "2026-10-14",
+   "CZ": "2026-10-14"
+  }
+ },
+ "archive": {
+  "AT": {
+   "stations_before": 281,
+   "merged": 5,
+   "stations": 289,
+   "years": {
+    "2025": [
+     "2025-01-01",
+     "2025-12-31"
+    ],
+    "2026": [
+     "2026-01-01",
+     "2026-10-14"
+    ]
+   },
+   "last_year_stations": 269
+  },
+  "CH": {
+   "stations_before": 281,
+   "merged": 283,
+   "stations": 300,
+   "years": {
+    "2026": [
+     "2026-01-01",
+     "2026-10-14"
+    ]
+   },
+   "last_year_stations": 0
+  },
+  "DE": {
+   "stations_before": 2192,
+   "merged": 0,
+   "stations": 2194,
+   "years": {
+    "2025": [
+     "2025-04-12",
+     "2025-12-31"
+    ],
+    "2026": [
+     "2026-01-01",
+     "2026-10-14"
+    ]
+   },
+   "last_year_stations": 2170
+  },
+  "CZ": {
+   "stations_before": 704,
+   "merged": 442,
+   "stations": 707,
+   "years": {
+    "2025": [
+     "2025-10-01",
+     "2025-12-31"
+    ],
+    "2026": [
+     "2026-01-01",
+     "2026-10-14"
+    ]
+   },
+   "last_year_stations": 449
+  }
+ },
+ "fetch_AT_grid": {
+  "last": "2026-10-14",
+  "days": 48
+ },
+ "fetch_CH_grid": {
+  "last": "2026-10-14",
+  "days": 48
+ },
+ "fetch_DE_grid": {
+  "last": "2026-10-14",
+  "days": 53
+ },
+ "grid_common_last_day": "2026-10-14",
+ "grid": {
+  "periods": [
+   "7",
+   "14",
+   "30",
+   "45",
+   "1"
+  ],
+  "last_day": "2026-10-14",
+  "own_last_day": "2026-10-14"
+ },
+ "ch_grid": {
+  "periods": [
+   "7",
+   "14",
+   "30",
+   "45",
+   "1"
+  ],
+  "last_day": "2026-10-14",
+  "own_last_day": "2026-10-14",
+  "monthly_used": [],
+  "missing_days": [],
+  "file": {
+   "var": "RprelimD",
+   "dims": [
+    "time",
+    "N",
+    "E"
+   ],
+   "crs": "EPSG:2056",
+   "shape": [
+    265,
+    370
+   ],
+   "x0": 2474500.0,
+   "dx": 1000.0,
+   "y0": 1059500.0,
+   "dy": 1000.0
+  }
+ },
+ "de_grid": {
+  "periods": [
+   "7",
+   "14",
+   "30",
+   "45",
+   "1"
+  ],
+  "last_day": "2026-10-14",
+  "own_last_day": "2026-10-14",
+  "file": {
+   "files": [
+    "pr_hyras_1_2026_v6-1_de.nc"
+   ]
+  }
+ },
+ "de_now": {
+  "stations": 1330,
+  "end": "2026-10-15T16:00Z",
+  "carried_hours": 10694,
+  "prev_stations": 1332
+ },
+ "cz_now": {
+  "stations": 413,
+  "end": "2026-10-15T16:00Z"
+ }
+}

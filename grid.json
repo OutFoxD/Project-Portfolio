@@ -1,0 +1,108 @@
+{
+ "generated": "2026-10-15T17:10:57+00:00",
+ "source": "spartacus-v3-1d-1km",
+ "bounds": [
+  [
+   46.16132856869247,
+   9.393909734939893
+  ],
+  [
+   49.177527691779716,
+   17.382180045432914
+  ]
+ ],
+ "last_day": "2026-10-14",
+ "own_last_day": "2026-10-14",
+ "periods": {
+  "7": {
+   "start": "2026-10-08",
+   "end": "2026-10-14",
+   "file": "grid_7d.png",
+   "mean": {
+    "Vorarlberg": 45.7,
+    "Tirol": 19.7,
+    "Wien": 2.4,
+    "Oberösterreich": 19.0,
+    "Niederösterreich": 7.9,
+    "Steiermark": 11.8,
+    "Salzburg": 25.2,
+    "Kärnten": 12.9,
+    "Burgenland": 6.4,
+    "Österreich": 15.2
+   },
+   "max": 89.9
+  },
+  "14": {
+   "start": "2026-10-01",
+   "end": "2026-10-14",
+   "file": "grid_14d.png",
+   "mean": {
+    "Vorarlberg": 70.4,
+    "Tirol": 33.3,
+    "Wien": 2.4,
+    "Oberösterreich": 19.0,
+    "Niederösterreich": 7.9,
+    "Steiermark": 13.3,
+    "Salzburg": 25.5,
+    "Kärnten": 16.1,
+    "Burgenland": 6.4,
+    "Österreich": 18.7
+   },
+   "max": 114.8
+  },
+  "30": {
+   "start": "2026-09-15",
+   "end": "2026-10-14",
+   "file": "grid_30d.png",
+   "mean": {
+    "Vorarlberg": 83.5,
+    "Tirol": 65.2,
+    "Wien": 22.2,
+    "Oberösterreich": 58.3,
+    "Niederösterreich": 30.3,
+    "Steiermark": 30.2,
+    "Salzburg": 68.0,
+    "Kärnten": 33.9,
+    "Burgenland": 12.3,
+    "Österreich": 44.0
+   },
+   "max": 144.7
+  },
+  "45": {
+   "start": "2026-08-31",
+   "end": "2026-10-14",
+   "file": "grid_45d.png",
+   "mean": {
+    "Vorarlberg": 119.2,
+    "Tirol": 118.9,
+    "Wien": 55.1,
+    "Oberösterreich": 99.4,
+    "Niederösterreich": 71.7,
+    "Steiermark": 97.8,
+    "Salzburg": 136.1,
+    "Kärnten": 129.8,
+    "Burgenland": 55.1,
+    "Österreich": 100.7
+   },
+   "max": 252.3
+  },
+  "1": {
+   "start": "2026-10-14",
+   "end": "2026-10-14",
+   "file": "grid_1d.png",
+   "mean": {
+    "Vorarlberg": 1.5,
+    "Tirol": 0.4,
+    "Wien": 0.4,
+    "Oberösterreich": 2.7,
+    "Niederösterreich": 0.9,
+    "Steiermark": 1.5,
+    "Salzburg": 2.7,
+    "Kärnten": 0.3,
+    "Burgenland": 0.3,
+    "Österreich": 1.3
+   },
+   "max": 13.4
+  }
+ }
+}
