@@ -1,0 +1,74 @@
+<!doctype html>
+{%- comment -%}
+  The home page. All the words and photos come from readme.md, so keep editing that file as before.
+  This layout only rearranges what the Markdown produces:
+    text before the first ## goes in the header, every ## becomes a section,
+    and inside a project the part up to the end of the list goes left, photos go right.
+{%- endcomment -%}
+{%- assign body = content
+  | replace: '🚀 ', '' | replace: '🛠️ ', '' | replace: '🔋📟🤖🔌 ', '' | replace: '💻 ', '' | replace: '📫 ', '' | replace: '✨ ', ''
+  | replace: '<img ', '<img loading="lazy" decoding="async" '
+  | replace: '<li><strong>Description:</strong> ', '<li>'
+  | replace: '<li><strong>Goals:</strong>', '<li class="meta"><strong>Goals:</strong>'
+  | replace: '<li><strong>Technologies Used:</strong>', '<li class="meta"><strong>Technologies Used:</strong>'
+  | replace: '<li><strong>Repository:</strong>', '<li class="meta"><strong>Repository:</strong>'
+  | replace: '<li><strong>Github Repo:</strong>', '<li class="meta"><strong>Github Repo:</strong>' -%}
+{%- assign sections = body | split: '<h2' -%}
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Protofox – Christoph's hardware, embedded and software projects</title>
+  <meta name="description" content="Christoph's portfolio: battery packs, a restored lathe, hacked electronics and small software projects, each with goals, tools and photos.">
+  <meta property="og:title" content="Protofox">
+  <meta property="og:description" content="Christoph's hardware, embedded and software projects.">
+  <meta property="og:image" content="https://protofox.at/docs/ScooterBatt3.jpg">
+  <meta property="og:url" content="https://protofox.at/">
+  <meta name="theme-color" content="#587246">
+  <link rel="icon" href="assets/fox.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/protofox.css">
+  <link rel="stylesheet" href="assets/page.css">
+</head>
+<body>
+<header>
+  <div class="panel">
+    <nav aria-label="Site">
+      <a href="now/">now</a>
+      <a href="bench/">bench</a>
+      <a href="#contact">contact</a>
+    </nav>
+    <h1 class="wordmark">protofox</h1>
+  </div>
+  <div class="hero wrap">
+    <div class="intro">{{ sections[0] }}</div>
+    <div class="me"><img src="assets/hero.jpg" width="1400" height="1050" alt="Christoph taking a selfie in his workshop, with the oak workbench behind him."></div>
+  </div>
+</header>
+<main>
+{%- for part in sections offset: 1 -%}
+  {%- assign chunks = part | split: '<h3' -%}
+  {%- if chunks.size > 1 %}
+  <section class="sect wrap">
+    <h2{{ chunks[0] }}
+    {%- for chunk in chunks offset: 1 -%}
+      {%- assign bits = chunk | split: '</ul>' %}
+    <article class="project">
+      <div class="txt"><h3{{ bits[0] }}</ul></div>
+      <div class="pics">{{ bits[1] }}</div>
+    </article>
+    {%- endfor %}
+  </section>
+  {%- else -%}
+  {%- if part contains 'magic' %}
+  <section class="bare places wrap"><h2{{ part }}</section>
+  {%- else %}
+  <section class="bare wrap" id="contact"><h2{{ part }}</section>
+  {%- endif -%}
+  {%- endif -%}
+{%- endfor %}
+</main>
+<footer class="foot">
+  <p>Made in Linz. The green is RAL 6011 Reseda, same as my bench drill and vices. The orange is off the Emco Compact 5.</p>
+</footer>
+</body>
+</html>

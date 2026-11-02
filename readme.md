@@ -12,7 +12,8 @@ In total the supply comes in under 2 kg and can deliver maximum power for about 
 - **Goals:** Backup-charge my e-scooter from 0-100 % SoC within 2 hrs
 - **Technologies Used:**  Spot welding, 3D printing, DC-DC buck conversion, Soldering, CAD
 - **Repository:** [Mobile-Battery-supplied-Lab-Power-Supply](https://github.com/OutFoxD/Mobile-Battery-supplied-Lab-Power-Supply)
-![Project Image](docs/ScooterBatt3.jpg)
+
+![Spot-welded 14s2p battery pack next to the adjustable DC-DC converter with its colour display](docs/ScooterBatt3.jpg)
 
 ## 🛠️ Hardware Projects
 
@@ -22,8 +23,12 @@ In total the supply comes in under 2 kg and can deliver maximum power for about 
 Improve it to be able to make parts reproducably within ±10 µm accuracy.  
 Install digital readout on both axes and make the machine nice to work on in general.
 - **Technologies Used:** 3D Printing, CAD, Conventional Turning, CNC Servo and Speed Control, Powder Coating, Woodworking, Scraping 
-- **After:** ![After](docs/EmcoUnimat3After.jpg)
-- **Before:** ![Before](docs/EmcoUnimat3Before.jpg)
+
+**After**  
+![The restored Unimat 3 with digital readouts and a new control box](docs/EmcoUnimat3After.jpg)
+
+**Before**  
+![The Unimat 3 as I got it, on a cluttered bench](docs/EmcoUnimat3Before.jpg)
 
 ### **Rejuvenating old Bosch battery packs**
 - **Description:** My batteries could no longer provide enough power to supply my vacuum cleaner on turbo mode.  
@@ -32,7 +37,8 @@ So the cells had to go and got replaced by Molycel 28R cells held together by st
 Insights into spot welding and specifically steel-copper sandwhich welds.  
 Preparation of used batteries for lower demand projects.
 - **Technologies Used:**  Spot welding
-![project Image](docs/BoschBatt2.jpg)
+
+![Opened Bosch battery pack in my hand, with new cells and copper-steel welds](docs/BoschBatt2.jpg)
 
 ## 🔋📟🤖🔌 Embedded Projects
 
@@ -42,13 +48,15 @@ The power electronics lived under the table with the Interface and power connect
 Turns out it was not working as well as expected and got replaced anyways.
 - **Goals:** Improved usability with separate UI board and a rotary encoder
 - **Technologies Used:**  Raspberry Pi Pico, Rotary Encoder, 3D Printing, CAD, Soldering
-![Project Image](docs/ElectronicLoad.jpg)
+
+![Separate 3D-printed interface box for the electronic load, wired up to a Raspberry Pi Pico](docs/ElectronicLoad.jpg)
 
 ### **Hacked humidifier with active control**
 - **Description:** My girlfriend wanted her plants to grow better, so I made it happen.
 - **Goals:** Operation within optimal humidity range (60-80 %RH) to promote tropical plant growth
 - **Technologies Used:**  Raspberry Pi Pico, OLED Display, 3D Printing, Temp and Humidity Sensing
-![Project Image](docs/HumidityControl.jpg)
+
+![Raspberry Pi Pico and small OLED display on a breadboard, wired to the humidifier](docs/HumidityControl.jpg)
  
 ### **Electroluminescence measurements of PV panels**
 - **Description:** Failure analysis of PV panels/systems was one of my topics at work and I continued the research privately as well.  
@@ -56,7 +64,8 @@ Turns out near-infrared imaging can be used, when feeding back power into PV pan
 - **Goals:** Insights on ElectroLuminesence for PV panel failure analysis.  
 Insights on optical systems and optical filtering.
 - **Technologies Used:** Near-Infrared Imaging, Raspberry Pi Zero W, Raspberry Pi NoIR Cam, Modified CMOS Digicam
-![Project Image](docs/ElectroLuminesence.JPG)
+
+![Near-infrared image of a glowing PV panel, with dark cells and micro-cracks showing the faults](docs/ElectroLuminesence.JPG)
 
 ## 💻 Software Projects
 
@@ -67,7 +76,8 @@ After the data is gathered it's saved to an InfluxDB and later visualized in Gra
 Grafana also does the conversion from relative to absolute humidity.
 - **Goals:** Gaining Insights how my flat heats up during summer and how and when washed clothes are fully dried
 - **Technologies Used:** Raspberry Pi 4, Docker, NodeRed, Grafana, InfluxDB, TadoAPI
-![Project Image](docs/GrafanaTemperatures.jpg)
+
+![Grafana dashboard with temperature curves for several rooms](docs/GrafanaTemperatures.jpg)
 
 ### **Spotbroo - App for energy spot price visualization with widget support**
 - **Description:** Frustration with currently available apps for spot prices lead to a friend offering to program an app for me.  
@@ -88,8 +98,8 @@ I'm insaney greatful for what he thought me within that project, since that's th
 
 ## ✨ Where the magic happens
 - In my home lab
-![my home Lab](docs/HomeLab.jpg)
+![My home lab: white desk, pegboard full of tools, 3D printer and bench supplies](docs/HomeLab.jpg)
 - in the [Grand Garage](https://grandgarage.eu/) - my local makerspace
-![my home Lab](docs/MeGG.jpg)
+![Me giving a thumbs up at a milling machine in the Grand Garage](docs/MeGG.jpg)
 - or in my Dad's workshop 
-![Project Image](docs/EmcoCompact5.jpg)
+![Orange Emco Compact 5 lathe in my dad's workshop](docs/EmcoCompact5.jpg)

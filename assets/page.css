@@ -1,0 +1,161 @@
+/* protofox: content pages (home, now, bench, community).
+   Plain web bones: black text, underlined links, visited links change colour, big unframed photos.
+   No cards, no shadows, no rounded corners. */
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--pf-paper); color: var(--pf-ink);
+  font: 400 1.125rem/1.6 var(--pf-serif);
+}
+img { max-width: 100%; height: auto; }
+h1, h2, h3 { font-family: var(--pf-sans); line-height: 1.05; margin: 0; text-wrap: balance; }
+h3 strong { font-weight: inherit; }
+a { color: var(--pf-link); text-underline-offset: .15em; text-decoration-thickness: 1px; }
+a:visited { color: var(--pf-visited); }
+a:hover { background: var(--pf-orange); color: #000; text-decoration: none; }
+a:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--pf-orange); outline-offset: 2px; }
+::selection { background: var(--pf-orange); color: #000; }
+
+.wrap {
+  padding-left: max(var(--pf-gutter), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--pf-gutter), env(safe-area-inset-right, 0px));
+}
+
+/* ---------- home: painted panel with the name across it */
+.panel {
+  background: var(--pf-paint); color: var(--pf-on-paint);
+  padding: .9rem max(var(--pf-gutter), env(safe-area-inset-right, 0px)) 0 max(var(--pf-gutter), env(safe-area-inset-left, 0px));
+  clip-path: var(--pf-edge);
+}
+.panel nav { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .25rem 1.25rem; font: 600 1.05rem/1.3 var(--pf-sans); }
+.panel nav a { color: inherit; text-underline-offset: .18em; }
+.panel nav a:hover { background: none; color: inherit; text-decoration: underline; text-decoration-thickness: 3px; }
+.wordmark {
+  margin: .1em 0 0 -.03em;
+  font-weight: 900; font-stretch: 125%; letter-spacing: -.055em; line-height: .86;
+  font-size: 18.3vw; color: var(--pf-ink-on-panel, #000);
+  padding-bottom: calc(.1em + 18px);
+}
+.hero {
+  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 1.5rem 3rem; align-items: start;
+  padding-block: 2rem 0;
+}
+.hero .intro { font-size: clamp(1.3rem, 2.3vw, 1.85rem); line-height: 1.32; max-width: 26em; }
+.hero .intro p { margin: 0 0 1em; }
+.hero .intro strong { font-weight: 400; }
+.hero .intro em { display: block; font-size: .72em; line-height: 1.45; color: var(--pf-faint); font-style: italic; }
+.hero .me { margin-top: -5.5vw; position: relative; }
+.hero .me img { display: block; width: 100%; }
+
+/* ---------- home: sections and projects */
+.sect { padding-block: clamp(3rem, 7vw, 6rem) 0; }
+.sect > h2, .bare > h2 {
+  font-weight: 800; font-stretch: 125%; letter-spacing: -.035em;
+  font-size: clamp(2.1rem, 5.6vw, 4.4rem); margin-bottom: 1.6rem;
+}
+.project {
+  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 1.25rem 3rem;
+  padding-block: 0 clamp(2.5rem, 5vw, 4.5rem);
+}
+.project .txt { position: sticky; top: 1.25rem; align-self: start; max-width: 34em; }
+.project h3 { font-size: clamp(1.4rem, 2.2vw, 1.8rem); font-weight: 700; margin-bottom: .7rem; }
+.project ul { list-style: none; margin: 0; padding: 0; }
+.project li { margin: 0 0 .6rem; }
+.project li.meta { font: 400 .98rem/1.45 var(--pf-sans); color: var(--pf-faint); }
+.project li.meta strong { color: var(--pf-ink); font-weight: 700; }
+.project li.meta a { font-weight: 600; }
+.pics { display: grid; gap: 1rem; justify-items: start; }
+.pics p { margin: 0; font: 700 .98rem/1.3 var(--pf-sans); }
+.pics img { display: block; max-height: 82vh; width: auto; margin-top: .3rem; }
+.pics:empty { display: none; }
+
+/* the featured one gets the whole width */
+.sect:first-of-type .project { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); padding-bottom: 0; }
+.sect:first-of-type .pics { order: -1; }
+.sect:first-of-type .project h3 { font-size: clamp(1.7rem, 3.2vw, 2.6rem); font-stretch: 112%; letter-spacing: -.02em; }
+
+/* contact + where the magic happens */
+.bare { padding-block: clamp(3rem, 7vw, 6rem) 0; }
+.bare > ul { list-style: none; margin: 0; padding: 0; }
+.bare > ul > li { margin-bottom: .35rem; }
+.bare > p { margin: 1.25rem 0 0; }
+.bare.places > ul { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; align-items: start; }
+.bare.places img { display: block; width: 100%; margin-top: .4rem; }
+.bare.places > ul > li { font: 600 1.02rem/1.3 var(--pf-sans); margin: 0; }
+
+.foot {
+  margin-top: clamp(3rem, 7vw, 6rem);
+  background: var(--pf-paint); color: var(--pf-on-paint);
+  padding: 2rem max(var(--pf-gutter), env(safe-area-inset-right, 0px)) 2.5rem max(var(--pf-gutter), env(safe-area-inset-left, 0px));
+  font: 400 1rem/1.45 var(--pf-sans);
+  clip-path: polygon(0 12px, 8% 4px, 17% 10px, 29% 0, 41% 8px, 52% 3px, 66% 11px, 78% 5px, 90% 9px, 100% 2px, 100% 100%, 0 100%);
+}
+.foot p { margin: 0; max-width: 44em; }
+.foot a, .foot a:visited { color: inherit; }
+
+/* ---------- subpages */
+.page-head { padding-block: 1.75rem 1.5rem; max-width: 60rem; }
+.page-head h1 {
+  font-weight: 800; font-stretch: 125%; letter-spacing: -.035em;
+  font-size: clamp(2.2rem, 6vw, 4.6rem);
+}
+.page-head p { margin: 1rem 0 0; max-width: 40em; }
+
+/* ---------- the log: date on the left, whatever was posted on the right.
+   The markup inside is what the now-post app writes, so everything is styled from outside. */
+.log {
+  display: grid; grid-template-columns: 8.5rem minmax(0, 44rem); column-gap: 1.5rem;
+  padding-bottom: 3rem;
+}
+.log > * { grid-column: 2; min-width: 0; }
+.log > .date {
+  grid-column: 1; margin-top: 1.1rem;
+  font: 600 .95rem/1.5 var(--pf-sans); font-variant-numeric: tabular-nums; color: var(--pf-faint);
+}
+.log > .date + * { margin-top: 1.1rem !important; }
+.log > .date:has(+ img), .log > .date:has(+ .shot) { margin-top: 3rem; color: var(--pf-ink); }
+.log > .date + img, .log > .date + .shot { margin-top: 3rem !important; }
+.log > img, .log .shot {
+  display: block; width: auto; max-width: 100% !important; height: auto; max-height: 85vh;
+  border-radius: 0 !important; margin: 0 0 .5rem !important; cursor: zoom-in;
+}
+.log > ul { margin: 0; padding: 0; list-style: none; }
+.log > ul > li { white-space: pre-line; margin: 0 0 .2rem; }
+.log > ul > li + li, .log > ul > li:has(+ li) { padding-left: 1em; text-indent: -1em; }
+.log > ul > li + li::before, .log > ul > li:has(+ li)::before { content: "– "; }
+.log > p { margin: 0 0 .4rem; }
+
+.after-log { max-width: 44rem; padding-bottom: 4rem; }
+.after-log p { margin: 2rem 0 .5rem; }
+.after-log .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; align-items: start; }
+.after-log .pair figure { margin: 0; }
+.after-log .pair img { display: block; width: 100%; }
+.after-log .pair figcaption { font: 400 .98rem/1.4 var(--pf-sans); margin-top: .35rem; }
+
+/* community */
+.links { padding-bottom: 4rem; max-width: 44rem; }
+.links h2 { font-size: 1.6rem; font-weight: 700; margin: 2rem 0 .5rem; }
+.links ul { list-style: none; margin: 0; padding: 0; }
+.links li { margin: 0 0 .3rem; }
+
+/* zoomed photo */
+dialog.zoom { border: 0; padding: 0; background: none; max-width: 100vw; max-height: 100vh; cursor: zoom-out; }
+dialog.zoom::backdrop { background: #000; }
+dialog.zoom img { display: block; max-width: 100vw; max-height: 100vh; }
+
+@media (max-width: 760px) {
+  body { font-size: 1.0625rem; }
+  .hero, .project, .sect:first-of-type .project { grid-template-columns: minmax(0, 1fr); }
+  .hero .me { margin-top: 0; order: -1; }
+  .hero { padding-top: .75rem; }
+  .project .txt { position: static; }
+  .pics img { max-height: none; width: 100%; }
+  .bare.places > ul { grid-template-columns: minmax(0, 1fr); }
+  .log { grid-template-columns: minmax(0, 1fr); }
+  .log > *, .log > .date { grid-column: 1; }
+  .log > .date + *, .log > .date + img, .log > .date + .shot { margin-top: 0 !important; }
+  .log > .date:has(+ img), .log > .date:has(+ .shot) { margin-top: 2.25rem; margin-bottom: .3rem; }
+  .log > img, .log .shot { width: 100%; max-height: none; }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }

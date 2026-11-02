@@ -3,17 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0f1a24">
+<meta name="theme-color" content="#1b2216">
 <title>Skitour – Neuschnee, Schneefallgrenze &amp; Wind</title>
 <meta name="description" content="Neuschnee, Schneefallgrenze und Windverfrachtung auf einer Topo-Karte mit Hangneigung und Exposition – für die Skitourenplanung in den Ostalpen.">
+<link rel="icon" href="../assets/fox.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/protofox.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
   :root{
-    --bg:#0f1a24; --panel:#132230f2; --panel2:#1b2d3f; --line:#2b4258;
-    --text:#e9f1f7; --muted:#9fb3c5; --ice:#9ad5ff; --ice2:#4fb3ff;
+    --bg:#1b2216; --panel:#1b2216f2; --panel2:#2b3424; --line:#3f4a35;
+    --text:#f1f3ea; --muted:#aeb5a2; --ice:#9ad5ff; --ice2:#4fb3ff;
     --warn:#f2a33a; --bad:#ff8a7a;
     --sheet-h:0px; --top-h:0px;
-    --font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --font:var(--pf-sans);
   }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;-webkit-text-size-adjust:100%}
@@ -23,31 +25,32 @@
 
   /* ---------- top bar: title + time windows */
   .topbar{position:fixed;z-index:1001;top:calc(env(safe-area-inset-top) + 8px);left:8px;right:8px;
-    background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px 10px 8px;
+    background:var(--panel);border:1px solid var(--line);border-radius:0;padding:8px 10px 8px;
     box-shadow:0 6px 24px #0006;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
   .brand{display:flex;align-items:baseline;gap:8px;margin:0 2px 6px;white-space:nowrap;overflow:hidden}
   .brand b{font-size:1.05rem;letter-spacing:.2px}
-  .brand b i{font-style:normal;color:var(--ice)}
+  .brand .home{display:inline-flex;align-items:center;gap:4px;align-self:center;color:inherit;font-weight:800;font-stretch:125%;letter-spacing:-.02em}
+  .brand .home img{display:block}
   .brand span{color:var(--muted);font-size:.82rem;overflow:hidden;text-overflow:ellipsis}
   .chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
   .chips::-webkit-scrollbar{display:none}
-  .chip{flex:1 0 auto;min-width:50px;min-height:38px;padding:6px 7px;border-radius:10px;border:1px solid var(--line);
+  .chip{flex:1 0 auto;min-width:50px;min-height:38px;padding:6px 7px;border-radius:0;border:1px solid var(--line);
     background:var(--panel2);font-weight:650;font-size:.9rem;cursor:pointer;font-variant-numeric:tabular-nums;white-space:nowrap}
   .chip.fc{border-style:dashed}
   .chip[aria-pressed="true"]{background:var(--ice);color:#06223a;border-color:var(--ice);border-style:solid}
-  .sep{flex:0 0 2px;align-self:stretch;margin:4px 2px;background:var(--line);border-radius:2px}
+  .sep{flex:0 0 2px;align-self:stretch;margin:4px 2px;background:var(--line);border-radius:0}
   .when{color:var(--muted);font-size:.8rem;margin:6px 2px 0;min-height:1em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .when b{color:var(--text);font-weight:600}
   .when .stale{color:var(--warn)}
 
   /* ---------- bottom sheet (mobile) / side panel (desktop) */
   .sheet{position:fixed;z-index:1002;left:0;right:0;bottom:0;max-height:78vh;overflow:auto;
-    background:var(--panel);border-top:1px solid var(--line);border-radius:16px 16px 0 0;
+    background:var(--panel);border-top:1px solid var(--line);border-radius:0 16px 0 0;
     padding:0 12px calc(env(safe-area-inset-bottom) + 10px);box-shadow:0 -8px 28px #0007;
     backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);overscroll-behavior:contain}
   .grip{display:flex;justify-content:center;align-items:center;width:100%;height:26px;border:0;background:none;cursor:pointer;position:sticky;top:0;z-index:2;
     background:linear-gradient(var(--panel) 70%, transparent)}
-  .grip span{width:44px;height:5px;border-radius:3px;background:#5d7890}
+  .grip span{width:44px;height:5px;border-radius:0;background:#7d8a70}
   .more{display:none}
   .sheet.open .more{display:block}
   section{padding:6px 0 10px;border-bottom:1px solid #ffffff12}
@@ -57,15 +60,15 @@
   #wx{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -12px;padding:0 12px}
   #wx::-webkit-scrollbar{display:none}
   #wx button{flex:0 0 auto}
-  .seg button{flex:1 1 auto;min-height:40px;padding:7px 10px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);cursor:pointer;font-size:.9rem;font-weight:600}
+  .seg button{flex:1 1 auto;min-height:40px;padding:7px 10px;border-radius:0;border:1px solid var(--line);background:var(--panel2);cursor:pointer;font-size:.9rem;font-weight:600}
   .seg button[aria-pressed="true"]{background:var(--ice);border-color:var(--ice);color:#06223a}
   .legend{display:flex;flex-wrap:wrap;gap:4px 10px;margin:8px 0 0;font-size:.8rem;color:var(--muted);align-items:center}
-  .legend .bar{display:flex;width:100%;border-radius:6px;overflow:hidden;border:1px solid #0005}
+  .legend .bar{display:flex;width:100%;border-radius:0;overflow:hidden;border:1px solid #0005}
   .legend .bar span{flex:1;height:12px}
   .legend .ticks{display:flex;width:100%;justify-content:space-between;font-variant-numeric:tabular-nums;color:var(--text);font-size:.75rem}
   .legend .ticks span{flex:1;text-align:left}
   .legend .it{display:inline-flex;align-items:center;gap:5px}
-  .legend .sw{width:14px;height:14px;border-radius:4px;border:1px solid #0006;display:inline-block}
+  .legend .sw{width:14px;height:14px;border-radius:0;border:1px solid #0006;display:inline-block}
   .legend .cap{width:100%;color:var(--muted)}
   .hint{color:var(--muted);font-size:.8rem;margin:6px 0 0;line-height:1.4}
   .hint.warn{color:var(--warn)}
@@ -74,8 +77,8 @@
   .row input[type=checkbox]{width:20px;height:20px;accent-color:var(--ice2);margin:0}
   .row input[type=range]{flex:1;min-width:120px;accent-color:var(--ice2)}
   .row .val{min-width:5.5em;text-align:right;font-variant-numeric:tabular-nums}
-  select{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-height:40px;flex:1}
-  .btn{min-height:40px;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);cursor:pointer;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+  select{background:var(--panel2);border:1px solid var(--line);border-radius:0;padding:8px 10px;min-height:40px;flex:1}
+  .btn{min-height:40px;padding:8px 12px;border-radius:0;border:1px solid var(--line);background:var(--panel2);cursor:pointer;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
   .btn.primary{background:var(--ice);border-color:var(--ice);color:#06223a}
   .btns{display:flex;flex-wrap:wrap;gap:8px}
 
@@ -85,7 +88,7 @@
   .rose{display:grid;grid-template-columns:repeat(3,42px);grid-template-rows:repeat(3,42px);gap:4px}
   .rose button{border-radius:50%;border:1px solid var(--line);background:var(--panel2);font-size:.78rem;font-weight:700;cursor:pointer;padding:0}
   .rose button[aria-pressed="true"]{background:#2b6cb0;border-color:#6aa8ec;color:#fff}
-  .rose .mid{border-radius:10px;font-size:.68rem;font-weight:600;color:var(--muted)}
+  .rose .mid{border-radius:0;font-size:.68rem;font-weight:600;color:var(--muted)}
   .dsliders{flex:1;min-width:180px}
 
   .track{display:none}
@@ -102,7 +105,7 @@
   .leaflet-control-attribution:hover,.leaflet-control-attribution:focus-within{white-space:normal}
   .leaflet-bar a{width:40px;height:40px;line-height:40px;font-size:20px}
   .locbtn{font-size:22px!important}
-  .leaflet-popup-content-wrapper{border-radius:12px}
+  .leaflet-popup-content-wrapper{border-radius:0}
   .leaflet-popup-content{margin:10px 12px;font:13px/1.35 var(--font);color:#16232e;min-width:220px}
   .pp-head{font-weight:700;font-size:14px;margin-bottom:4px}
   .pp-sub{color:#4b5d6c;margin-bottom:6px}
@@ -112,15 +115,15 @@
   .pp thead th{color:#4b5d6c;font-weight:600;font-size:11px;border-bottom:1px solid #d5dde3}
   .pp tr.cur td{background:#e3f2ff;font-weight:700}
   .pp .note{color:#4b5d6c;font-size:12px;margin-top:6px}
-  .pp .tag{display:inline-block;padding:0 6px;border-radius:6px;font-weight:700;font-size:12px}
+  .pp .tag{display:inline-block;padding:0 6px;border-radius:0;font-weight:700;font-size:12px}
   .toast{position:fixed;z-index:1003;left:50%;transform:translateX(-50%);top:calc(var(--top-h) + 6px);
-    background:#0d1822e6;color:var(--text);padding:8px 12px;border-radius:10px;font-size:.85rem;border:1px solid var(--line);
+    background:#0d1822e6;color:var(--text);padding:8px 12px;border-radius:0;font-size:.85rem;border:1px solid var(--line);
     pointer-events:none;opacity:0;transition:opacity .25s;max-width:90vw;text-align:center}
   .toast.on{opacity:1}
 
   @media (min-width:900px){
     .topbar{left:384px;right:auto;max-width:640px}
-    .sheet{top:12px;left:12px;bottom:12px;right:auto;width:360px;max-height:none;border:1px solid var(--line);border-radius:14px;padding:4px 14px 14px}
+    .sheet{top:12px;left:12px;bottom:12px;right:auto;width:360px;max-height:none;border:1px solid var(--line);border-radius:0;padding:4px 14px 14px}
     .grip{display:none}
     .more{display:block}
     .leaflet-bottom{bottom:0}
@@ -135,7 +138,7 @@
 <div id="map" aria-label="Karte"></div>
 
 <header class="topbar" id="topbar">
-  <div class="brand"><b>Ski<i>tour</i></b><span>Neuschnee · Schneefallgrenze · Wind · Gelände</span></div>
+  <div class="brand"><a class="home" href="../"><img src="../assets/fox.svg" alt="" width="18" height="18">protofox</a><b>Skitour</b><span>Neuschnee, Schneefallgrenze, Wind, Gelände</span></div>
   <div class="chips" id="wins" role="group" aria-label="Zeitraum"></div>
   <div class="when" id="when">Lade Wetterdaten…</div>
 </header>
