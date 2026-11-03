@@ -34,7 +34,7 @@ a:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--pf-orange);
 .wordmark {
   margin: .1em 0 0 -.03em;
   font-weight: 900; font-stretch: 125%; letter-spacing: -.055em; line-height: .86;
-  font-size: 18.3vw; color: var(--pf-ink-on-panel, #000);
+  font-size: min(18.3vw, 10rem); color: var(--pf-ink-on-panel, #000);
   padding-bottom: calc(.1em + 18px);
 }
 .hero {
@@ -45,7 +45,7 @@ a:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--pf-orange);
 .hero .intro p { margin: 0 0 1em; }
 .hero .intro strong { font-weight: 400; }
 .hero .intro em { display: block; font-size: .72em; line-height: 1.45; color: var(--pf-faint); font-style: italic; }
-.hero .me { margin-top: -5.5vw; position: relative; }
+.hero .me { margin-top: -3.75rem; position: relative; }
 .hero .me img { display: block; width: 100%; }
 
 /* ---------- home: sections and projects */
