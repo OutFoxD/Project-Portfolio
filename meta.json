@@ -1,0 +1,133 @@
+{
+ "generated": "2026-11-14T16:44Z",
+ "bounds": [
+  [
+   46.2,
+   9.3
+  ],
+  [
+   48.0,
+   16.2
+  ]
+ ],
+ "size": [
+  690,
+  264
+ ],
+ "windows": [
+  {
+   "a": "a_p72.png",
+   "b": "b_p72.png",
+   "stats": {
+    "snow_max": 50.3,
+    "snow_p99": 22.5,
+    "wind_max": 139.7,
+    "wind_p95": 46.8,
+    "sl_median": 1917
+   },
+   "id": "p72",
+   "kind": "past",
+   "hours": 72,
+   "source": "inca-v1-1h-1km",
+   "start": "2026-11-11T16:00Z",
+   "end": "2026-11-14T16:00Z",
+   "hours_ok": 72
+  },
+  {
+   "a": "a_p48.png",
+   "b": "b_p48.png",
+   "stats": {
+    "snow_max": 44.5,
+    "snow_p99": 19.0,
+    "wind_max": 139.7,
+    "wind_p95": 45.1,
+    "sl_median": 1882
+   },
+   "id": "p48",
+   "kind": "past",
+   "hours": 48,
+   "source": "inca-v1-1h-1km",
+   "start": "2026-11-12T16:00Z",
+   "end": "2026-11-14T16:00Z",
+   "hours_ok": 48
+  },
+  {
+   "a": "a_p24.png",
+   "b": "b_p24.png",
+   "stats": {
+    "snow_max": 0.6,
+    "snow_p99": 0.0,
+    "wind_max": 122.7,
+    "wind_p95": 34.9,
+    "sl_median": 672
+   },
+   "id": "p24",
+   "kind": "past",
+   "hours": 24,
+   "source": "inca-v1-1h-1km",
+   "start": "2026-11-13T16:00Z",
+   "end": "2026-11-14T16:00Z",
+   "hours_ok": 24
+  },
+  {
+   "a": "a_f24.png",
+   "b": "b_f24.png",
+   "stats": {
+    "snow_max": 6.1,
+    "snow_p99": 0.3,
+    "wind_max": 52.2,
+    "wind_p95": 23.4,
+    "sl_median": 1198
+   },
+   "id": "f24",
+   "kind": "forecast",
+   "hours": 24,
+   "source": "nwp-v2-1h-1km",
+   "ref": "2026-11-14T12:00Z",
+   "start": "2026-11-14T16:00Z",
+   "end": "2026-11-15T16:00Z",
+   "hours_ok": 24
+  },
+  {
+   "a": "a_f48.png",
+   "b": "b_f48.png",
+   "stats": {
+    "snow_max": 16.9,
+    "snow_p99": 8.4,
+    "wind_max": 62.6,
+    "wind_p95": 29.1,
+    "sl_median": 1457
+   },
+   "id": "f48",
+   "kind": "forecast",
+   "hours": 48,
+   "source": "nwp-v2-1h-1km",
+   "ref": "2026-11-14T12:00Z",
+   "start": "2026-11-14T16:00Z",
+   "end": "2026-11-16T16:00Z",
+   "hours_ok": 48
+  }
+ ],
+ "errors": {},
+ "diag": {
+  "snowlmt": {
+   "roughness_as_is": 38.1,
+   "roughness_plus_terrain": 227.0,
+   "corr_with_terrain": 0.244,
+   "treated_as_above_ground": false,
+   "min": 393,
+   "max": 2152
+  },
+  "snowlmt_above_ground": false
+ },
+ "attribution": "GeoSphere Austria (CC BY 4.0)",
+ "inca_end": "2026-11-14T16:00Z",
+ "nwp_ref": "2026-11-14T12:00Z",
+ "snowdepth": {
+  "file": "snowdepth.png",
+  "day": "2026-11-13",
+  "source": "snowgrid_cl-v2-1d-1km",
+  "max_cm": 330
+ },
+ "t0": "2026-11-14T16:00Z"
+}
